@@ -1,5 +1,4 @@
-use super::{Function, Parameterised, Approximator, EvaluationResult, UpdateResult,
-            Projection, Projector};
+use super::{Approximator, EvaluationResult, UpdateResult, Projection, Projector};
 use geometry::{Matrix, Vector};
 use std::marker::PhantomData;
 
@@ -89,25 +88,13 @@ impl<I: ?Sized, P: Projector<I>> Linear<I, P> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> Function<I, f64> for Linear<I, P> {
+impl<I: ?Sized, P: Projector<I>> Approximator<I, f64> for Linear<I, P> {
     fn evaluate(&self, input: &I) -> EvaluationResult<f64> {
         let p = self.projector.project(input);
 
         Ok(self.evaluate_column(&p, 0))
     }
-}
 
-impl<I: ?Sized, P: Projector<I>> Function<I, Vector<f64>> for Linear<I, P> {
-    fn evaluate(&self, input: &I) -> EvaluationResult<Vector<f64>> {
-        let p = self.projector.project(input);
-
-        Ok(self.evaluate_full(&p))
-    }
-}
-
-impl<I: ?Sized, P: Projector<I>> Approximator<I, f64> for Linear<I, P> {}
-
-impl<I: ?Sized, P: Projector<I>> Parameterised<I, f64> for Linear<I, P> {
     fn update(&mut self, input: &I, error: f64) -> UpdateResult<()> {
         let p = self.projector.project(input);
 
@@ -115,15 +102,19 @@ impl<I: ?Sized, P: Projector<I>> Parameterised<I, f64> for Linear<I, P> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> Parameterised<I, Vector<f64>> for Linear<I, P> {
+impl<I: ?Sized, P: Projector<I>> Approximator<I, Vector<f64>> for Linear<I, P> {
+    fn evaluate(&self, input: &I) -> EvaluationResult<Vector<f64>> {
+        let p = self.projector.project(input);
+
+        Ok(self.evaluate_full(&p))
+    }
+
     fn update(&mut self, input: &I, errors: Vector<f64>) -> UpdateResult<()> {
         let p = self.projector.project(input);
 
         Ok(self.update_full(&p, errors))
     }
 }
-
-impl<I: ?Sized, P: Projector<I>> Approximator<I, Vector<f64>> for Linear<I, P> {}
 
 #[cfg(test)]
 mod tests {
