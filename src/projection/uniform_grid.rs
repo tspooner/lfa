@@ -1,18 +1,22 @@
-use super::{Projector, Projection};
+use super::{Vector, Projector, Projection};
+use geometry::{Space, RegularSpace};
+use geometry::dimensions::{Dimension, Partitioned};
 
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UniformGrid {
-    bounds: Vec<(f64, f64)>,
-    densities: Vec<usize>,
+    n_features: usize,
+    input_space: RegularSpace<Partitioned>,
 }
 
 impl UniformGrid {
-    pub fn new(bounds: Vec<(f64, f64)>, densities: Vec<usize>) -> Self {
+    pub fn new(input_space: RegularSpace<Partitioned>) -> Self {
+        let n_features = input_space.span().into();
+
         UniformGrid {
-            bounds: bounds,
-            densities: densities,
+            n_features: n_features,
+            input_space: input_space,
         }
     }
 
@@ -29,11 +33,11 @@ impl UniformGrid {
 
 impl Projector<[f64]> for UniformGrid {
     fn project(&self, input: &[f64]) -> Projection {
-        Projection::Sparse(vec![self.hash(input)])
+        Projection::Sparse(Vector::from_vec(vec![self.hash(input)]))
     }
 
     fn dim(&self) -> usize {
-        self.bounds.len()
+        self.input_space.dim()
     }
 
     fn size(&self) -> usize {

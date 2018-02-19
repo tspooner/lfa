@@ -1,4 +1,5 @@
-use geometry::Vector;
+use geometry::{Vector, RegularSpace};
+use geometry::dimensions::{BoundedDimension, Continuous};
 use super::{Projector, Projection};
 use utils::cartesian_product;
 
@@ -23,6 +24,10 @@ impl Polynomial {
             limits: limits,
             exponents: exponents,
         }
+    }
+
+    pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
+        Polynomial::new(order, input_space.iter().map(|d| d.limits()).collect())
     }
 
     fn make_exponents(order: u8, dim: usize) -> Vec<Vec<i32>> {
@@ -89,6 +94,10 @@ impl Chebyshev {
             limits: limits,
             polynomials: polynomials,
         }
+    }
+
+    pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
+        Chebyshev::new(order, input_space.iter().map(|d| d.limits()).collect())
     }
 
     fn make_polynomials(order: u8, dim: usize) -> Vec<Vec<fn(f64) -> f64>> {

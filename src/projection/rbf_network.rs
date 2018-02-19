@@ -1,23 +1,22 @@
-use super::{Projection, Projector, Vector};
+use geometry::{Vector, Matrix, Span, Space, RegularSpace};
+use geometry::dimensions::Partitioned;
+use ndarray::Axis;
+use super::{Projection, Projector};
+use utils::cartesian_product;
 
 /// Radial basis function network projector.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RBFNetwork {
-    mu: Vec<Vec<f64>>,
-    beta: Vec<f64>,
+    mu: Matrix<f64>,
+    beta: Vector<f64>,
 }
 
 impl RBFNetwork {
-    pub fn new(mu: Vec<Vec<f64>>, sigma: Vec<f64>) -> Self {
-        let n_dims = mu[0].len();
-        if !mu.iter().skip(1).all(|ref x| x.len() == n_dims) {
-            panic!("Rows of mu must all have the same length.");
-        }
-
-        if sigma.len() != n_dims {
+    pub fn new(mu: Matrix<f64>, sigma: Vector<f64>) -> Self {
+        if sigma.len() != mu.cols() {
             panic!(
                 "Dimensionality of mu ({}) and sigma ({}) must agree.",
-                n_dims,
+                mu.cols(),
                 sigma.len()
             );
         }
@@ -28,11 +27,30 @@ impl RBFNetwork {
         }
     }
 
+    pub fn from_space(input_space: RegularSpace<Partitioned>) -> Self {
+        let n_features = match input_space.span() {
+            Span::Finite(s) => s,
+            _ => { panic!("`RBFNetwork` projection only supports partitioned input spaces.") }
+        };
+
+        let centres = input_space.centres();
+        let flat_combs = cartesian_product(&centres)
+            .iter()
+            .cloned()
+            .flat_map(|e| e)
+            .collect();
+
+        let mu = Matrix::from_shape_vec((n_features, input_space.dim()), flat_combs).unwrap();
+        let sigma = input_space.iter().map(|d| d.partition_width()).collect();
+
+        RBFNetwork::new(mu, sigma)
+    }
+
     pub fn kernel(&self, input: &[f64]) -> Vector<f64> {
         self.mu
-            .iter()
-            .map(|ref mu| {
-                mu.iter()
+            .axis_iter(Axis(0))
+            .map(|col| {
+                col.iter()
                     .zip(input.iter())
                     .map(|(c, v)| c - v)
                     .zip(self.beta.iter())
@@ -46,9 +64,9 @@ impl RBFNetwork {
 impl Projector<[f64]> for RBFNetwork {
     fn project(&self, input: &[f64]) -> Projection { Projection::Dense(self.kernel(input)) }
 
-    fn dim(&self) -> usize { self.mu[0].len() }
+    fn dim(&self) -> usize { self.mu.cols() }
 
-    fn size(&self) -> usize { self.mu.len() }
+    fn size(&self) -> usize { self.mu.rows() }
 
     fn activity(&self) -> usize { self.size() }
 
@@ -60,18 +78,18 @@ impl Projector<[f64]> for RBFNetwork {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use utils::vec_compare;
+    use ndarray::{arr1, arr2};
 
     #[test]
     fn test_size() {
-        assert_eq!(RBFNetwork::new(vec![vec![0.0]], vec![0.25]).size(), 1);
+        assert_eq!(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25])).size(), 1);
         assert_eq!(
-            RBFNetwork::new(vec![vec![0.0], vec![0.5], vec![1.0]], vec![0.25]).size(),
+            RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).size(),
             3
         );
-        assert_eq!(RBFNetwork::new(vec![vec![0.0]; 10], vec![0.25]).size(), 10);
+        assert_eq!(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25])).size(), 10);
         assert_eq!(
-            RBFNetwork::new(vec![vec![0.0]; 100], vec![0.25]).size(),
+            RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25])).size(),
             100
         );
     }
@@ -79,18 +97,18 @@ mod tests {
     #[test]
     fn test_dimensionality() {
         assert_eq!(
-            RBFNetwork::new(vec![vec![0.0], vec![0.5], vec![1.0]], vec![0.25]).dim(),
+            RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).dim(),
             1
         );
         assert_eq!(
-            RBFNetwork::new(vec![vec![0.0, 0.5, 1.0]; 10], vec![0.1, 0.2, 0.3]).dim(),
+            RBFNetwork::new(arr2(&vec![[0.0, 0.5, 1.0]; 10]), arr1(&[0.1, 0.2, 0.3])).dim(),
             3
         );
     }
 
     #[test]
     fn test_kernel_relevance() {
-        let rbf = RBFNetwork::new(vec![vec![0.0]], vec![0.25]);
+        let rbf = RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]));
         let mut p = rbf.kernel(&[0.0]);
 
         for i in 1..10 {
@@ -103,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_kernel_isotropy() {
-        let rbf = RBFNetwork::new(vec![vec![0.0]], vec![0.25]);
+        let rbf = RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]));
         let p = rbf.kernel(&[0.0]);
 
         for i in 1..10 {
@@ -118,30 +136,22 @@ mod tests {
 
     #[test]
     fn test_projection_1d() {
-        let rbf = RBFNetwork::new(vec![vec![0.0], vec![0.5], vec![1.0]], vec![0.25]);
+        let rbf = RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]));
         let p = rbf.project_expanded(&vec![0.25]);
 
-        assert!(vec_compare(
-            &p.as_slice().unwrap(),
-            &[0.49546264, 0.49546264, 0.00907471],
-            1e-6
-        ));
+        assert!(p.all_close(&arr1(&[0.49546264, 0.49546264, 0.00907471]), 1e-6));
         assert_eq!(p.iter().fold(0.0, |acc, x| acc + *x), 1.0);
     }
 
     #[test]
     fn test_projection_2d() {
         let rbf = RBFNetwork::new(
-            vec![vec![0.0, -10.0], vec![0.5, -8.0], vec![1.0, -6.0]],
-            vec![0.25, 2.0],
+            arr2(&[[0.0, -10.0], [0.5, -8.0], [1.0, -6.0]]),
+            arr1(&[0.25, 2.0]),
         );
         let p = rbf.project_expanded(&[0.67, -7.0]);
 
-        assert!(vec_compare(
-            &p.as_slice().unwrap(),
-            &[0.00829727, 0.64932079, 0.34238193],
-            1e-6
-        ));
+        assert!(p.all_close(&arr1(&[0.00829727, 0.64932079, 0.34238193]), 1e-6));
         assert_eq!(p.iter().fold(0.0, |acc, x| acc + *x), 1.0);
     }
 }
