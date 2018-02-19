@@ -1,4 +1,4 @@
-use {Approximator, EvaluationResult, UpdateResult, Projection, Projector};
+use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
 use geometry::{Matrix, Vector};
 use std::marker::PhantomData;
 
@@ -32,10 +32,14 @@ impl<I: ?Sized, P: Projector<I>> MultiLinear<I, P> {
 
     pub fn evaluate_projection(&self, p: &Projection) -> Vector<f64> {
         match p {
-            &Projection::Dense(ref dense) => self.weights.t().dot(&(dense/p.z())),
-            &Projection::Sparse(ref sparse) => (0..self.weights.cols()).map(|c| {
-                sparse.iter().fold(0.0, |acc, idx| acc + self.weights[(*idx, c)])
-            }).collect(),
+            &Projection::Dense(ref dense) => self.weights.t().dot(&(dense / p.z())),
+            &Projection::Sparse(ref sparse) => (0..self.weights.cols())
+                .map(|c| {
+                    sparse
+                        .iter()
+                        .fold(0.0, |acc, idx| acc + self.weights[(*idx, c)])
+                })
+                .collect(),
         }
     }
 
@@ -45,20 +49,17 @@ impl<I: ?Sized, P: Projector<I>> MultiLinear<I, P> {
         match p {
             &Projection::Dense(ref dense) => {
                 let view = dense.view().into_shape((self.weights.rows(), 1)).unwrap();
-                let error_matrix =
-                    errors.view().into_shape((1, self.weights.cols())).unwrap();
+                let error_matrix = errors.view().into_shape((1, self.weights.cols())).unwrap();
 
-                self.weights.scaled_add(1.0/z, &view.dot(&error_matrix))
+                self.weights.scaled_add(1.0 / z, &view.dot(&error_matrix))
             },
-            &Projection::Sparse(ref sparse) => {
-                for c in 0..self.weights.cols() {
-                    let mut col = self.weights.column_mut(c);
-                    let error = errors[c];
-                    let scaled_error = error/z;
+            &Projection::Sparse(ref sparse) => for c in 0..self.weights.cols() {
+                let mut col = self.weights.column_mut(c);
+                let error = errors[c];
+                let scaled_error = error / z;
 
-                    for idx in sparse {
-                        col[*idx] += scaled_error
-                    }
+                for idx in sparse {
+                    col[*idx] += scaled_error
                 }
             },
         }
@@ -86,7 +87,7 @@ mod tests {
     extern crate seahash;
 
     use super::*;
-    use projection::{TileCoding, Fourier};
+    use projection::{Fourier, TileCoding};
     use std::hash::BuildHasherDefault;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;

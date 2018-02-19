@@ -10,7 +10,6 @@ mod utils;
 mod error;
 pub use self::error::*;
 
-
 /// An interface for dealing with function approximators.
 pub trait Approximator<I: ?Sized> {
     type Value;
@@ -30,7 +29,6 @@ impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
         (**self).update(input, update)
     }
 }
-
 
 pub mod projection;
 pub use self::projection::{Projection, Projector};

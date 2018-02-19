@@ -1,7 +1,7 @@
-use geometry::{Vector, Matrix, Span, Space, RegularSpace};
+use super::{Projection, Projector};
+use geometry::{Matrix, RegularSpace, Space, Span, Vector};
 use geometry::dimensions::Partitioned;
 use ndarray::Axis;
-use super::{Projection, Projector};
 use utils::cartesian_product;
 
 /// Radial basis function network projector.
@@ -30,7 +30,7 @@ impl RBFNetwork {
     pub fn from_space(input_space: RegularSpace<Partitioned>) -> Self {
         let n_features = match input_space.span() {
             Span::Finite(s) => s,
-            _ => { panic!("`RBFNetwork` projection only supports partitioned input spaces.") }
+            _ => panic!("`RBFNetwork` projection only supports partitioned input spaces."),
         };
 
         let centres = input_space.centres();
@@ -87,7 +87,10 @@ mod tests {
             RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).size(),
             3
         );
-        assert_eq!(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25])).size(), 10);
+        assert_eq!(
+            RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25])).size(),
+            10
+        );
         assert_eq!(
             RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25])).size(),
             100

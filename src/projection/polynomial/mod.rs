@@ -1,11 +1,9 @@
-use geometry::{Vector, RegularSpace};
+use super::{Projection, Projector};
+use geometry::{RegularSpace, Vector};
 use geometry::dimensions::{BoundedDimension, Continuous};
-use super::{Projector, Projection};
 use utils::cartesian_product;
 
-
 mod cpfk;
-
 
 /// Polynomial basis projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -72,7 +70,6 @@ impl Projector<[f64]> for Polynomial {
     }
 }
 
-
 /// Chebyshev polynomial basis projector.
 #[derive(Clone)]
 pub struct Chebyshev {
@@ -101,56 +98,58 @@ impl Chebyshev {
     }
 
     fn make_polynomials(order: u8, dim: usize) -> Vec<Vec<fn(f64) -> f64>> {
-        let dcs = vec![(0..(order+1)).collect::<Vec<u8>>(); dim];
+        let dcs = vec![(0..(order + 1)).collect::<Vec<u8>>(); dim];
         let mut coefficients = cartesian_product(&dcs);
 
         coefficients.sort_by(|a, b| b.partial_cmp(a).unwrap());
         coefficients.dedup();
 
-        coefficients.iter().map(|vals| {
-            vals.iter().map(|i| match *i {
-                0 => cpfk::t_0,
-                1 => cpfk::t_1,
-                2 => cpfk::t_2,
-                3 => cpfk::t_3,
-                4 => cpfk::t_4,
-                5 => cpfk::t_5,
-                6 => cpfk::t_6,
-                7 => cpfk::t_7,
-                8 => cpfk::t_8,
-                9 => cpfk::t_9,
-                10 => cpfk::t_10,
-                11 => cpfk::t_11,
-                _ => panic!("Chebyshev only supports orders up to 11."),
-            }).collect()
-        }).collect()
+        coefficients
+            .iter()
+            .map(|vals| {
+                vals.iter()
+                    .map(|i| match *i {
+                        0 => cpfk::t_0,
+                        1 => cpfk::t_1,
+                        2 => cpfk::t_2,
+                        3 => cpfk::t_3,
+                        4 => cpfk::t_4,
+                        5 => cpfk::t_5,
+                        6 => cpfk::t_6,
+                        7 => cpfk::t_7,
+                        8 => cpfk::t_8,
+                        9 => cpfk::t_9,
+                        10 => cpfk::t_10,
+                        11 => cpfk::t_11,
+                        _ => panic!("Chebyshev only supports orders up to 11."),
+                    })
+                    .collect()
+            })
+            .collect()
     }
 }
 
 impl Projector<[f64]> for Chebyshev {
     fn project(&self, input: &[f64]) -> Projection {
-        let scaled_state = input.iter().enumerate().map(|(i, v)| {
-            (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0)
-        }).map(|v| 2.0*v - 1.0).collect::<Vec<f64>>();
+        let scaled_state = input
+            .iter()
+            .enumerate()
+            .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
+            .map(|v| 2.0 * v - 1.0)
+            .collect::<Vec<f64>>();
 
-        let activations = self.polynomials.iter().map(|polys| {
-            scaled_state.iter().zip(polys).map(|(v, t)| t(*v)).product()
-        });
+        let activations = self.polynomials
+            .iter()
+            .map(|polys| scaled_state.iter().zip(polys).map(|(v, t)| t(*v)).product());
 
         Projection::Dense(Vector::from_iter(activations))
     }
 
-    fn dim(&self) -> usize {
-        self.limits.len()
-    }
+    fn dim(&self) -> usize { self.limits.len() }
 
-    fn size(&self) -> usize {
-        self.polynomials.len()
-    }
+    fn size(&self) -> usize { self.polynomials.len() }
 
-    fn activity(&self) -> usize {
-        self.size()
-    }
+    fn activity(&self) -> usize { self.size() }
 
     fn equivalent(&self, other: &Self) -> bool {
         self.order == other.order && self.limits == other.limits

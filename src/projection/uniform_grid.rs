@@ -1,7 +1,6 @@
-use super::{Vector, Projector, Projection};
-use geometry::{Space, RegularSpace};
+use super::{Projection, Projector, Vector};
+use geometry::{RegularSpace, Space};
 use geometry::dimensions::{Dimension, Partitioned};
-
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -36,31 +35,23 @@ impl Projector<[f64]> for UniformGrid {
         Projection::Sparse(Vector::from_vec(vec![self.hash(input)]))
     }
 
-    fn dim(&self) -> usize {
-        self.input_space.dim()
-    }
+    fn dim(&self) -> usize { self.input_space.dim() }
 
-    fn size(&self) -> usize {
-        self.n_features
-    }
+    fn size(&self) -> usize { self.n_features }
 
-    fn activity(&self) -> usize {
-        1
-    }
+    fn activity(&self) -> usize { 1 }
 
     fn equivalent(&self, other: &Self) -> bool {
         self.dim() == other.dim() && self.size() == other.size()
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::{Projector, Projection, UniformGrid};
-    use ndarray::arr1;
+    use super::{Projection, Projector, UniformGrid};
     use geometry::RegularSpace;
     use geometry::dimensions::Partitioned;
-
+    use ndarray::arr1;
 
     #[test]
     fn test_is_sparse() {
@@ -70,7 +61,7 @@ mod tests {
 
         match out {
             Projection::Sparse(_) => assert!(true),
-            Projection::Dense(_) => assert!(false)
+            Projection::Dense(_) => assert!(false),
         }
     }
 
@@ -90,7 +81,7 @@ mod tests {
                     assert_eq!(idx.len(), 1);
                     assert_eq!(idx[0], expected_bin);
                 },
-                _ => assert!(false)
+                _ => assert!(false),
             }
 
             let mut dense = arr1(&vec![0.0; 10]);
@@ -110,14 +101,14 @@ mod tests {
         for i in 0..10 {
             for j in 0..10 {
                 let out = t.project(&vec![i as u32 as f64, j as u32 as f64]);
-                let expected_bin = j*10 + i;
+                let expected_bin = j * 10 + i;
 
                 match out {
                     Projection::Sparse(ref idx) => {
                         assert_eq!(idx.len(), 1);
                         assert_eq!(idx[0], expected_bin);
                     },
-                    _ => assert!(false)
+                    _ => assert!(false),
                 }
 
                 let mut dense = arr1(&vec![0.0; 100]);
@@ -139,14 +130,14 @@ mod tests {
             for j in 0..10 {
                 for k in 0..10 {
                     let out = t.project(&vec![i as u32 as f64, j as u32 as f64, k as u32 as f64]);
-                    let expected_bin = k*100 + j*10 + i;
+                    let expected_bin = k * 100 + j * 10 + i;
 
                     match out {
                         Projection::Sparse(ref idx) => {
                             assert_eq!(idx.len(), 1);
                             assert_eq!(idx[0], expected_bin);
                         },
-                        _ => assert!(false)
+                        _ => assert!(false),
                     }
 
                     let mut dense = arr1(&vec![0.0; 1000]);

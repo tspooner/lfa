@@ -1,4 +1,4 @@
-use {Approximator, EvaluationResult, UpdateResult, Projection, Projector};
+use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
 use geometry::Vector;
 use std::marker::PhantomData;
 
@@ -26,22 +26,20 @@ impl<I: ?Sized, P: Projector<I>> SimpleLinear<I, P> {
 
     pub fn evaluate_projection(&self, p: &Projection) -> f64 {
         match p {
-            &Projection::Dense(ref dense) => self.weights.dot(&(dense/p.z())),
-            &Projection::Sparse(ref sparse) =>
-                sparse.iter().fold(0.0, |acc, idx| acc + self.weights[*idx]),
+            &Projection::Dense(ref dense) => self.weights.dot(&(dense / p.z())),
+            &Projection::Sparse(ref sparse) => {
+                sparse.iter().fold(0.0, |acc, idx| acc + self.weights[*idx])
+            },
         }
     }
 
-
     pub fn update_projection(&mut self, p: &Projection, error: f64) {
-        let scaled_error = error/p.z();
+        let scaled_error = error / p.z();
 
         match p {
             &Projection::Dense(ref dense) => self.weights.scaled_add(scaled_error, dense),
-            &Projection::Sparse(ref sparse) => {
-                for idx in sparse {
-                    self.weights[*idx] += scaled_error
-                }
+            &Projection::Sparse(ref sparse) => for idx in sparse {
+                self.weights[*idx] += scaled_error
             },
         }
     }
@@ -68,7 +66,7 @@ mod tests {
     extern crate seahash;
 
     use super::*;
-    use projection::{TileCoding, Fourier};
+    use projection::{Fourier, TileCoding};
     use std::hash::BuildHasherDefault;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
