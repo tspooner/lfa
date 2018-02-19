@@ -11,18 +11,21 @@ pub use self::error::*;
 
 
 /// An interface for dealing with function approximators.
-pub trait Approximator<I: ?Sized, V> {
+pub trait Approximator<I: ?Sized> {
+    type Value;
 
     /// Evaluates the function and returns its output.
-    fn evaluate(&self, input: &I) -> EvaluationResult<V>;
+    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value>;
 
-    fn update(&mut self, input: &I, update: V) -> UpdateResult<()>;
+    fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()>;
 }
 
-impl<I: ?Sized, V, T: Approximator<I, V>> Approximator<I, V> for Box<T> {
-    fn evaluate(&self, input: &I) -> EvaluationResult<V> { (**self).evaluate(input) }
+impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
+    type Value = T::Value;
 
-    fn update(&mut self, input: &I, update: V) -> UpdateResult<()> {
+    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> { (**self).evaluate(input) }
+
+    fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
         (**self).update(input, update)
     }
 }
@@ -31,8 +34,5 @@ impl<I: ?Sized, V, T: Approximator<I, V>> Approximator<I, V> for Box<T> {
 pub mod projection;
 pub use self::projection::{Projection, Projector};
 
-mod table;
-pub use self::table::Table;
-
-mod linear;
-pub use self::linear::Linear;
+mod approximators;
+pub use self::approximators::*;
