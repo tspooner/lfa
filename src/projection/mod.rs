@@ -45,7 +45,7 @@ impl Projection {
 
     /// Expand and normalise a given projection, and convert into a raw, dense
     /// vector.
-    fn expanded(self, span: Span) -> DenseT {
+    pub fn expanded(self, span: Span) -> DenseT {
         #[inline]
         fn expand_sparse(active_indices: SparseT, z: ActivationT, size: usize) -> DenseT {
             let mut phi = Vector::zeros((size,));
