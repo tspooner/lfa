@@ -49,9 +49,7 @@ impl Projector<[f64]> for UniformGrid {
 
 #[cfg(test)]
 mod tests {
-    use super::{Projection, Projector, UniformGrid};
-    use geometry::RegularSpace;
-    use geometry::dimensions::Partitioned;
+    use super::*;
     use ndarray::arr1;
 
     #[test]
@@ -71,7 +69,7 @@ mod tests {
         let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10)]);
         let t = UniformGrid::new(ds);
 
-        assert_eq!(t.size(), 10);
+        assert_eq!(t.span(), Span::Finite(10));
 
         for i in 0..10 {
             let out = t.project(&vec![i as u32 as f64]);
@@ -88,7 +86,7 @@ mod tests {
             let mut dense = arr1(&vec![0.0; 10]);
             dense[expected_bin] = 1.0;
 
-            assert_eq!(t.expand_projection(out), dense);
+            assert_eq!(out.expanded(t.span()), dense);
         }
     }
 
@@ -97,7 +95,7 @@ mod tests {
         let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10); 2]);
         let t = UniformGrid::new(ds);
 
-        assert_eq!(t.size(), 100);
+        assert_eq!(t.span(), Span::Finite(100));
 
         for i in 0..10 {
             for j in 0..10 {
@@ -115,7 +113,7 @@ mod tests {
                 let mut dense = arr1(&vec![0.0; 100]);
                 dense[expected_bin] = 1.0;
 
-                assert_eq!(t.expand_projection(out), dense);
+                assert_eq!(out.expanded(t.span()), dense);
             }
         }
     }
@@ -125,7 +123,7 @@ mod tests {
         let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10); 3]);
         let t = UniformGrid::new(ds);
 
-        assert_eq!(t.size(), 1000);
+        assert_eq!(t.span(), Span::Finite(1000));
 
         for i in 0..10 {
             for j in 0..10 {
@@ -144,7 +142,7 @@ mod tests {
                     let mut dense = arr1(&vec![0.0; 1000]);
                     dense[expected_bin] = 1.0;
 
-                    assert_eq!(t.expand_projection(out), dense);
+                    assert_eq!(out.expanded(t.span()), dense);
                 }
             }
         }

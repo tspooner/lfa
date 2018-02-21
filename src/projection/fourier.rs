@@ -127,9 +127,10 @@ mod tests {
     #[test]
     fn test_order1_1d() {
         let f = Fourier::new(1, vec![(0.0, 1.0)]);
+        let span: usize = f.span().into();
 
         assert_eq!(f.dim(), 1);
-        assert_eq!(f.span(), 1);
+        assert_eq!(span, 1);
 
         assert!(
             f.project_expanded(&vec![-1.0])
@@ -220,9 +221,10 @@ mod tests {
     #[test]
     fn test_order1_2d() {
         let f = Fourier::new(1, vec![(0.0, 1.0), (5.0, 6.0)]);
+        let span: usize = f.span().into();
 
         assert_eq!(f.dim(), 2);
-        assert_eq!(f.span(), 3);
+        assert_eq!(span, 3);
 
         assert!(
             f.project_expanded(&vec![0.0, 5.0])
@@ -257,9 +259,10 @@ mod tests {
     #[test]
     fn test_order2_2d() {
         let f = Fourier::new(2, vec![(0.0, 1.0), (5.0, 6.0)]);
+        let span: usize = f.span().into();
 
         assert_eq!(f.dim(), 2);
-        assert_eq!(f.span(), 5);
+        assert_eq!(span, 5);
 
         assert!(
             f.project_expanded(&vec![0.0, 5.0])

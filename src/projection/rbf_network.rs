@@ -82,18 +82,23 @@ mod tests {
     use ndarray::{arr1, arr2};
 
     #[test]
-    fn test_size() {
-        assert_eq!(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25])).size(), 1);
+    fn test_span() {
+        fn get_span(rbf_net: RBFNetwork) -> usize { rbf_net.span().into() }
+
         assert_eq!(
-            RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).size(),
+            get_span(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))),
+            1
+        );
+        assert_eq!(
+            get_span(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
             3
         );
         assert_eq!(
-            RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25])).size(),
+            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
             10
         );
         assert_eq!(
-            RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25])).size(),
+            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
             100
         );
     }
@@ -141,7 +146,7 @@ mod tests {
     #[test]
     fn test_projection_1d() {
         let rbf = RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]));
-        let p = rbf.project_expanded(&vec![0.25]);
+        let p = rbf.project_expanded(&[0.25]);
 
         assert!(p.all_close(&arr1(&[0.49546264, 0.49546264, 0.00907471]), 1e-6));
         assert_eq!(p.iter().fold(0.0, |acc, x| acc + *x), 1.0);
