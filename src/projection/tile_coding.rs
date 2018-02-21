@@ -1,4 +1,6 @@
 use super::{Projection, Projector};
+use geometry::{Space, Span};
+use rand::ThreadRng;
 use std::hash::{BuildHasher, Hasher};
 
 /// Generalised tile coding scheme with hashing.
@@ -17,6 +19,16 @@ impl<H: BuildHasher> TileCoding<H> {
             memory_size: memory_size,
         }
     }
+}
+
+impl<H: BuildHasher> Space for TileCoding<H> {
+    type Repr = Projection;
+
+    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+
+    fn dim(&self) -> usize { unimplemented!() }
+
+    fn span(&self) -> Span { Span::Finite(self.memory_size) }
 }
 
 impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
@@ -41,16 +53,5 @@ impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
                 })
                 .collect(),
         )
-    }
-
-    fn dim(&self) -> usize { unimplemented!() }
-
-    fn size(&self) -> usize { self.memory_size as usize }
-
-    fn activity(&self) -> usize { self.n_tilings }
-
-    fn equivalent(&self, other: &Self) -> bool {
-        self.size() == other.size() && self.n_tilings == other.n_tilings
-            && self.memory_size == other.memory_size
     }
 }

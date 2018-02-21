@@ -1,5 +1,5 @@
 use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
-use geometry::Vector;
+use geometry::{Space, Vector};
 use std::marker::PhantomData;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -12,7 +12,7 @@ pub struct SimpleLinear<I: ?Sized, P: Projector<I>> {
 
 impl<I: ?Sized, P: Projector<I>> SimpleLinear<I, P> {
     pub fn new(projector: P) -> Self {
-        let n_features = projector.size();
+        let n_features = projector.span().into();
 
         Self {
             projector: projector,

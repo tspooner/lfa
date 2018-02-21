@@ -1,6 +1,8 @@
 use {Projection, Projector};
-use geometry::RegularSpace;
+use geometry::{RegularSpace, Space, Span};
 use geometry::dimensions::{BoundedDimension, Continuous};
+use rand::ThreadRng;
+use rand::distributions::{IndependentSample, Range};
 use std::f64::consts::PI;
 use utils::cartesian_product;
 
@@ -14,9 +16,9 @@ pub(self) fn l2(x: &[f64]) -> f64 { x.into_iter().fold(0.0, |acc, v| acc + (v * 
 /// Fourier basis projector.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Fourier {
-    order: u8,
-    limits: Vec<(f64, f64)>,
-    coefficients: Vec<Vec<f64>>,
+    pub order: u8,
+    pub limits: Vec<(f64, f64)>,
+    pub coefficients: Vec<Vec<f64>>,
 }
 
 impl Fourier {
@@ -53,6 +55,23 @@ impl Fourier {
     }
 }
 
+impl Space for Fourier {
+    type Repr = Projection;
+
+    fn sample(&self, rng: &mut ThreadRng) -> Projection {
+        let random_input: Vec<f64> = self.limits
+            .iter()
+            .map(|&(ll, ul)| Range::new(ll, ul).ind_sample(rng))
+            .collect();
+
+        self.project(&random_input)
+    }
+
+    fn dim(&self) -> usize { self.limits.len() }
+
+    fn span(&self) -> Span { Span::Finite(self.coefficients.len()) }
+}
+
 impl Projector<[f64]> for Fourier {
     fn project(&self, input: &[f64]) -> Projection {
         let scaled_state = input
@@ -74,16 +93,6 @@ impl Projector<[f64]> for Fourier {
                 })
                 .collect(),
         )
-    }
-
-    fn dim(&self) -> usize { self.limits.len() }
-
-    fn size(&self) -> usize { self.coefficients.len() }
-
-    fn activity(&self) -> usize { self.size() }
-
-    fn equivalent(&self, other: &Self) -> bool {
-        self.order == other.order && self.limits == other.limits
     }
 }
 
@@ -120,7 +129,7 @@ mod tests {
         let f = Fourier::new(1, vec![(0.0, 1.0)]);
 
         assert_eq!(f.dim(), 1);
-        assert_eq!(f.size(), 1);
+        assert_eq!(f.span(), 1);
 
         assert!(
             f.project_expanded(&vec![-1.0])
@@ -167,7 +176,7 @@ mod tests {
         let f2 = Fourier::new(2, vec![(0.0, 1.0)]);
 
         assert_eq!(f2.dim(), f1.dim());
-        assert_eq!(f2.size(), f2.size());
+        assert_eq!(f2.span(), f2.span());
 
         assert_eq!(
             f2.project_expanded(&vec![-1.0]),
@@ -213,7 +222,7 @@ mod tests {
         let f = Fourier::new(1, vec![(0.0, 1.0), (5.0, 6.0)]);
 
         assert_eq!(f.dim(), 2);
-        assert_eq!(f.size(), 3);
+        assert_eq!(f.span(), 3);
 
         assert!(
             f.project_expanded(&vec![0.0, 5.0])
@@ -250,7 +259,7 @@ mod tests {
         let f = Fourier::new(2, vec![(0.0, 1.0), (5.0, 6.0)]);
 
         assert_eq!(f.dim(), 2);
-        assert_eq!(f.size(), 5);
+        assert_eq!(f.span(), 5);
 
         assert!(
             f.project_expanded(&vec![0.0, 5.0])

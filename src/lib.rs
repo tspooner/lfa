@@ -1,9 +1,10 @@
+extern crate ndarray;
+extern crate rand;
+extern crate spaces as geometry;
+
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-
-extern crate ndarray;
-extern crate spaces as geometry;
 
 mod utils;
 

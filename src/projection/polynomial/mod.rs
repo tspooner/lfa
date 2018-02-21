@@ -1,6 +1,7 @@
 use super::{Projection, Projector};
-use geometry::{RegularSpace, Vector};
+use geometry::{RegularSpace, Space, Span, Vector};
 use geometry::dimensions::{BoundedDimension, Continuous};
+use rand::ThreadRng;
 use utils::cartesian_product;
 
 mod cpfk;
@@ -8,9 +9,9 @@ mod cpfk;
 /// Polynomial basis projector.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Polynomial {
-    order: u8,
-    limits: Vec<(f64, f64)>,
-    exponents: Vec<Vec<i32>>,
+    pub order: u8,
+    pub limits: Vec<(f64, f64)>,
+    pub exponents: Vec<Vec<i32>>,
 }
 
 impl Polynomial {
@@ -39,6 +40,16 @@ impl Polynomial {
     }
 }
 
+impl Space for Polynomial {
+    type Repr = Projection;
+
+    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+
+    fn dim(&self) -> usize { self.limits.len() }
+
+    fn span(&self) -> Span { Span::Finite(self.exponents.len()) }
+}
+
 impl Projector<[f64]> for Polynomial {
     fn project(&self, input: &[f64]) -> Projection {
         let scaled_state = input
@@ -58,24 +69,14 @@ impl Projector<[f64]> for Polynomial {
 
         Projection::Dense(activations.collect())
     }
-
-    fn dim(&self) -> usize { self.limits.len() }
-
-    fn size(&self) -> usize { self.exponents.len() }
-
-    fn activity(&self) -> usize { self.size() }
-
-    fn equivalent(&self, other: &Self) -> bool {
-        self.order == other.order && self.limits == other.limits
-    }
 }
 
 /// Chebyshev polynomial basis projector.
 #[derive(Clone)]
 pub struct Chebyshev {
-    order: u8,
-    limits: Vec<(f64, f64)>,
-    polynomials: Vec<Vec<fn(f64) -> f64>>,
+    pub order: u8,
+    pub limits: Vec<(f64, f64)>,
+    pub polynomials: Vec<Vec<fn(f64) -> f64>>,
 }
 
 impl Chebyshev {
@@ -129,6 +130,16 @@ impl Chebyshev {
     }
 }
 
+impl Space for Chebyshev {
+    type Repr = Projection;
+
+    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+
+    fn dim(&self) -> usize { self.limits.len() }
+
+    fn span(&self) -> Span { Span::Finite(self.polynomials.len()) }
+}
+
 impl Projector<[f64]> for Chebyshev {
     fn project(&self, input: &[f64]) -> Projection {
         let scaled_state = input
@@ -143,15 +154,5 @@ impl Projector<[f64]> for Chebyshev {
             .map(|polys| scaled_state.iter().zip(polys).map(|(v, t)| t(*v)).product());
 
         Projection::Dense(Vector::from_iter(activations))
-    }
-
-    fn dim(&self) -> usize { self.limits.len() }
-
-    fn size(&self) -> usize { self.polynomials.len() }
-
-    fn activity(&self) -> usize { self.size() }
-
-    fn equivalent(&self, other: &Self) -> bool {
-        self.order == other.order && self.limits == other.limits
     }
 }

@@ -1,5 +1,5 @@
 use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
-use geometry::{Matrix, Vector};
+use geometry::{Matrix, Space, Vector};
 use std::marker::PhantomData;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -12,7 +12,7 @@ pub struct MultiLinear<I: ?Sized, P: Projector<I>> {
 
 impl<I: ?Sized, P: Projector<I>> MultiLinear<I, P> {
     pub fn new(projector: P, n_outputs: usize) -> Self {
-        let n_features = projector.size();
+        let n_features = projector.span().into();
 
         Self {
             projector: projector,

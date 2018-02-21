@@ -2,13 +2,14 @@ use super::{Projection, Projector};
 use geometry::{Matrix, RegularSpace, Space, Span, Vector};
 use geometry::dimensions::Partitioned;
 use ndarray::Axis;
+use rand::ThreadRng;
 use utils::cartesian_product;
 
 /// Radial basis function network projector.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RBFNetwork {
-    mu: Matrix<f64>,
-    beta: Vector<f64>,
+    pub mu: Matrix<f64>,
+    pub beta: Vector<f64>,
 }
 
 impl RBFNetwork {
@@ -61,18 +62,18 @@ impl RBFNetwork {
     }
 }
 
-impl Projector<[f64]> for RBFNetwork {
-    fn project(&self, input: &[f64]) -> Projection { Projection::Dense(self.kernel(input)) }
+impl Space for RBFNetwork {
+    type Repr = Projection;
+
+    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 
     fn dim(&self) -> usize { self.mu.cols() }
 
-    fn size(&self) -> usize { self.mu.rows() }
+    fn span(&self) -> Span { Span::Finite(self.mu.rows()) }
+}
 
-    fn activity(&self) -> usize { self.size() }
-
-    fn equivalent(&self, other: &Self) -> bool {
-        self.mu == other.mu && self.beta == other.beta && self.size() == other.size()
-    }
+impl Projector<[f64]> for RBFNetwork {
+    fn project(&self, input: &[f64]) -> Projection { Projection::Dense(self.kernel(input)) }
 }
 
 #[cfg(test)]

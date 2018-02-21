@@ -1,6 +1,6 @@
 //! Linear basis projection module.
 
-use geometry::Vector;
+use geometry::{Space, Vector};
 
 pub(crate) type ActivationT = f64;
 pub(crate) type IndexT = usize;
@@ -14,7 +14,7 @@ pub(self) fn l1(x: &[ActivationT]) -> ActivationT {
 }
 
 /// Projected feature vector representation.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Projection {
     /// Dense, floating-point activation vector.
     Dense(DenseT),
@@ -31,6 +31,14 @@ impl Projection {
             &Projection::Sparse(ref active_indices) => active_indices.len() as ActivationT,
         }
     }
+
+    /// Return the maximum number of active features in the basis space.
+    pub fn activity(&self) -> usize {
+        match self {
+            &Projection::Dense(ref activations) => activations.len(),
+            &Projection::Sparse(ref active_indices) => active_indices.len(),
+        }
+    }
 }
 
 impl Into<Projection> for DenseT {
@@ -42,21 +50,9 @@ impl Into<Projection> for SparseT {
 }
 
 /// Trait for basis projectors.
-pub trait Projector<I: ?Sized> {
+pub trait Projector<I: ?Sized>: Space<Repr = Projection> {
     /// Project data from an input space onto the basis.
     fn project(&self, input: &I) -> Projection;
-
-    /// Return the number of dimensions in the basis space.
-    fn dim(&self) -> usize;
-
-    /// Return the number of features in the basis space.
-    fn size(&self) -> usize;
-
-    /// Return the maximum number of active features in the basis space.
-    fn activity(&self) -> usize;
-
-    /// Check for equivalence with another projector of the same type.
-    fn equivalent(&self, other: &Self) -> bool;
 
     /// Project data from an input space onto the basis and convert into a raw,
     /// dense vector.
@@ -81,15 +77,21 @@ pub trait Projector<I: ?Sized> {
             z if z.abs() < 1e-6 => match projection {
                 Projection::Dense(phi) => phi,
                 Projection::Sparse(active_indices) => {
-                    expand_sparse(active_indices, 1.0, self.size())
+                    expand_sparse(active_indices, 1.0, self.span().into())
                 },
             },
             z => match projection {
                 Projection::Dense(phi) => phi.iter().map(|x| x / z).collect(),
-                Projection::Sparse(active_indices) => expand_sparse(active_indices, z, self.size()),
+                Projection::Sparse(active_indices) => {
+                    expand_sparse(active_indices, z, self.span().into())
+                },
             },
         }
     }
+}
+
+impl<P: Projector<[f64]>> Projector<Vec<f64>> for P {
+    fn project(&self, input: &Vec<f64>) -> Projection { Projector::<[f64]>::project(self, &input) }
 }
 
 mod rbf_network;
