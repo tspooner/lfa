@@ -11,7 +11,7 @@ readme = "README.md"
 keywords = ["function", "approximation", "linear", "ai", "rl"]
 
 repository = "https://github.com/tspooner/lfa"
-documentation = "https://tspooner.github.io/lfa/lfa/index.html"
+documentation = "https://docs.rs/lfa"
 
 [badges]
 travis-ci = { repository = "tspooner/lfa", branch = "master" }

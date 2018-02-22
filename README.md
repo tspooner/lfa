@@ -1,4 +1,4 @@
-# LFA ([api](https://tspooner.github.io/lfa))
+# LFA ([api](https://docs.rs/lfa))
 
 [![Crates.io](https://img.shields.io/crates/v/lfa.svg)](https://crates.io/crates/lfa)
 [![Build Status](https://travis-ci.org/tspooner/lfa.svg?branch=master)](https://travis-ci.org/tspooner/lfa)
@@ -6,15 +6,17 @@
 
 <!--
 ## Overview
+-->
 
 
 ## Installation
 ```toml
 [dependencies]
-lfa = "0.1"
+lfa = "0.2"
 ```
 
 
+<!--
 ## Usage
 -->
 
