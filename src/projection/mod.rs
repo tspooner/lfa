@@ -1,6 +1,7 @@
 //! Linear basis projection module.
 
 use geometry::{Space, Span, Vector};
+use geometry::norms::l1;
 
 
 pub(crate) type ActivationT = f64;
@@ -8,12 +9,6 @@ pub(crate) type IndexT = usize;
 
 pub(crate) type DenseT = Vector<ActivationT>;
 pub(crate) type SparseT = Vector<IndexT>;
-
-
-#[inline]
-pub(self) fn l1(x: &[ActivationT]) -> ActivationT {
-    x.into_iter().fold(0.0, |acc, v| acc + v.abs())
-}
 
 
 /// Projected feature vector representation.
@@ -79,8 +74,16 @@ impl Into<Projection> for DenseT {
     fn into(self) -> Projection { Projection::Dense(self) }
 }
 
+impl Into<Projection> for Vec<f64> {
+    fn into(self) -> Projection { Projection::Dense(Vector::from_vec(self)) }
+}
+
 impl Into<Projection> for SparseT {
     fn into(self) -> Projection { Projection::Sparse(self) }
+}
+
+impl Into<Projection> for Vec<usize> {
+    fn into(self) -> Projection { Projection::Sparse(Vector::from_vec(self)) }
 }
 
 
