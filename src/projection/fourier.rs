@@ -1,5 +1,6 @@
 use {Projection, Projector};
 use geometry::{RegularSpace, Space, Span};
+use geometry::norms::l2;
 use geometry::dimensions::{BoundedDimension, Continuous};
 use rand::ThreadRng;
 use rand::distributions::{IndependentSample, Range};
@@ -10,8 +11,6 @@ use utils::cartesian_product;
 // TODO: Add builder which allows use to configure whether to use coefficient
 // scaling or not.
 
-#[inline]
-pub(self) fn l2(x: &[f64]) -> f64 { x.into_iter().fold(0.0, |acc, v| acc + (v * v).abs()).sqrt() }
 
 /// Fourier basis projector.
 #[derive(Clone, Serialize, Deserialize)]

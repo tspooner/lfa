@@ -1,7 +1,8 @@
-use super::{Projection, Projector, Vector};
 use geometry::{RegularSpace, Space, Span};
 use geometry::dimensions::{Dimension, Partitioned};
 use rand::ThreadRng;
+use super::{Projection, Projector};
+
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -43,7 +44,7 @@ impl Space for UniformGrid {
 
 impl Projector<[f64]> for UniformGrid {
     fn project(&self, input: &[f64]) -> Projection {
-        Projection::Sparse(Vector::from_vec(vec![self.hash(input)]))
+        vec![self.hash(input)].into()
     }
 }
 
