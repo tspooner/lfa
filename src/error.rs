@@ -5,6 +5,7 @@ pub enum EvaluationError {
 
 pub type EvaluationResult<T> = Result<T, EvaluationError>;
 
+
 #[derive(Debug)]
 pub enum UpdateError {
     Failed,

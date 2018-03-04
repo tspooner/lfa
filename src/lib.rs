@@ -1,6 +1,6 @@
 extern crate ndarray;
 extern crate rand;
-extern crate spaces as geometry;
+pub extern crate spaces as geometry;
 
 extern crate serde;
 #[macro_use]
@@ -11,13 +11,14 @@ mod utils;
 mod error;
 pub use self::error::*;
 
-/// An interface for dealing with function approximators.
+/// An interface for function approximators.
 pub trait Approximator<I: ?Sized> {
     type Value;
 
-    /// Evaluates the function and returns its output.
+    /// Evaluates the function and returns its value.
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value>;
 
+    /// Updates the approximator's estimate for the given input.
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()>;
 }
 
