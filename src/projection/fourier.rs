@@ -1,7 +1,7 @@
 use {Projection, Projector};
-use geometry::{RegularSpace, Space, Span};
+use geometry::{RegularSpace, Space, BoundedSpace, Span};
 use geometry::norms::l2;
-use geometry::dimensions::{BoundedDimension, Continuous};
+use geometry::dimensions::Continuous;
 use rand::ThreadRng;
 use rand::distributions::{IndependentSample, Range};
 use std::f64::consts::PI;
@@ -32,7 +32,7 @@ impl Fourier {
     }
 
     pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
-        Fourier::new(order, input_space.iter().map(|d| d.limits()).collect())
+        Fourier::new(order, input_space.iter().map(|d| (*d.lb(), *d.ub())).collect())
     }
 
     fn make_coefficients(order: u8, dim: usize) -> Vec<Vec<f64>> {
@@ -55,7 +55,7 @@ impl Fourier {
 }
 
 impl Space for Fourier {
-    type Repr = Projection;
+    type Value = Projection;
 
     fn sample(&self, rng: &mut ThreadRng) -> Projection {
         let random_input: Vec<f64> = self.limits

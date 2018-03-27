@@ -63,7 +63,7 @@ impl RBFNetwork {
 }
 
 impl Space for RBFNetwork {
-    type Repr = Projection;
+    type Value = Projection;
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 

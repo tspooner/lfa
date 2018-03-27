@@ -1,6 +1,6 @@
 use super::{Projection, Projector};
-use geometry::{RegularSpace, Space, Span, Vector};
-use geometry::dimensions::{BoundedDimension, Continuous};
+use geometry::{RegularSpace, Space, BoundedSpace, Span, Vector};
+use geometry::dimensions::Continuous;
 use rand::ThreadRng;
 use utils::cartesian_product;
 
@@ -26,7 +26,7 @@ impl Polynomial {
     }
 
     pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
-        Polynomial::new(order, input_space.iter().map(|d| d.limits()).collect())
+        Polynomial::new(order, input_space.iter().map(|d| (*d.lb(), *d.ub())).collect())
     }
 
     fn make_exponents(order: u8, dim: usize) -> Vec<Vec<i32>> {
@@ -41,7 +41,7 @@ impl Polynomial {
 }
 
 impl Space for Polynomial {
-    type Repr = Projection;
+    type Value = Projection;
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 
@@ -95,7 +95,7 @@ impl Chebyshev {
     }
 
     pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
-        Chebyshev::new(order, input_space.iter().map(|d| d.limits()).collect())
+        Chebyshev::new(order, input_space.iter().map(|d| (*d.lb(), *d.ub())).collect())
     }
 
     fn make_polynomials(order: u8, dim: usize) -> Vec<Vec<fn(f64) -> f64>> {
@@ -131,7 +131,7 @@ impl Chebyshev {
 }
 
 impl Space for Chebyshev {
-    type Repr = Projection;
+    type Value = Projection;
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 

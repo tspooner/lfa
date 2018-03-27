@@ -1,5 +1,5 @@
-use geometry::{RegularSpace, Space, Span};
-use geometry::dimensions::{Dimension, Partitioned};
+use geometry::{RegularSpace, Space, Surjection, Span};
+use geometry::dimensions::Partitioned;
 use rand::ThreadRng;
 use super::{Projection, Projector};
 
@@ -25,15 +25,15 @@ impl UniformGrid {
         let mut in_it = input.iter().rev();
         let mut d_it = self.input_space.iter().rev();
 
-        let acc = d_it.next().unwrap().convert(*in_it.next().unwrap());
+        let acc = d_it.next().unwrap().map(*in_it.next().unwrap());
 
         d_it.zip(in_it)
-            .fold(acc, |acc, (d, v)| d.convert(*v) + d.density() * acc)
+            .fold(acc, |acc, (d, v)| d.map(*v) + d.density() * acc)
     }
 }
 
 impl Space for UniformGrid {
-    type Repr = Projection;
+    type Value = Projection;
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 

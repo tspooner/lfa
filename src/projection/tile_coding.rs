@@ -45,7 +45,7 @@ impl<H: BuildHasher> TileCoding<H> {
 }
 
 impl<H: BuildHasher> Space for TileCoding<H> {
-    type Repr = Projection;
+    type Value = Projection;
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 

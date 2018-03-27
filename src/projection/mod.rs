@@ -88,7 +88,7 @@ impl Into<Projection> for Vec<usize> {
 
 
 /// Trait for basis projectors.
-pub trait Projector<I: ?Sized>: Space<Repr = Projection> {
+pub trait Projector<I: ?Sized>: Space<Value = Projection> {
     /// Project data from an input space onto the basis.
     fn project(&self, input: &I) -> Projection;
 

@@ -19,7 +19,7 @@ coveralls = { repository = "tspooner/lfa", branch = "master", service = "github"
 
 [dependencies]
 rand = "0.4"
-spaces = "0.0"
+spaces = "1.0"
 ndarray = "0.11"
 
 serde = "1.0"
