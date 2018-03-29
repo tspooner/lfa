@@ -1,11 +1,8 @@
-use geometry::{
-    RegularSpace, Space, BoundedSpace,
-    Span, Vector,
-    dimensions::Continuous,
-};
-use rand::ThreadRng;
 use super::{Projection, Projector};
+use geometry::{BoundedSpace, RegularSpace, Space, Span, Vector, dimensions::Continuous};
 use utils::cartesian_product;
+
+use rand::ThreadRng;
 
 mod cpfk;
 
@@ -29,7 +26,10 @@ impl Polynomial {
     }
 
     pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
-        Polynomial::new(order, input_space.iter().map(|d| (*d.lb(), *d.ub())).collect())
+        Polynomial::new(
+            order,
+            input_space.iter().map(|d| (*d.lb(), *d.ub())).collect(),
+        )
     }
 
     fn make_exponents(order: u8, dim: usize) -> Vec<Vec<i32>> {
@@ -98,7 +98,10 @@ impl Chebyshev {
     }
 
     pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
-        Chebyshev::new(order, input_space.iter().map(|d| (*d.lb(), *d.ub())).collect())
+        Chebyshev::new(
+            order,
+            input_space.iter().map(|d| (*d.lb(), *d.ub())).collect(),
+        )
     }
 
     fn make_polynomials(order: u8, dim: usize) -> Vec<Vec<fn(f64) -> f64>> {

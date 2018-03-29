@@ -1,31 +1,19 @@
-use {Projection, Projector};
-use geometry::{
-    Space,
-    BoundedSpace,
-    RegularSpace,
-    Span,
-    dimensions::Continuous,
-    norms::l2,
-};
-
-use rand::{
-    ThreadRng,
-    distributions::{
-        IndependentSample,
-        Range,
-    },
-};
-use std::f64::consts::PI;
+use geometry::{BoundedSpace, RegularSpace, Space, Span, dimensions::Continuous, norms::l2};
 use utils::cartesian_product;
+use {Projection, Projector};
 
-// TODO: Add builder which allows use to configure whether to use coefficient scaling or not.
+use rand::{ThreadRng, distributions::{IndependentSample, Range}};
+use std::f64::consts::PI;
+
+// TODO: Add builder which allows use to configure whether to use coefficient
+// scaling or not.
 
 /// Fourier basis projector.
 ///
 /// # References
-/// - [Konidaris, George, Sarah Osentoski, and Philip S. Thomas. "Value function approximation in
-/// reinforcement learning using the Fourier basis." AAAI. Vol. 6.
-/// 2011.](http://lis.csail.mit.edu/pubs/konidaris-aaai11a.pdf)
+/// - [Konidaris, George, Sarah Osentoski, and Philip S. Thomas. "Value
+/// function approximation in reinforcement learning using the Fourier basis."
+/// AAAI. Vol. 6. 2011.](http://lis.csail.mit.edu/pubs/konidaris-aaai11a.pdf)
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Fourier {
     pub order: u8,
@@ -45,7 +33,10 @@ impl Fourier {
     }
 
     pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
-        Fourier::new(order, input_space.iter().map(|d| (*d.lb(), *d.ub())).collect())
+        Fourier::new(
+            order,
+            input_space.iter().map(|d| (*d.lb(), *d.ub())).collect(),
+        )
     }
 
     fn make_coefficients(order: u8, dim: usize) -> Vec<Vec<f64>> {
@@ -243,25 +234,25 @@ mod tests {
             f.project_expanded(&vec![0.0, 5.0])
                 .all_close(&arr1(&vec![1.0 / 3.0; 3]), 1e-6)
         );
-        assert!(f.project_expanded(&vec![0.5, 5.0]).all_close(
+        assert!(f.project_expanded(&vec![0.5, 5.0],).all_close(
             &arr1(&vec![4.24042024e-17, 3.07486821e-1, 6.92513179e-1]),
-            1e-6
+            1e-6,
         ));
-        assert!(f.project_expanded(&vec![0.0, 5.5]).all_close(
+        assert!(f.project_expanded(&vec![0.0, 5.5],).all_close(
             &arr1(&vec![6.92513179e-1, 3.07486821e-1, 4.24042024e-17]),
-            1e-6
+            1e-6,
         ));
         assert!(
             f.project_expanded(&vec![0.5, 5.5])
                 .all_close(&arr1(&vec![1.01093534e-16, -1.0, 1.01093534e-16]), 1e-6)
         );
-        assert!(f.project_expanded(&vec![1.0, 5.5]).all_close(
+        assert!(f.project_expanded(&vec![1.0, 5.5],).all_close(
             &arr1(&vec![-5.04567213e-1, -4.95432787e-1, 3.08958311e-17]),
-            1e-6
+            1e-6,
         ));
-        assert!(f.project_expanded(&vec![0.5, 6.0]).all_close(
+        assert!(f.project_expanded(&vec![0.5, 6.0],).all_close(
             &arr1(&vec![3.08958311e-17, -4.95432787e-1, -5.04567213e-1]),
-            1e-6
+            1e-6,
         ));
         assert!(
             f.project_expanded(&vec![1.0, 6.0])
@@ -281,7 +272,7 @@ mod tests {
             f.project_expanded(&vec![0.0, 5.0])
                 .all_close(&arr1(&vec![0.2; 5]), 1e-6)
         );
-        assert!(f.project_expanded(&vec![0.5, 5.0]).all_close(
+        assert!(f.project_expanded(&vec![0.5, 5.0],).all_close(
             &arr1(&vec![
                 2.58110397e-17,
                 6.95831686e-2,
@@ -289,9 +280,9 @@ mod tests {
                 3.21726225e-1,
                 4.21526267e-1,
             ]),
-            1e-6
+            1e-6,
         ));
-        assert!(f.project_expanded(&vec![0.5, 5.5]).all_close(
+        assert!(f.project_expanded(&vec![0.5, 5.5],).all_close(
             &arr1(&vec![
                 3.76070090e-17,
                 -3.13998939e-1,
@@ -299,9 +290,9 @@ mod tests {
                 -3.13998939e-1,
                 3.76070090e-17,
             ]),
-            1e-6
+            1e-6,
         ));
-        assert!(f.project_expanded(&vec![0.5, 6.0]).all_close(
+        assert!(f.project_expanded(&vec![0.5, 6.0],).all_close(
             &arr1(&vec![
                 1.58656439e-17,
                 -2.44984612e-1,
@@ -309,9 +300,9 @@ mod tests {
                 -2.41494847e-1,
                 -2.59105628e-1,
             ]),
-            1e-6
+            1e-6,
         ));
-        assert!(f.project_expanded(&vec![1.0, 6.0]).all_close(
+        assert!(f.project_expanded(&vec![1.0, 6.0],).all_close(
             &arr1(&vec![
                 -0.31048999,
                 -0.1481752,
@@ -319,7 +310,7 @@ mod tests {
                 -0.1481752,
                 -0.31048999,
             ]),
-            1e-6
+            1e-6,
         ));
     }
 }

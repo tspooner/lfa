@@ -1,9 +1,6 @@
 //! Linear basis projection module.
 
-use geometry::{
-    Space, Span, Vector,
-    norms::l1,
-};
+use geometry::{Space, Span, Vector, norms::l1};
 
 pub(crate) type ActivationT = f64;
 pub(crate) type IndexT = usize;
@@ -62,9 +59,7 @@ impl Projection {
             },
             z => match self {
                 Projection::Dense(phi) => phi.iter().map(|x| x / z).collect(),
-                Projection::Sparse(active_indices) => {
-                    expand_sparse(active_indices, z, span.into())
-                },
+                Projection::Sparse(active_indices) => expand_sparse(active_indices, z, span.into()),
             },
         }
     }
@@ -112,7 +107,32 @@ macro_rules! impl_fixed {
     }
 }
 
-impl_fixed!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
+impl_fixed!(
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+);
 
 mod rbf_network;
 pub use self::rbf_network::*;

@@ -1,12 +1,9 @@
-use geometry::{
-    RegularSpace, Space,
-    Span, Vector, Matrix,
-    dimensions::Partitioned,
-};
+use super::{Projection, Projector};
+use geometry::{Matrix, RegularSpace, Space, Span, Vector, dimensions::Partitioned};
+use utils::cartesian_product;
+
 use ndarray::Axis;
 use rand::ThreadRng;
-use super::{Projection, Projector};
-use utils::cartesian_product;
 
 /// Radial basis function network projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -88,10 +85,7 @@ mod tests {
     fn test_span() {
         fn get_span(rbf_net: RBFNetwork) -> usize { rbf_net.span().into() }
 
-        assert_eq!(
-            get_span(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))),
-            1
-        );
+        assert_eq!(get_span(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))), 1);
         assert_eq!(
             get_span(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
             3

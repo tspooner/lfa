@@ -1,5 +1,5 @@
-use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
 use geometry::{Matrix, Vector};
+use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
 
 use std::marker::PhantomData;
 
