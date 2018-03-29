@@ -1,8 +1,11 @@
-use super::{Projection, Projector};
-use geometry::{Matrix, RegularSpace, Space, Span, Vector};
-use geometry::dimensions::Partitioned;
+use geometry::{
+    RegularSpace, Space,
+    Span, Vector, Matrix,
+    dimensions::Partitioned,
+};
 use ndarray::Axis;
 use rand::ThreadRng;
+use super::{Projection, Projector};
 use utils::cartesian_product;
 
 /// Radial basis function network projector.

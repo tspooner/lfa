@@ -1,15 +1,15 @@
 //! Linear basis projection module.
 
-use geometry::{Space, Span, Vector};
-use geometry::norms::l1;
-
+use geometry::{
+    Space, Span, Vector,
+    norms::l1,
+};
 
 pub(crate) type ActivationT = f64;
 pub(crate) type IndexT = usize;
 
 pub(crate) type DenseT = Vector<ActivationT>;
 pub(crate) type SparseT = Vector<IndexT>;
-
 
 /// Projected feature vector representation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,7 +86,6 @@ impl Into<Projection> for Vec<usize> {
     fn into(self) -> Projection { Projection::Sparse(Vector::from_vec(self)) }
 }
 
-
 /// Trait for basis projectors.
 pub trait Projector<I: ?Sized>: Space<Value = Projection> {
     /// Project data from an input space onto the basis.
@@ -114,7 +113,6 @@ macro_rules! impl_fixed {
 }
 
 impl_fixed!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
-
 
 mod rbf_network;
 pub use self::rbf_network::*;

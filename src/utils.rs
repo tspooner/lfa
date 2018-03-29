@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-
 pub(self) fn partial_cartesian<T: Clone>(a: Vec<Vec<T>>, b: &Vec<T>) -> Vec<Vec<T>> {
     a.into_iter()
         .flat_map(|xs| {

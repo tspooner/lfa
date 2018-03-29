@@ -1,7 +1,10 @@
-use super::{Projection, Projector};
-use geometry::{RegularSpace, Space, BoundedSpace, Span, Vector};
-use geometry::dimensions::Continuous;
+use geometry::{
+    RegularSpace, Space, BoundedSpace,
+    Span, Vector,
+    dimensions::Continuous,
+};
 use rand::ThreadRng;
+use super::{Projection, Projector};
 use utils::cartesian_product;
 
 mod cpfk;

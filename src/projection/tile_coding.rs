@@ -3,7 +3,6 @@ use geometry::{Space, Span};
 use rand::ThreadRng;
 use std::hash::{BuildHasher, Hasher};
 
-
 #[inline]
 fn bin_state(input: &[f64], n_tilings: usize) -> Vec<usize> {
     input.into_iter().map(|f| (*f*n_tilings as f64).floor() as usize).collect()

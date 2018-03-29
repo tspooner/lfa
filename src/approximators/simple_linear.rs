@@ -1,5 +1,6 @@
 use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
 use geometry::Vector;
+
 use std::marker::PhantomData;
 
 #[derive(Clone, Serialize, Deserialize)]

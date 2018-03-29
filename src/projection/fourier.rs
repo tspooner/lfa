@@ -1,18 +1,31 @@
 use {Projection, Projector};
-use geometry::{RegularSpace, Space, BoundedSpace, Span};
-use geometry::norms::l2;
-use geometry::dimensions::Continuous;
-use rand::ThreadRng;
-use rand::distributions::{IndependentSample, Range};
+use geometry::{
+    Space,
+    BoundedSpace,
+    RegularSpace,
+    Span,
+    dimensions::Continuous,
+    norms::l2,
+};
+
+use rand::{
+    ThreadRng,
+    distributions::{
+        IndependentSample,
+        Range,
+    },
+};
 use std::f64::consts::PI;
 use utils::cartesian_product;
 
-// TODO: Add learning rate scaling http://lis.csail.mit.edu/pubs/konidaris-aaai11a.pdf
-// TODO: Add builder which allows use to configure whether to use coefficient
-// scaling or not.
-
+// TODO: Add builder which allows use to configure whether to use coefficient scaling or not.
 
 /// Fourier basis projector.
+///
+/// # References
+/// - [Konidaris, George, Sarah Osentoski, and Philip S. Thomas. "Value function approximation in
+/// reinforcement learning using the Fourier basis." AAAI. Vol. 6.
+/// 2011.](http://lis.csail.mit.edu/pubs/konidaris-aaai11a.pdf)
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Fourier {
     pub order: u8,
@@ -41,6 +54,7 @@ impl Fourier {
             .iter()
             .skip(1)
             .map(|cfs| {
+                // Rescale coefficients s.t. a_i = a_1 / ||c^i||_2
                 let z = l2(&cfs);
 
                 cfs.iter().map(|c| c / z).collect()

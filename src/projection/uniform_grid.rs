@@ -1,8 +1,10 @@
-use geometry::{RegularSpace, Space, Surjection, Span};
-use geometry::dimensions::Partitioned;
+use geometry::{
+    RegularSpace, Space,
+    Surjection, Span,
+    dimensions::Partitioned,
+};
 use rand::ThreadRng;
 use super::{Projection, Projector};
-
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
