@@ -1,6 +1,6 @@
-//! Linear basis projection module.
+// Linear basis projection module.
 
-use geometry::{Space, Span, Vector, norms::l1};
+use geometry::{Space, Vector, norms::l1};
 
 pub(crate) type ActivationT = f64;
 pub(crate) type IndexT = usize;
@@ -37,7 +37,7 @@ impl Projection {
 
     /// Expand and normalise a given projection, and convert into a raw, dense
     /// vector.
-    pub fn expanded(self, span: Span) -> DenseT {
+    pub fn expanded(self, dim: usize) -> DenseT {
         #[inline]
         fn expand_sparse(active_indices: SparseT, z: ActivationT, size: usize) -> DenseT {
             let mut phi = Vector::zeros((size,));
@@ -54,12 +54,12 @@ impl Projection {
             z if z.abs() < 1e-6 => match self {
                 Projection::Dense(phi) => phi,
                 Projection::Sparse(active_indices) => {
-                    expand_sparse(active_indices, 1.0, span.into())
+                    expand_sparse(active_indices, 1.0, dim)
                 },
             },
             z => match self {
                 Projection::Dense(phi) => phi.iter().map(|x| x / z).collect(),
-                Projection::Sparse(active_indices) => expand_sparse(active_indices, z, span.into()),
+                Projection::Sparse(active_indices) => expand_sparse(active_indices, z, dim),
             },
         }
     }
@@ -88,7 +88,7 @@ pub trait Projector<I: ?Sized>: Space<Value = Projection> {
 
     /// Project data from an input space onto the basis and convert into a raw,
     /// dense vector.
-    fn project_expanded(&self, input: &I) -> DenseT { self.project(input).expanded(self.span()) }
+    fn project_expanded(&self, input: &I) -> DenseT { self.project(input).expanded(self.dim()) }
 }
 
 impl<P: Projector<[f64]>> Projector<Vec<f64>> for P {

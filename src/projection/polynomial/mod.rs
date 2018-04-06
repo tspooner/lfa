@@ -48,9 +48,9 @@ impl Space for Polynomial {
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 
-    fn dim(&self) -> usize { self.limits.len() }
+    fn dim(&self) -> usize { self.exponents.len() }
 
-    fn span(&self) -> Span { Span::Finite(self.exponents.len()) }
+    fn span(&self) -> Span { Span::Infinite }
 }
 
 impl Projector<[f64]> for Polynomial {
@@ -141,9 +141,9 @@ impl Space for Chebyshev {
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 
-    fn dim(&self) -> usize { self.limits.len() }
+    fn dim(&self) -> usize { self.polynomials.len() }
 
-    fn span(&self) -> Span { Span::Finite(self.polynomials.len()) }
+    fn span(&self) -> Span { Span::Infinite }
 }
 
 impl Projector<[f64]> for Chebyshev {

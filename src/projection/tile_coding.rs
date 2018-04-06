@@ -1,7 +1,7 @@
 use super::{Projection, Projector};
 use geometry::{Space, Span};
 
-use rand::ThreadRng;
+use rand::{ThreadRng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
 
 #[inline]
@@ -55,11 +55,13 @@ impl<H: BuildHasher> TileCoding<H> {
 impl<H: BuildHasher> Space for TileCoding<H> {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+    fn sample(&self, mut rng: &mut ThreadRng) -> Projection {
+        sample_indices(&mut rng, self.memory_size, self.n_tilings).into()
+    }
 
-    fn dim(&self) -> usize { unimplemented!() }
+    fn dim(&self) -> usize { self.memory_size }
 
-    fn span(&self) -> Span { Span::Finite(self.memory_size) }
+    fn span(&self) -> Span { unimplemented!() }
 }
 
 impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {

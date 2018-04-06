@@ -67,9 +67,9 @@ impl Space for RBFNetwork {
 
     fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
 
-    fn dim(&self) -> usize { self.mu.cols() }
+    fn dim(&self) -> usize { self.mu.rows() }
 
-    fn span(&self) -> Span { Span::Finite(self.mu.rows()) }
+    fn span(&self) -> Span { Span::Infinite }
 }
 
 impl Projector<[f64]> for RBFNetwork {
@@ -82,33 +82,43 @@ mod tests {
     use ndarray::{arr1, arr2};
 
     #[test]
-    fn test_span() {
-        fn get_span(rbf_net: RBFNetwork) -> usize { rbf_net.span().into() }
+    fn test_dim() {
+        fn get_dim(rbf_net: RBFNetwork) -> usize { rbf_net.dim() }
 
-        assert_eq!(get_span(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))), 1);
+        assert_eq!(get_dim(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))), 1);
         assert_eq!(
-            get_span(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
+            get_dim(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
             3
         );
         assert_eq!(
-            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
+            get_dim(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
             10
         );
         assert_eq!(
-            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
+            get_dim(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
             100
         );
     }
 
     #[test]
-    fn test_dimensionality() {
+    fn test_span() {
+        fn get_span(rbf_net: RBFNetwork) -> Span { rbf_net.span() }
+
         assert_eq!(
-            RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).dim(),
-            1
+            get_span(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))),
+            Span::Infinite
         );
         assert_eq!(
-            RBFNetwork::new(arr2(&vec![[0.0, 0.5, 1.0]; 10]), arr1(&[0.1, 0.2, 0.3])).dim(),
-            3
+            get_span(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
+            Span::Infinite
+        );
+        assert_eq!(
+            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
+            Span::Infinite
+        );
+        assert_eq!(
+            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
+            Span::Infinite
         );
     }
 

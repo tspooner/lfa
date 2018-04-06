@@ -13,7 +13,7 @@ pub struct SimpleLinear<I: ?Sized, P: Projector<I>> {
 
 impl<I: ?Sized, P: Projector<I>> SimpleLinear<I, P> {
     pub fn new(projector: P) -> Self {
-        let n_features = projector.span().into();
+        let n_features = projector.dim();
 
         Self {
             projector: projector,

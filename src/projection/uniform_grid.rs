@@ -1,7 +1,7 @@
 use super::{Projection, Projector};
 use geometry::{RegularSpace, Space, Span, Surjection, dimensions::Partitioned};
 
-use rand::ThreadRng;
+use rand::{ThreadRng, seq::sample_indices};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -34,11 +34,13 @@ impl UniformGrid {
 impl Space for UniformGrid {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+    fn sample(&self, mut rng: &mut ThreadRng) -> Projection {
+        sample_indices(&mut rng, self.n_features, 1).into()
+    }
 
-    fn dim(&self) -> usize { self.input_space.dim() }
+    fn dim(&self) -> usize { self.n_features }
 
-    fn span(&self) -> Span { Span::Finite(self.n_features) }
+    fn span(&self) -> Span { unimplemented!() }
 }
 
 impl Projector<[f64]> for UniformGrid {
@@ -67,7 +69,7 @@ mod tests {
         let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10)]);
         let t = UniformGrid::new(ds);
 
-        assert_eq!(t.span(), Span::Finite(10));
+        assert_eq!(t.dim(), 10);
 
         for i in 0..10 {
             let out = t.project(&vec![i as u32 as f64]);
@@ -84,7 +86,7 @@ mod tests {
             let mut dense = arr1(&vec![0.0; 10]);
             dense[expected_bin] = 1.0;
 
-            assert_eq!(out.expanded(t.span()), dense);
+            assert_eq!(out.expanded(t.dim()), dense);
         }
     }
 
@@ -93,7 +95,7 @@ mod tests {
         let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10); 2]);
         let t = UniformGrid::new(ds);
 
-        assert_eq!(t.span(), Span::Finite(100));
+        assert_eq!(t.dim(), 100);
 
         for i in 0..10 {
             for j in 0..10 {
@@ -111,7 +113,7 @@ mod tests {
                 let mut dense = arr1(&vec![0.0; 100]);
                 dense[expected_bin] = 1.0;
 
-                assert_eq!(out.expanded(t.span()), dense);
+                assert_eq!(out.expanded(t.dim()), dense);
             }
         }
     }
@@ -121,7 +123,7 @@ mod tests {
         let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10); 3]);
         let t = UniformGrid::new(ds);
 
-        assert_eq!(t.span(), Span::Finite(1000));
+        assert_eq!(t.dim(), 1000);
 
         for i in 0..10 {
             for j in 0..10 {
@@ -140,7 +142,7 @@ mod tests {
                     let mut dense = arr1(&vec![0.0; 1000]);
                     dense[expected_bin] = 1.0;
 
-                    assert_eq!(out.expanded(t.span()), dense);
+                    assert_eq!(out.expanded(t.dim()), dense);
                 }
             }
         }
