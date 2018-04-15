@@ -1,12 +1,8 @@
 use geometry::{BoundedSpace, RegularSpace, Space, Span, dimensions::Continuous, norms::l2};
-use utils::cartesian_product;
-use {Projection, Projector};
-
 use rand::{ThreadRng, distributions::{IndependentSample, Range}};
 use std::f64::consts::PI;
-
-// TODO: Add builder which allows use to configure whether to use coefficient
-// scaling or not.
+use utils::cartesian_product;
+use {Projection, Projector};
 
 /// Fourier basis projector.
 ///

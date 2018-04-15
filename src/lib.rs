@@ -1,5 +1,7 @@
-extern crate ndarray;
 extern crate rand;
+extern crate ndarray;
+extern crate itertools;
+
 pub extern crate spaces as geometry;
 
 extern crate serde;
@@ -32,8 +34,8 @@ impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
     }
 }
 
-pub mod projection;
-pub use self::projection::{Projection, Projector};
+pub mod projectors;
+pub use self::projectors::{Projection, Projector, AdaptiveProjector};
 
 mod approximators;
 pub use self::approximators::*;

@@ -1,5 +1,5 @@
-use super::{Projection, Projector};
 use geometry::{Matrix, RegularSpace, Space, Span, Vector, dimensions::Partitioned};
+use projectors::{Projection, Projector};
 use utils::cartesian_product;
 
 use ndarray::Axis;

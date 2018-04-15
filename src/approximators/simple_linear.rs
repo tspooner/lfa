@@ -1,5 +1,5 @@
 use geometry::Vector;
-use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
+use {Approximator, EvaluationResult, Projection, Projector, AdaptiveProjector, UpdateResult};
 
 use std::marker::PhantomData;
 
@@ -67,7 +67,7 @@ mod tests {
     extern crate seahash;
 
     use super::*;
-    use projection::{Fourier, TileCoding};
+    use projectors::fixed::{Fourier, TileCoding};
     use std::hash::BuildHasherDefault;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;

@@ -1,5 +1,5 @@
-use super::{Projection, Projector};
 use geometry::{Space, Span};
+use projectors::{Projection, Projector};
 
 use rand::{ThreadRng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
