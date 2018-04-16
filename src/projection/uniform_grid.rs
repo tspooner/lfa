@@ -1,7 +1,7 @@
-use super::{Projection, Projector};
-use geometry::{RegularSpace, Space, Span, Surjection, dimensions::Partitioned};
-
+use geometry::{RegularSpace, Space, Card, Surjection, dimensions::Partitioned};
 use rand::{ThreadRng, seq::sample_indices};
+use super::{Projection, Projector};
+
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -12,7 +12,7 @@ pub struct UniformGrid {
 
 impl UniformGrid {
     pub fn new(input_space: RegularSpace<Partitioned>) -> Self {
-        let n_features = input_space.span().into();
+        let n_features = input_space.card().into();
 
         UniformGrid {
             n_features: n_features,
@@ -40,7 +40,7 @@ impl Space for UniformGrid {
 
     fn dim(&self) -> usize { self.n_features }
 
-    fn span(&self) -> Span { unimplemented!() }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl Projector<[f64]> for UniformGrid {

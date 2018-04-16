@@ -1,8 +1,7 @@
-use super::{Projection, Projector};
-use geometry::{BoundedSpace, RegularSpace, Space, Span, Vector, dimensions::Continuous};
-use utils::cartesian_product;
-
+use geometry::{BoundedSpace, RegularSpace, Space, Card, Vector, dimensions::Continuous};
 use rand::ThreadRng;
+use super::{Projection, Projector};
+use utils::cartesian_product;
 
 mod cpfk;
 
@@ -50,7 +49,7 @@ impl Space for Polynomial {
 
     fn dim(&self) -> usize { self.exponents.len() }
 
-    fn span(&self) -> Span { Span::Infinite }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl Projector<[f64]> for Polynomial {
@@ -143,7 +142,7 @@ impl Space for Chebyshev {
 
     fn dim(&self) -> usize { self.polynomials.len() }
 
-    fn span(&self) -> Span { Span::Infinite }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl Projector<[f64]> for Chebyshev {
