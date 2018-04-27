@@ -1,6 +1,5 @@
-use geometry::{Space, Span};
+use geometry::{Space, Card};
 use projectors::{Projection, Projector};
-
 use rand::{ThreadRng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
 
@@ -61,7 +60,7 @@ impl<H: BuildHasher> Space for TileCoding<H> {
 
     fn dim(&self) -> usize { self.memory_size }
 
-    fn span(&self) -> Span { unimplemented!() }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {

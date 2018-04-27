@@ -1,4 +1,4 @@
-use geometry::{Vector, Space, Span};
+use geometry::{Vector, Space, Card};
 use projectors::{IndexT, IndexSet, Feature, CandidateFeature};
 use {Projection, Projector, AdaptiveProjector};
 
@@ -89,7 +89,7 @@ impl<P: Projector<[f64]>> Space for IFDD<P> {
 
     fn dim(&self) -> usize { self.features.len() }
 
-    fn span(&self) -> Span { unimplemented!() }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
@@ -176,7 +176,7 @@ mod tests {
 
         fn dim(&self) -> usize { 5 }
 
-        fn span(&self) -> Span { unimplemented!() }
+        fn card(&self) -> Card { unimplemented!() }
     }
 
     impl Projector<[f64]> for BaseProjector {
