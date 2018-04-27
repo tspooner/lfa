@@ -94,7 +94,7 @@ impl<P: Projector<[f64]>> Space for IFDD<P> {
 
 impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
     fn project(&self, input: &[f64]) -> Projection {
-        let mut p = self.project_base(input);
+        let mut p = self.base.project(input);
         let np: Vec<usize> = (self.base.dim()..self.dim()).filter_map(|i| {
 
             let f = &self.features[i];
@@ -148,10 +148,6 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
         self.features.push(feature);
 
         Some(mapping)
-    }
-
-    fn project_base(&self, input: &[f64]) -> Projection {
-        self.base.project(input)
     }
 }
 
@@ -211,18 +207,5 @@ mod tests {
             index: 6,
             parent_indices: [0, 3].iter().cloned().collect(),
         });
-    }
-
-    #[test]
-    fn test_project_base() {
-        let b = TileCoding::new(SHBuilder::default(), 8, 100);
-        let f = IFDD::new(b.clone(), 100.0);
-
-        assert_eq!(b.project(&vec![0.0, 1.0]), f.project_base(&vec![0.0, 1.0]));
-
-        let b = BaseProjector;
-        let f = IFDD::new(b.clone(), 100.0);
-
-        assert_eq!(b.project(&vec![0.0, 1.0]), f.project_base(&vec![0.0, 1.0]));
     }
 }
