@@ -1,17 +1,18 @@
-use geometry::{Matrix, Vector};
-use {Approximator, EvaluationResult, Projection, Projector, UpdateResult};
-
+use approximators::Approximator;
+use geometry::{Vector, Matrix};
+use projectors::{Projection, Projector};
 use std::marker::PhantomData;
+use {EvaluationResult, UpdateResult};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct MultiLinear<I: ?Sized, P: Projector<I>> {
+pub struct Multi<I: ?Sized, P: Projector<I>> {
     pub projector: P,
     pub weights: Matrix<f64>,
 
     phantom: PhantomData<I>,
 }
 
-impl<I: ?Sized, P: Projector<I>> MultiLinear<I, P> {
+impl<I: ?Sized, P: Projector<I>> Multi<I, P> {
     pub fn new(projector: P, n_outputs: usize) -> Self {
         let n_features = projector.dim();
 
@@ -67,7 +68,7 @@ impl<I: ?Sized, P: Projector<I>> MultiLinear<I, P> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> Approximator<I> for MultiLinear<I, P> {
+impl<I: ?Sized, P: Projector<I>> Approximator<I> for Multi<I, P> {
     type Value = Vector<f64>;
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Vector<f64>> {
@@ -96,7 +97,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = MultiLinear::new(p.clone(), 2);
+        let mut f = Multi::new(p.clone(), 2);
 
         let input = vec![5.0];
 
@@ -112,7 +113,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = MultiLinear::new(p.clone(), 2);
+        let mut f = Multi::new(p.clone(), 2);
 
         let input = vec![5.0];
 

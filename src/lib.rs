@@ -13,29 +13,8 @@ mod utils;
 mod error;
 pub use self::error::*;
 
-/// An interface for function approximators.
-pub trait Approximator<I: ?Sized> {
-    type Value;
-
-    /// Evaluates the function and returns its value.
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value>;
-
-    /// Updates the approximator's estimate for the given input.
-    fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()>;
-}
-
-impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
-    type Value = T::Value;
-
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> { (**self).evaluate(input) }
-
-    fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
-        (**self).update(input, update)
-    }
-}
-
 pub mod projectors;
 pub use self::projectors::{Projection, Projector, AdaptiveProjector};
 
-mod approximators;
-pub use self::approximators::*;
+pub mod approximators;
+pub use self::approximators::{Approximator, AdaptiveApproximator};

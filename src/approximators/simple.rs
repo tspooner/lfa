@@ -1,17 +1,18 @@
+use approximators::Approximator;
 use geometry::Vector;
-use {Approximator, EvaluationResult, Projection, Projector, AdaptiveProjector, UpdateResult};
-
+use projectors::{Projection, Projector};
 use std::marker::PhantomData;
+use {EvaluationResult, UpdateResult};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct SimpleLinear<I: ?Sized, P: Projector<I>> {
+pub struct Simple<I: ?Sized, P: Projector<I>> {
     pub projector: P,
     pub weights: Vector<f64>,
 
     phantom: PhantomData<I>,
 }
 
-impl<I: ?Sized, P: Projector<I>> SimpleLinear<I, P> {
+impl<I: ?Sized, P: Projector<I>> Simple<I, P> {
     pub fn new(projector: P) -> Self {
         let n_features = projector.dim();
 
@@ -46,7 +47,7 @@ impl<I: ?Sized, P: Projector<I>> SimpleLinear<I, P> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> Approximator<I> for SimpleLinear<I, P> {
+impl<I: ?Sized, P: Projector<I>> Approximator<I> for Simple<I, P> {
     type Value = f64;
 
     fn evaluate(&self, input: &I) -> EvaluationResult<f64> {
@@ -75,7 +76,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = SimpleLinear::new(p.clone());
+        let mut f = Simple::new(p.clone());
 
         let input = vec![5.0];
 
@@ -88,7 +89,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = SimpleLinear::new(p.clone());
+        let mut f = Simple::new(p.clone());
 
         let input = vec![5.0];
 
