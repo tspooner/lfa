@@ -26,3 +26,9 @@ impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
         (**self).update(input, update)
     }
 }
+
+/// An interface for adaptive function approximators.
+pub trait AdaptiveApproximator<I: ?Sized>: Approximator<I> {
+    /// Adapt the approximator given some approximation error.
+    fn adapt(&mut self, input: &I, error: Self::Value) -> AdaptResult<usize>;
+}
