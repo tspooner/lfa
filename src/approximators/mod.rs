@@ -1,4 +1,6 @@
 use error::*;
+use projectors::{IndexT, IndexSet};
+use std::collections::HashMap;
 
 mod simple;
 pub use self::simple::Simple;
@@ -15,6 +17,12 @@ pub trait Approximator<I: ?Sized> {
 
     /// Update the approximator's estimate for the given input.
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()>;
+
+    #[allow(unused_variables)]
+    /// Adapt the approximator in light of newly discovered features.
+    fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
+        Err(AdaptError::NotImplemented)
+    }
 }
 
 impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
@@ -25,10 +33,8 @@ impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
         (**self).update(input, update)
     }
-}
 
-/// An interface for adaptive function approximators.
-pub trait AdaptiveApproximator<I: ?Sized>: Approximator<I> {
-    /// Adapt the approximator given some approximation error.
-    fn adapt(&mut self, input: &I, error: Self::Value) -> AdaptResult<usize>;
+    fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
+        (**self).adapt(new_features)
+    }
 }
