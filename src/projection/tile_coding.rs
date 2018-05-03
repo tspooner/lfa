@@ -1,8 +1,7 @@
-use super::{Projection, Projector};
-use geometry::{Space, Span};
-
+use geometry::{Space, Card};
 use rand::{ThreadRng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
+use super::{Projection, Projector};
 
 #[inline]
 fn bin_state(input: &[f64], n_tilings: usize) -> Vec<usize> {
@@ -61,7 +60,7 @@ impl<H: BuildHasher> Space for TileCoding<H> {
 
     fn dim(&self) -> usize { self.memory_size }
 
-    fn span(&self) -> Span { unimplemented!() }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {

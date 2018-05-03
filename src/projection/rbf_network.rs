@@ -1,9 +1,9 @@
-use super::{Projection, Projector};
-use geometry::{Matrix, RegularSpace, Space, Span, Vector, dimensions::Partitioned};
-use utils::cartesian_product;
-
+use geometry::{Matrix, RegularSpace, Space, Card, Vector, dimensions::Partitioned};
 use ndarray::Axis;
 use rand::ThreadRng;
+use super::{Projection, Projector};
+use utils::cartesian_product;
+
 
 /// Radial basis function network projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -29,8 +29,8 @@ impl RBFNetwork {
     }
 
     pub fn from_space(input_space: RegularSpace<Partitioned>) -> Self {
-        let n_features = match input_space.span() {
-            Span::Finite(s) => s,
+        let n_features = match input_space.card() {
+            Card::Finite(s) => s,
             _ => panic!("`RBFNetwork` projection only supports partitioned input spaces."),
         };
 
@@ -69,7 +69,7 @@ impl Space for RBFNetwork {
 
     fn dim(&self) -> usize { self.mu.rows() }
 
-    fn span(&self) -> Span { Span::Infinite }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl Projector<[f64]> for RBFNetwork {
@@ -82,7 +82,7 @@ mod tests {
     use ndarray::{arr1, arr2};
 
     #[test]
-    fn test_dim() {
+    fn test_dimensionality() {
         fn get_dim(rbf_net: RBFNetwork) -> usize { rbf_net.dim() }
 
         assert_eq!(get_dim(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))), 1);
@@ -101,24 +101,24 @@ mod tests {
     }
 
     #[test]
-    fn test_span() {
-        fn get_span(rbf_net: RBFNetwork) -> Span { rbf_net.span() }
+    fn test_cardinality() {
+        fn get_card(rbf_net: RBFNetwork) -> Card { rbf_net.card() }
 
         assert_eq!(
-            get_span(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))),
-            Span::Infinite
+            get_card(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))),
+            Card::Infinite
         );
         assert_eq!(
-            get_span(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
-            Span::Infinite
+            get_card(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
+            Card::Infinite
         );
         assert_eq!(
-            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
-            Span::Infinite
+            get_card(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
+            Card::Infinite
         );
         assert_eq!(
-            get_span(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
-            Span::Infinite
+            get_card(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
+            Card::Infinite
         );
     }
 

@@ -1,9 +1,8 @@
-use geometry::{BoundedSpace, RegularSpace, Space, Span, dimensions::Continuous, norms::l2};
-use utils::cartesian_product;
-use {Projection, Projector};
-
+use geometry::{BoundedSpace, RegularSpace, Space, Card, dimensions::Continuous, norms::l2};
 use rand::{ThreadRng, distributions::{IndependentSample, Range}};
 use std::f64::consts::PI;
+use utils::cartesian_product;
+use {Projection, Projector};
 
 // TODO: Add builder which allows use to configure whether to use coefficient
 // scaling or not.
@@ -73,7 +72,7 @@ impl Space for Fourier {
 
     fn dim(&self) -> usize { self.coefficients.len() }
 
-    fn span(&self) -> Span { Span::Infinite }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl Projector<[f64]> for Fourier {
@@ -133,7 +132,7 @@ mod tests {
         let f = Fourier::new(1, vec![(0.0, 1.0)]);
 
         assert_eq!(f.dim(), 1);
-        assert_eq!(f.span(), Span::Infinite);
+        assert_eq!(f.card(), Card::Infinite);
 
         assert!(
             f.project_expanded(&vec![-1.0])
@@ -180,7 +179,7 @@ mod tests {
         let f2 = Fourier::new(2, vec![(0.0, 1.0)]);
 
         assert_eq!(f2.dim(), f1.dim());
-        assert_eq!(f2.span(), f2.span());
+        assert_eq!(f2.card(), f2.card());
 
         assert_eq!(
             f2.project_expanded(&vec![-1.0]),
@@ -226,7 +225,7 @@ mod tests {
         let f = Fourier::new(1, vec![(0.0, 1.0), (5.0, 6.0)]);
 
         assert_eq!(f.dim(), 3);
-        assert_eq!(f.span(), Span::Infinite);
+        assert_eq!(f.card(), Card::Infinite);
 
         assert!(
             f.project_expanded(&vec![0.0, 5.0])
@@ -263,7 +262,7 @@ mod tests {
         let f = Fourier::new(2, vec![(0.0, 1.0), (5.0, 6.0)]);
 
         assert_eq!(f.dim(), 5);
-        assert_eq!(f.span(), Span::Infinite);
+        assert_eq!(f.card(), Card::Infinite);
 
         assert!(
             f.project_expanded(&vec![0.0, 5.0])
