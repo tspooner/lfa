@@ -17,4 +17,7 @@ pub mod projectors;
 pub use self::projectors::{Projection, Projector, AdaptiveProjector};
 
 pub mod approximators;
-pub use self::approximators::{Approximator, AdaptiveApproximator};
+pub use self::approximators::Approximator;
+
+mod lfa;
+pub use self::lfa::LFA;
