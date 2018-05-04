@@ -25,7 +25,7 @@ impl<I: ?Sized, P: Projector<I>> Space for Shift<I, P> {
     type Value = Projection;
 
     fn sample(&self, rng: &mut ThreadRng) -> Projection {
-        self.projector.sample(rng)
+        Projection::Dense(self.projector.sample(rng).expanded(self.dim()) + self.offset)
     }
 
     fn dim(&self) -> usize {
