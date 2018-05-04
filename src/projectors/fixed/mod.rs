@@ -14,3 +14,9 @@ pub use self::tile_coding::*;
 
 mod uniform_grid;
 pub use self::uniform_grid::*;
+
+mod random;
+pub use self::random::*;
+
+mod constant;
+pub use self::constant::*;

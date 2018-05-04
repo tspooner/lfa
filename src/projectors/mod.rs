@@ -17,6 +17,7 @@ pub use self::feature::{CandidateFeature, Feature};
 
 pub mod adaptive;
 pub mod fixed;
+pub mod mixing;
 
 /// Trait for basis projectors.
 pub trait Projector<I: ?Sized>: Space<Value = Projection> {
