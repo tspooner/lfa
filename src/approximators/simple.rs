@@ -1,10 +1,10 @@
 use approximators::Approximator;
 use error::AdaptError;
 use geometry::Vector;
-use projectors::{Projection, IndexT, IndexSet};
+use projectors::{IndexSet, IndexT, Projection};
 use std::collections::HashMap;
 use std::mem::replace;
-use {EvaluationResult, UpdateResult, AdaptResult};
+use {AdaptResult, EvaluationResult, UpdateResult};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Simple {
@@ -19,9 +19,8 @@ impl Simple {
     }
 
     fn extend_weights(&mut self, new_weights: Vec<f64>) {
-        let mut weights = unsafe {
-            replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec()
-        };
+        let mut weights =
+            unsafe { replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec() };
 
         weights.extend(new_weights);
 
@@ -37,7 +36,7 @@ impl Approximator<Projection> for Simple {
             &Projection::Dense(ref dense) => self.weights.dot(&(dense / p.z())),
             &Projection::Sparse(ref sparse) => {
                 sparse.iter().fold(0.0, |acc, idx| acc + self.weights[*idx])
-            },
+            }
         })
     }
 
@@ -56,13 +55,16 @@ impl Approximator<Projection> for Simple {
         let n_nfs = new_features.len();
         let max_index = self.weights.len() + n_nfs - 1;
 
-        let new_weights: Result<Vec<f64>, _> = new_features.into_iter().map(|(&i, idx)| {
-            if i > max_index {
-                Err(AdaptError::Failed)
-            } else {
-                Ok(idx.iter().fold(0.0, |acc, j| acc + self.weights[*j]) / (idx.len() as f64))
-            }
-        }).collect();
+        let new_weights: Result<Vec<f64>, _> = new_features
+            .into_iter()
+            .map(|(&i, idx)| {
+                if i > max_index {
+                    Err(AdaptError::Failed)
+                } else {
+                    Ok(idx.iter().fold(0.0, |acc, j| acc + self.weights[*j]) / (idx.len() as f64))
+                }
+            })
+            .collect();
 
         self.extend_weights(new_weights?);
 
@@ -77,7 +79,7 @@ mod tests {
     use LFA;
     use approximators::{Approximator, Simple};
     use projectors::fixed::{Fourier, TileCoding};
-    use std::collections::{HashMap, BTreeSet};
+    use std::collections::{BTreeSet, HashMap};
     use std::hash::BuildHasherDefault;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -126,8 +128,8 @@ mod tests {
             Ok(n) => {
                 assert_eq!(n, 1);
                 assert_eq!(f.weights.len(), 101);
-                assert_eq!(f.weights[100], f.weights[10]/2.0 + f.weights[90]/2.0);
-            },
+                assert_eq!(f.weights[100], f.weights[10] / 2.0 + f.weights[90] / 2.0);
+            }
             Err(err) => panic!("Simple::adapt failed with AdaptError::{:?}", err),
         }
     }

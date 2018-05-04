@@ -1,5 +1,5 @@
 use error::*;
-use projectors::{IndexT, IndexSet};
+use projectors::{IndexSet, IndexT};
 use std::collections::HashMap;
 
 mod simple;
@@ -28,7 +28,9 @@ pub trait Approximator<I: ?Sized> {
 impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
     type Value = T::Value;
 
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> { (**self).evaluate(input) }
+    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
+        (**self).evaluate(input)
+    }
 
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
         (**self).update(input, update)

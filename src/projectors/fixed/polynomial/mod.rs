@@ -1,4 +1,4 @@
-use geometry::{BoundedSpace, RegularSpace, Space, Card, Vector, dimensions::Continuous};
+use geometry::{BoundedSpace, Card, RegularSpace, Space, Vector, dimensions::Continuous};
 use projectors::{Projection, Projector};
 use rand::ThreadRng;
 use utils::cartesian_product;
@@ -45,11 +45,17 @@ impl Polynomial {
 impl Space for Polynomial {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+    fn sample(&self, _rng: &mut ThreadRng) -> Projection {
+        unimplemented!()
+    }
 
-    fn dim(&self) -> usize { self.exponents.len() }
+    fn dim(&self) -> usize {
+        self.exponents.len()
+    }
 
-    fn card(&self) -> Card { Card::Infinite }
+    fn card(&self) -> Card {
+        Card::Infinite
+    }
 }
 
 impl Projector<[f64]> for Polynomial {
@@ -138,11 +144,17 @@ impl Chebyshev {
 impl Space for Chebyshev {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+    fn sample(&self, _rng: &mut ThreadRng) -> Projection {
+        unimplemented!()
+    }
 
-    fn dim(&self) -> usize { self.polynomials.len() }
+    fn dim(&self) -> usize {
+        self.polynomials.len()
+    }
 
-    fn card(&self) -> Card { Card::Infinite }
+    fn card(&self) -> Card {
+        Card::Infinite
+    }
 }
 
 impl Projector<[f64]> for Chebyshev {

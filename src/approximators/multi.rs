@@ -1,10 +1,10 @@
 use approximators::Approximator;
 use error::AdaptError;
-use geometry::{Vector, Matrix};
-use projectors::{Projection, IndexT, IndexSet};
+use geometry::{Matrix, Vector};
+use projectors::{IndexSet, IndexT, Projection};
 use std::collections::HashMap;
 use std::mem::replace;
-use {EvaluationResult, UpdateResult, AdaptResult};
+use {AdaptResult, EvaluationResult, UpdateResult};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Multi {
@@ -24,9 +24,8 @@ impl Multi {
         let n_rows_new = new_rows.len();
 
         // Weight matrix stored in row-major format.
-        let mut weights = unsafe {
-            replace(&mut self.weights, Matrix::uninitialized((0, 0))).into_raw_vec()
-        };
+        let mut weights =
+            unsafe { replace(&mut self.weights, Matrix::uninitialized((0, 0))).into_raw_vec() };
 
         weights.reserve_exact(n_rows_new);
 
@@ -34,7 +33,7 @@ impl Multi {
             weights.extend(row);
         }
 
-        self.weights = Matrix::from_shape_vec((n_rows+n_rows_new, n_cols), weights).unwrap();
+        self.weights = Matrix::from_shape_vec((n_rows + n_rows_new, n_cols), weights).unwrap();
     }
 }
 
@@ -63,7 +62,7 @@ impl Approximator<Projection> for Multi {
                 let error_matrix = errors.view().into_shape((1, self.weights.cols())).unwrap();
 
                 self.weights.scaled_add(1.0 / z, &view.dot(&error_matrix))
-            },
+            }
             &Projection::Sparse(ref sparse) => for c in 0..self.weights.cols() {
                 let mut col = self.weights.column_mut(c);
                 let error = errors[c];
@@ -82,25 +81,30 @@ impl Approximator<Projection> for Multi {
 
         let max_index = self.weights.len() + n_nfs - 1;
 
-        let new_weights: Result<Vec<Vec<f64>>, _> = new_features.into_iter().map(|(&i, idx)| {
-            if i > max_index {
-                Err(AdaptError::Failed)
-            } else {
-                Ok((0..n_outputs).map(|c| {
-                    let c = self.weights.column(c);
+        let new_weights: Result<Vec<Vec<f64>>, _> = new_features
+            .into_iter()
+            .map(|(&i, idx)| {
+                if i > max_index {
+                    Err(AdaptError::Failed)
+                } else {
+                    Ok((0..n_outputs)
+                        .map(|c| {
+                            let c = self.weights.column(c);
 
-                    idx.iter().fold(0.0, |acc, r| acc + c[*r])
-                }).collect())
-            }
-        }).collect();
+                            idx.iter().fold(0.0, |acc, r| acc + c[*r])
+                        })
+                        .collect())
+                }
+            })
+            .collect();
 
         match new_weights {
             Ok(new_weights) => {
                 self.append_weight_rows(new_weights);
 
                 Ok(n_nfs)
-            },
-            Err(err) => Err(err)
+            }
+            Err(err) => Err(err),
         }
     }
 }
@@ -113,7 +117,7 @@ mod tests {
     use approximators::{Approximator, Multi};
     use geometry::Vector;
     use projectors::fixed::{Fourier, TileCoding};
-    use std::collections::{HashMap, BTreeSet};
+    use std::collections::{BTreeSet, HashMap};
     use std::hash::BuildHasherDefault;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -168,9 +172,9 @@ mod tests {
                 let c0 = f.weights.column(0);
                 let c1 = f.weights.column(1);
 
-                assert_eq!(c0[100], c0[10]/2.0 + c0[90]/2.0);
-                assert_eq!(c1[100], c1[10]/2.0 + c1[90]/2.0);
-            },
+                assert_eq!(c0[100], c0[10] / 2.0 + c0[90] / 2.0);
+                assert_eq!(c1[100], c1[10] / 2.0 + c1[90] / 2.0);
+            }
             Err(err) => panic!("Simple::adapt failed with AdaptError::{:?}", err),
         }
     }

@@ -1,9 +1,8 @@
-use geometry::{Matrix, RegularSpace, Space, Card, Vector, dimensions::Partitioned};
+use geometry::{Card, Matrix, RegularSpace, Space, Vector, dimensions::Partitioned};
 use ndarray::Axis;
 use projectors::{Projection, Projector};
 use rand::ThreadRng;
 use utils::cartesian_product;
-
 
 /// Radial basis function network projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -65,15 +64,23 @@ impl RBFNetwork {
 impl Space for RBFNetwork {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection { unimplemented!() }
+    fn sample(&self, _rng: &mut ThreadRng) -> Projection {
+        unimplemented!()
+    }
 
-    fn dim(&self) -> usize { self.mu.rows() }
+    fn dim(&self) -> usize {
+        self.mu.rows()
+    }
 
-    fn card(&self) -> Card { Card::Infinite }
+    fn card(&self) -> Card {
+        Card::Infinite
+    }
 }
 
 impl Projector<[f64]> for RBFNetwork {
-    fn project(&self, input: &[f64]) -> Projection { Projection::Dense(self.kernel(input)) }
+    fn project(&self, input: &[f64]) -> Projection {
+        Projection::Dense(self.kernel(input))
+    }
 }
 
 #[cfg(test)]
@@ -83,7 +90,9 @@ mod tests {
 
     #[test]
     fn test_dimensionality() {
-        fn get_dim(rbf_net: RBFNetwork) -> usize { rbf_net.dim() }
+        fn get_dim(rbf_net: RBFNetwork) -> usize {
+            rbf_net.dim()
+        }
 
         assert_eq!(get_dim(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))), 1);
         assert_eq!(
@@ -102,7 +111,9 @@ mod tests {
 
     #[test]
     fn test_cardinality() {
-        fn get_card(rbf_net: RBFNetwork) -> Card { rbf_net.card() }
+        fn get_card(rbf_net: RBFNetwork) -> Card {
+            rbf_net.card()
+        }
 
         assert_eq!(
             get_card(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))),

@@ -1,4 +1,4 @@
-use geometry::{Space, Card};
+use geometry::{Card, Space};
 use projectors::{Projection, Projector};
 use rand::{ThreadRng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
@@ -17,8 +17,7 @@ fn hash_state<H: Hasher>(
     state: &[usize],
     n_tilings: usize,
     memory_size: usize,
-) -> Vec<usize>
-{
+) -> Vec<usize> {
     let state_len = state.len();
 
     (0..n_tilings)
@@ -58,9 +57,13 @@ impl<H: BuildHasher> Space for TileCoding<H> {
         sample_indices(&mut rng, self.memory_size, self.n_tilings).into()
     }
 
-    fn dim(&self) -> usize { self.memory_size }
+    fn dim(&self) -> usize {
+        self.memory_size
+    }
 
-    fn card(&self) -> Card { unimplemented!() }
+    fn card(&self) -> Card {
+        unimplemented!()
+    }
 }
 
 impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
