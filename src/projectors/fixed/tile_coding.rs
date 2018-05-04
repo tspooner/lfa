@@ -1,7 +1,7 @@
 use geometry::{Space, Card};
+use projectors::{Projection, Projector};
 use rand::{ThreadRng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
-use super::{Projection, Projector};
 
 #[inline]
 fn bin_state(input: &[f64], n_tilings: usize) -> Vec<usize> {

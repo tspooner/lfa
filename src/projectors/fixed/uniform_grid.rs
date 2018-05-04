@@ -1,6 +1,6 @@
 use geometry::{RegularSpace, Space, Card, Surjection, dimensions::Partitioned};
+use projectors::{Projection, Projector};
 use rand::{ThreadRng, seq::sample_indices};
-use super::{Projection, Projector};
 
 
 /// Fixed uniform basis projector.
@@ -78,7 +78,7 @@ mod tests {
             match out {
                 Projection::Sparse(ref idx) => {
                     assert_eq!(idx.len(), 1);
-                    assert_eq!(idx[0], expected_bin);
+                    assert!(idx.contains(&expected_bin));
                 },
                 _ => assert!(false),
             }
@@ -105,7 +105,7 @@ mod tests {
                 match out {
                     Projection::Sparse(ref idx) => {
                         assert_eq!(idx.len(), 1);
-                        assert_eq!(idx[0], expected_bin);
+                        assert!(idx.contains(&expected_bin));
                     },
                     _ => assert!(false),
                 }
@@ -134,7 +134,7 @@ mod tests {
                     match out {
                         Projection::Sparse(ref idx) => {
                             assert_eq!(idx.len(), 1);
-                            assert_eq!(idx[0], expected_bin);
+                            assert!(idx.contains(&expected_bin));
                         },
                         _ => assert!(false),
                     }

@@ -1,7 +1,7 @@
 use geometry::{Matrix, RegularSpace, Space, Card, Vector, dimensions::Partitioned};
 use ndarray::Axis;
+use projectors::{Projection, Projector};
 use rand::ThreadRng;
-use super::{Projection, Projector};
 use utils::cartesian_product;
 
 
