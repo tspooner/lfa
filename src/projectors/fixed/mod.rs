@@ -17,3 +17,6 @@ pub use self::uniform_grid::*;
 
 mod random;
 pub use self::random::*;
+
+mod constant;
+pub use self::constant::*;
