@@ -47,3 +47,41 @@ impl Projector<[f64]> for Constant {
         vec![self.value; self.n_features].into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rand::thread_rng;
+    use super::*;
+
+    #[test]
+    fn test_project() {
+        assert_eq!(Constant::zeros(1).project(&[0.0]), vec![0.0; 1].into());
+        assert_eq!(Constant::zeros(10).project(&[0.0]), vec![0.0; 10].into());
+        assert_eq!(Constant::zeros(100).project(&[0.0]), vec![0.0; 100].into());
+
+        assert_eq!(Constant::ones(1).project(&[0.0]), vec![1.0; 1].into());
+        assert_eq!(Constant::ones(10).project(&[0.0]), vec![1.0; 10].into());
+        assert_eq!(Constant::ones(100).project(&[0.0]), vec![1.0; 100].into());
+
+        assert_eq!(Constant::new(10, -1.5).project(&[0.0]), vec![-1.5; 10].into());
+        assert_eq!(Constant::new(10, 5.6).project(&[0.0]), vec![5.6; 10].into());
+        assert_eq!(Constant::new(10, 123.0).project(&[0.0]), vec![123.0; 10].into());
+    }
+
+    #[test]
+    fn test_sample() {
+        let mut rng = thread_rng();
+
+        assert_eq!(Constant::zeros(1).sample(&mut rng), vec![0.0; 1].into());
+        assert_eq!(Constant::zeros(10).sample(&mut rng), vec![0.0; 10].into());
+        assert_eq!(Constant::zeros(100).sample(&mut rng), vec![0.0; 100].into());
+
+        assert_eq!(Constant::ones(1).sample(&mut rng), vec![1.0; 1].into());
+        assert_eq!(Constant::ones(10).sample(&mut rng), vec![1.0; 10].into());
+        assert_eq!(Constant::ones(100).sample(&mut rng), vec![1.0; 100].into());
+
+        assert_eq!(Constant::new(10, -1.5).sample(&mut rng), vec![-1.5; 10].into());
+        assert_eq!(Constant::new(10, 5.6).sample(&mut rng), vec![5.6; 10].into());
+        assert_eq!(Constant::new(10, 123.0).sample(&mut rng), vec![123.0; 10].into());
+    }
+}
