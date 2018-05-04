@@ -160,8 +160,6 @@ mod tests {
     use super::*;
     use std::hash::BuildHasherDefault;
 
-    type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
-
     #[derive(Clone)]
     struct BaseProjector;
 

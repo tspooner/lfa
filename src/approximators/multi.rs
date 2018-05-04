@@ -18,14 +18,6 @@ impl Multi {
         }
     }
 
-    pub fn assign(&mut self, rhs: &Matrix<f64>) { self.weights.assign(rhs); }
-
-    pub fn assign_cols(&mut self, rhs: &Vector<f64>) {
-        let view = rhs.broadcast(self.weights.dim()).unwrap();
-
-        self.weights.assign(&view);
-    }
-
     fn append_weight_rows(&mut self, new_rows: Vec<Vec<f64>>) {
         let n_cols = self.weights.cols();
         let n_rows = self.weights.rows();
@@ -118,9 +110,10 @@ mod tests {
     extern crate seahash;
 
     use LFA;
-    use approximators::Approximator;
+    use approximators::{Approximator, Multi};
     use geometry::Vector;
     use projectors::fixed::{Fourier, TileCoding};
+    use std::collections::{HashMap, BTreeSet};
     use std::hash::BuildHasherDefault;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -151,5 +144,34 @@ mod tests {
 
         assert!((out[0] - 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_adapt() {
+        let mut f = Multi::new(100, 2);
+
+        let mut new_features = HashMap::new();
+        new_features.insert(100, {
+            let mut idx = BTreeSet::new();
+
+            idx.insert(10);
+            idx.insert(90);
+
+            idx
+        });
+
+        match f.adapt(&new_features) {
+            Ok(n) => {
+                assert_eq!(n, 1);
+                assert_eq!(f.weights.rows(), 101);
+
+                let c0 = f.weights.column(0);
+                let c1 = f.weights.column(1);
+
+                assert_eq!(c0[100], c0[10]/2.0 + c0[90]/2.0);
+                assert_eq!(c1[100], c1[10]/2.0 + c1[90]/2.0);
+            },
+            Err(err) => panic!("Simple::adapt failed with AdaptError::{:?}", err),
+        }
     }
 }

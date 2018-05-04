@@ -18,8 +18,6 @@ impl Simple {
         }
     }
 
-    pub fn assign(&mut self, values: &Vector<f64>) { self.weights.assign(values); }
-
     fn extend_weights(&mut self, new_weights: Vec<f64>) {
         let mut weights = unsafe {
             replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec()
@@ -77,8 +75,9 @@ mod tests {
     extern crate seahash;
 
     use LFA;
-    use approximators::Approximator;
+    use approximators::{Approximator, Simple};
     use projectors::fixed::{Fourier, TileCoding};
+    use std::collections::{HashMap, BTreeSet};
     use std::hash::BuildHasherDefault;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -107,5 +106,29 @@ mod tests {
         let out = f.evaluate(input.as_slice()).unwrap();
 
         assert!((out - 50.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_adapt() {
+        let mut f = Simple::new(100);
+
+        let mut new_features = HashMap::new();
+        new_features.insert(100, {
+            let mut idx = BTreeSet::new();
+
+            idx.insert(10);
+            idx.insert(90);
+
+            idx
+        });
+
+        match f.adapt(&new_features) {
+            Ok(n) => {
+                assert_eq!(n, 1);
+                assert_eq!(f.weights.len(), 101);
+                assert_eq!(f.weights[100], f.weights[10]/2.0 + f.weights[90]/2.0);
+            },
+            Err(err) => panic!("Simple::adapt failed with AdaptError::{:?}", err),
+        }
     }
 }
