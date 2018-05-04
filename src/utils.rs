@@ -23,7 +23,7 @@ pub(crate) fn cartesian_product<T: Clone>(lists: &Vec<Vec<T>>) -> Vec<Vec<T>> {
             rest.iter()
                 .cloned()
                 .fold(init, |vec, list| partial_cartesian(vec, &list))
-        },
+        }
         None => vec![],
     }
 }

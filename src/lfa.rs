@@ -1,6 +1,6 @@
-use approximators::{Approximator, Simple, Multi};
+use approximators::{Approximator, Multi, Simple};
 use error::*;
-use projectors::{Projector, Projection, IndexT, IndexSet};
+use projectors::{IndexSet, IndexT, Projection, Projector};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
@@ -52,7 +52,8 @@ impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> Approximator<I> fo
     }
 
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
-        self.approximator.update(&self.projector.project(input), update)
+        self.approximator
+            .update(&self.projector.project(input), update)
     }
 
     fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {

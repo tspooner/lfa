@@ -1,4 +1,4 @@
-///! Linear basis projection module.
+/// ! Linear basis projection module.
 
 mod rbf_network;
 pub use self::rbf_network::*;

@@ -1,11 +1,10 @@
-use geometry::{Vector, Space, Card};
-use projectors::{IndexT, IndexSet, Feature, CandidateFeature};
-use {Projection, Projector, AdaptiveProjector};
+use geometry::{Card, Space, Vector};
+use projectors::{CandidateFeature, Feature, IndexSet, IndexT};
+use {AdaptiveProjector, Projection, Projector};
 
 use std::collections::HashMap;
 use rand::{Rng, ThreadRng, seq::sample_indices};
 use itertools::Itertools;
-
 
 pub struct IFDD<P: Projector<[f64]>> {
     pub base: P,
@@ -18,14 +17,16 @@ pub struct IFDD<P: Projector<[f64]>> {
 impl<P: Projector<[f64]>> IFDD<P> {
     pub fn new(base_projector: P, discovery_threshold: f64) -> Self {
         let initial_dim: usize = base_projector.dim();
-        let mut base_features: Vec<Feature> = (0..initial_dim).map(|i| Feature {
-            index: i,
-            parent_indices: {
-                let mut index_set = IndexSet::new();
-                index_set.insert(i);
-                index_set
-            },
-        }).collect();
+        let mut base_features: Vec<Feature> = (0..initial_dim)
+            .map(|i| Feature {
+                index: i,
+                parent_indices: {
+                    let mut index_set = IndexSet::new();
+                    index_set.insert(i);
+                    index_set
+                },
+            })
+            .collect();
 
         base_features.reserve(initial_dim);
 
@@ -44,7 +45,8 @@ impl<P: Projector<[f64]>> IFDD<P> {
         let key = self.features[g].union(&self.features[h]);
         let rel = {
             let c = self.candidates
-                .entry(key.clone()).or_insert_with(|| CandidateFeature::new(key.clone()));
+                .entry(key.clone())
+                .or_insert_with(|| CandidateFeature::new(key.clone()));
 
             c.relevance += error.abs();
 
@@ -87,25 +89,29 @@ impl<P: Projector<[f64]>> Space for IFDD<P> {
         sample_indices(&mut rng, d, n).into()
     }
 
-    fn dim(&self) -> usize { self.features.len() }
+    fn dim(&self) -> usize {
+        self.features.len()
+    }
 
-    fn card(&self) -> Card { unimplemented!() }
+    fn card(&self) -> Card {
+        unimplemented!()
+    }
 }
 
 impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
     fn project(&self, input: &[f64]) -> Projection {
         let mut p = self.base.project(input);
-        let np: Vec<usize> = (self.base.dim()..self.dim()).filter_map(|i| {
+        let np: Vec<usize> = (self.base.dim()..self.dim())
+            .filter_map(|i| {
+                let f = &self.features[i];
 
-            let f = &self.features[i];
-
-            if f.parent_indices.iter().all(|i| p[*i].abs() < 1e-7) {
-                Some(i)
-            } else {
-                None
-            }
-
-        }).collect();
+                if f.parent_indices.iter().all(|i| p[*i].abs() < 1e-7) {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
         for i in np.iter() {
             for j in self.features[*i].parent_indices.iter() {
@@ -132,7 +138,7 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
             match self.add_feature(f) {
                 Some(nf) => {
                     acc.get_or_insert_with(HashMap::new).insert(nf.0, nf.1);
-                },
+                }
                 None => (),
             };
 
@@ -151,12 +157,11 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     extern crate seahash;
 
-    use projectors::{fixed::TileCoding, adaptive::IFDD};
+    use projectors::{adaptive::IFDD, fixed::TileCoding};
     use super::*;
     use std::hash::BuildHasherDefault;
 
@@ -166,16 +171,25 @@ mod tests {
     impl Space for BaseProjector {
         type Value = Projection;
 
-        fn sample(&self, _: &mut ThreadRng) -> Projection { unimplemented!() }
+        fn sample(&self, _: &mut ThreadRng) -> Projection {
+            unimplemented!()
+        }
 
-        fn dim(&self) -> usize { 5 }
+        fn dim(&self) -> usize {
+            5
+        }
 
-        fn card(&self) -> Card { unimplemented!() }
+        fn card(&self) -> Card {
+            unimplemented!()
+        }
     }
 
     impl Projector<[f64]> for BaseProjector {
         fn project(&self, input: &[f64]) -> Projection {
-            input.iter().map(|v| v.round().min(4.0).max(0.0) as usize).collect()
+            input
+                .iter()
+                .map(|v| v.round().min(4.0).max(0.0) as usize)
+                .collect()
         }
     }
 
@@ -183,27 +197,39 @@ mod tests {
     fn test_discover() {
         let mut f = IFDD::new(BaseProjector, 10.0);
 
-        assert_eq!(f.discover(&vec![0.0, 4.0], 10.0), Some({
-            let mut hm = HashMap::new();
-            hm.insert(5, [0, 4].iter().cloned().collect());
-            hm
-        }));
-        assert_eq!(f.features[5], Feature {
-            index: 5,
-            parent_indices: [0, 4].iter().cloned().collect(),
-        });
+        assert_eq!(
+            f.discover(&vec![0.0, 4.0], 10.0),
+            Some({
+                let mut hm = HashMap::new();
+                hm.insert(5, [0, 4].iter().cloned().collect());
+                hm
+            })
+        );
+        assert_eq!(
+            f.features[5],
+            Feature {
+                index: 5,
+                parent_indices: [0, 4].iter().cloned().collect(),
+            }
+        );
 
         assert_eq!(f.discover(&vec![0.0, 3.0], 5.0), None);
         assert_eq!(f.features.len(), 6);
 
-        assert_eq!(f.discover(&vec![0.0, 3.0], 5.0), Some({
-            let mut hm = HashMap::new();
-            hm.insert(6, [0, 3].iter().cloned().collect());
-            hm
-        }));
-        assert_eq!(f.features[6], Feature {
-            index: 6,
-            parent_indices: [0, 3].iter().cloned().collect(),
-        });
+        assert_eq!(
+            f.discover(&vec![0.0, 3.0], 5.0),
+            Some({
+                let mut hm = HashMap::new();
+                hm.insert(6, [0, 3].iter().cloned().collect());
+                hm
+            })
+        );
+        assert_eq!(
+            f.features[6],
+            Feature {
+                index: 6,
+                parent_indices: [0, 3].iter().cloned().collect(),
+            }
+        );
     }
 }

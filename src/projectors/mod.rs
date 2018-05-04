@@ -13,7 +13,7 @@ mod projection;
 pub use self::projection::Projection;
 
 mod feature;
-pub use self::feature::{Feature, CandidateFeature};
+pub use self::feature::{CandidateFeature, Feature};
 
 pub mod adaptive;
 pub mod fixed;
@@ -26,7 +26,9 @@ pub trait Projector<I: ?Sized>: Space<Value = Projection> {
 
     /// Project data from an input space onto the basis and convert into a raw,
     /// dense vector.
-    fn project_expanded(&self, input: &I) -> DenseT { self.project(input).expanded(self.dim()) }
+    fn project_expanded(&self, input: &I) -> DenseT {
+        self.project(input).expanded(self.dim())
+    }
 }
 
 /// Trait for projectors with adaptive bases.
@@ -36,7 +38,9 @@ pub trait AdaptiveProjector<I: ?Sized>: Projector<I> {
 }
 
 impl<P: Projector<[f64]>> Projector<Vec<f64>> for P {
-    fn project(&self, input: &Vec<f64>) -> Projection { Projector::<[f64]>::project(self, &input) }
+    fn project(&self, input: &Vec<f64>) -> Projection {
+        Projector::<[f64]>::project(self, &input)
+    }
 }
 
 macro_rules! impl_fixed {

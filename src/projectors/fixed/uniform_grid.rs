@@ -1,7 +1,6 @@
-use geometry::{RegularSpace, Space, Card, Surjection, dimensions::Partitioned};
+use geometry::{Card, RegularSpace, Space, Surjection, dimensions::Partitioned};
 use projectors::{Projection, Projector};
 use rand::{ThreadRng, seq::sample_indices};
-
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -38,13 +37,19 @@ impl Space for UniformGrid {
         sample_indices(&mut rng, self.n_features, 1).into()
     }
 
-    fn dim(&self) -> usize { self.n_features }
+    fn dim(&self) -> usize {
+        self.n_features
+    }
 
-    fn card(&self) -> Card { unimplemented!() }
+    fn card(&self) -> Card {
+        unimplemented!()
+    }
 }
 
 impl Projector<[f64]> for UniformGrid {
-    fn project(&self, input: &[f64]) -> Projection { vec![self.hash(input)].into() }
+    fn project(&self, input: &[f64]) -> Projection {
+        vec![self.hash(input)].into()
+    }
 }
 
 #[cfg(test)]
@@ -79,7 +84,7 @@ mod tests {
                 Projection::Sparse(ref idx) => {
                     assert_eq!(idx.len(), 1);
                     assert!(idx.contains(&expected_bin));
-                },
+                }
                 _ => assert!(false),
             }
 
@@ -106,7 +111,7 @@ mod tests {
                     Projection::Sparse(ref idx) => {
                         assert_eq!(idx.len(), 1);
                         assert!(idx.contains(&expected_bin));
-                    },
+                    }
                     _ => assert!(false),
                 }
 
@@ -135,7 +140,7 @@ mod tests {
                         Projection::Sparse(ref idx) => {
                             assert_eq!(idx.len(), 1);
                             assert!(idx.contains(&expected_bin));
-                        },
+                        }
                         _ => assert!(false),
                     }
 

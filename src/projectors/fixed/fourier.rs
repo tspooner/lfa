@@ -1,4 +1,4 @@
-use geometry::{BoundedSpace, RegularSpace, Space, Card, dimensions::Continuous, norms::l2};
+use geometry::{BoundedSpace, Card, RegularSpace, Space, dimensions::Continuous, norms::l2};
 use projectors::{Projection, Projector};
 use rand::{ThreadRng, distributions::{IndependentSample, Range}};
 use std::f64::consts::PI;
@@ -67,9 +67,13 @@ impl Space for Fourier {
         self.project(&random_input)
     }
 
-    fn dim(&self) -> usize { self.coefficients.len() }
+    fn dim(&self) -> usize {
+        self.coefficients.len()
+    }
 
-    fn card(&self) -> Card { Card::Infinite }
+    fn card(&self) -> Card {
+        Card::Infinite
+    }
 }
 
 impl Projector<[f64]> for Fourier {

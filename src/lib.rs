@@ -1,6 +1,6 @@
-extern crate rand;
-extern crate ndarray;
 extern crate itertools;
+extern crate ndarray;
+extern crate rand;
 
 pub extern crate spaces as geometry;
 
@@ -14,7 +14,7 @@ mod error;
 pub use self::error::*;
 
 pub mod projectors;
-pub use self::projectors::{Projection, Projector, AdaptiveProjector};
+pub use self::projectors::{AdaptiveProjector, Projection, Projector};
 
 pub mod approximators;
 pub use self::approximators::Approximator;
