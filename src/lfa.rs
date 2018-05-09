@@ -4,6 +4,7 @@ use projectors::{IndexSet, IndexT, Projection, Projector};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct LFA<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
     pub projector: P,
     pub approximator: A,
