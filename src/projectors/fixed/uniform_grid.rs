@@ -1,6 +1,6 @@
 use geometry::{Card, RegularSpace, Space, Surjection, dimensions::Partitioned};
 use projectors::{Projection, Projector};
-use rand::{ThreadRng, seq::sample_indices};
+use rand::{Rng, seq::sample_indices};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
@@ -33,7 +33,7 @@ impl UniformGrid {
 impl Space for UniformGrid {
     type Value = Projection;
 
-    fn sample(&self, mut rng: &mut ThreadRng) -> Projection {
+    fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> Projection {
         sample_indices(&mut rng, self.n_features, 1).into()
     }
 

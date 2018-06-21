@@ -1,6 +1,6 @@
 use geometry::{BoundedSpace, Card, RegularSpace, Space, Vector, dimensions::Continuous};
 use projectors::{Projection, Projector};
-use rand::ThreadRng;
+use rand::Rng;
 use utils::cartesian_product;
 
 mod cpfk;
@@ -45,7 +45,7 @@ impl Polynomial {
 impl Space for Polynomial {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection {
+    fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> Projection {
         unimplemented!()
     }
 
@@ -144,7 +144,7 @@ impl Chebyshev {
 impl Space for Chebyshev {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection {
+    fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> Projection {
         unimplemented!()
     }
 

@@ -1,7 +1,7 @@
 use geometry::{Card, Matrix, RegularSpace, Space, Vector, dimensions::Partitioned};
 use ndarray::Axis;
 use projectors::{Projection, Projector};
-use rand::ThreadRng;
+use rand::Rng;
 use utils::cartesian_product;
 
 /// Radial basis function network projector.
@@ -64,7 +64,7 @@ impl RBFNetwork {
 impl Space for RBFNetwork {
     type Value = Projection;
 
-    fn sample(&self, _rng: &mut ThreadRng) -> Projection {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
         unimplemented!()
     }
 

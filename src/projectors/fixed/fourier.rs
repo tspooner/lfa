@@ -1,6 +1,6 @@
 use geometry::{BoundedSpace, Card, RegularSpace, Space, dimensions::Continuous, norms::l2};
 use projectors::{Projection, Projector};
-use rand::{ThreadRng, distributions::{IndependentSample, Range}};
+use rand::{Rng, distributions::{Distribution, Range}};
 use std::f64::consts::PI;
 use utils::cartesian_product;
 
@@ -58,10 +58,10 @@ impl Fourier {
 impl Space for Fourier {
     type Value = Projection;
 
-    fn sample(&self, rng: &mut ThreadRng) -> Projection {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
         let random_input: Vec<f64> = self.limits
             .iter()
-            .map(|&(ll, ul)| Range::new(ll, ul).ind_sample(rng))
+            .map(|&(ll, ul)| Range::new(ll, ul).sample(rng))
             .collect();
 
         self.project(&random_input)

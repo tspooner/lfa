@@ -1,6 +1,6 @@
 use geometry::{Space, Card};
 use projectors::{Projector, Projection};
-use rand::ThreadRng;
+use rand::Rng;
 use std::marker::PhantomData;
 
 pub struct Shift<I: ?Sized, P: Projector<I>> {
@@ -24,16 +24,16 @@ impl<I: ?Sized, P: Projector<I>> Shift<I, P> {
 impl<I: ?Sized, P: Projector<I>> Space for Shift<I, P> {
     type Value = Projection;
 
-    fn sample(&self, rng: &mut ThreadRng) -> Projection {
-        Projection::Dense(self.projector.sample(rng).expanded(self.dim()) + self.offset)
-    }
-
     fn dim(&self) -> usize {
         self.projector.dim()
     }
 
     fn card(&self) -> Card {
         self.projector.card()
+    }
+
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
+        Projection::Dense(self.projector.sample(rng).expanded(self.dim()) + self.offset)
     }
 }
 

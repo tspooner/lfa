@@ -1,15 +1,15 @@
 use geometry::{Card, Space};
 use projectors::{Projection, Projector};
-use rand::{ThreadRng, thread_rng, distributions::{self as dists, IndependentSample}};
+use rand::{Rng, thread_rng, distributions::{self as dists, Distribution}};
 
 /// Fixed uniform basis projector.
 #[derive(Clone)]
-pub struct Random<D: IndependentSample<f64>> {
+pub struct Random<D: Distribution<f64>> {
     n_features: usize,
     distribution: D,
 }
 
-impl<D: IndependentSample<f64>> Random<D> {
+impl<D: Distribution<f64>> Random<D> {
     pub fn new(n_features: usize, distribution: D) -> Self {
         Random {
             n_features: n_features,
@@ -42,11 +42,11 @@ impl Random<dists::Range<f64>> {
     }
 }
 
-impl<D: IndependentSample<f64>> Space for Random<D> {
+impl<D: Distribution<f64>> Space for Random<D> {
     type Value = Projection;
 
-    fn sample(&self, rng: &mut ThreadRng) -> Projection {
-        (0..self.n_features).into_iter().map(|_| self.distribution.ind_sample(rng)).collect()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
+        (0..self.n_features).into_iter().map(|_| self.distribution.sample(rng)).collect()
     }
 
     fn dim(&self) -> usize {
@@ -58,7 +58,7 @@ impl<D: IndependentSample<f64>> Space for Random<D> {
     }
 }
 
-impl<D: IndependentSample<f64>> Projector<[f64]> for Random<D> {
+impl<D: Distribution<f64>> Projector<[f64]> for Random<D> {
     fn project(&self, _: &[f64]) -> Projection {
         self.sample(&mut thread_rng())
     }
