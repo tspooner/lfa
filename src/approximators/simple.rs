@@ -83,10 +83,10 @@ mod tests {
     extern crate seahash;
 
     use LFA;
-    use approximators::{Approximator, Simple};
+    use approximators::Simple;
+    use core::Approximator;
     use projectors::fixed::{Fourier, TileCoding};
-    use std::collections::{BTreeSet, HashMap};
-    use std::hash::BuildHasherDefault;
+    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 

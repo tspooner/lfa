@@ -118,11 +118,11 @@ mod tests {
     extern crate seahash;
 
     use LFA;
-    use approximators::{Approximator, Multi};
+    use approximators::Multi;
+    use core::Approximator;
     use geometry::Vector;
     use projectors::fixed::{Fourier, TileCoding};
-    use std::collections::{BTreeSet, HashMap};
-    use std::hash::BuildHasherDefault;
+    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
