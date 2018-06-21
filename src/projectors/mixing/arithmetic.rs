@@ -1,6 +1,6 @@
 use geometry::{Space, Card, norms::l1};
 use projectors::{Projector, Projection};
-use rand::ThreadRng;
+use rand::Rng;
 use std::marker::PhantomData;
 
 pub struct Sum<I: ?Sized, P1: Projector<I>, P2: Projector<I>> {
@@ -28,16 +28,16 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Sum<I, P1, P2> {
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Sum<I, P1, P2> {
     type Value = Projection;
 
-    fn sample(&self, _: &mut ThreadRng) -> Projection {
-        unimplemented!()
-    }
-
     fn dim(&self) -> usize {
         self.p1.dim().max(self.p2.dim())
     }
 
     fn card(&self) -> Card {
         self.p1.card() * self.p2.card()
+    }
+
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
+        unimplemented!()
     }
 }
 
@@ -87,15 +87,15 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Product<I, P1, P2> {
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Product<I, P1, P2> {
     type Value = Projection;
 
-    fn sample(&self, _: &mut ThreadRng) -> Projection {
-        unimplemented!()
-    }
-
     fn dim(&self) -> usize {
         self.p1.dim()
     }
 
     fn card(&self) -> Card { unimplemented!() }
+
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
+        unimplemented!()
+    }
 }
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<I, P1, P2> {

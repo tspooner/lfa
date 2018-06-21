@@ -1,6 +1,6 @@
 use geometry::{Card, Space};
 use projectors::{Projection, Projector};
-use rand::{ThreadRng};
+use rand::Rng;
 
 /// Fixed uniform basis projector.
 #[derive(Clone)]
@@ -29,7 +29,7 @@ impl Constant {
 impl Space for Constant {
     type Value = Projection;
 
-    fn sample(&self, _: &mut ThreadRng) -> Projection {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
         vec![self.value; self.n_features].into()
     }
 

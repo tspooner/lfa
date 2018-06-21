@@ -3,7 +3,7 @@ use projectors::{CandidateFeature, Feature, IndexSet, IndexT};
 use {AdaptiveProjector, Projection, Projector};
 
 use std::collections::HashMap;
-use rand::{Rng, ThreadRng, seq::sample_indices};
+use rand::{Rng, seq::sample_indices};
 use itertools::Itertools;
 
 pub struct IFDD<P: Projector<[f64]>> {
@@ -82,7 +82,7 @@ impl<P: Projector<[f64]>> IFDD<P> {
 impl<P: Projector<[f64]>> Space for IFDD<P> {
     type Value = Projection;
 
-    fn sample(&self, mut rng: &mut ThreadRng) -> Projection {
+    fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> Projection {
         let d = self.dim();
         let n = rng.gen_range(1, d);
 
@@ -171,7 +171,7 @@ mod tests {
     impl Space for BaseProjector {
         type Value = Projection;
 
-        fn sample(&self, _: &mut ThreadRng) -> Projection {
+        fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
             unimplemented!()
         }
 
