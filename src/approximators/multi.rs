@@ -1,10 +1,8 @@
-use core::Approximator;
-use error::AdaptError;
+use core::{Approximator, Parameterised};
+use error::{AdaptError, AdaptResult, EvaluationResult, UpdateResult};
 use geometry::{Matrix, Vector};
 use projectors::{IndexSet, IndexT, Projection};
-use std::collections::HashMap;
-use std::mem::replace;
-use {AdaptResult, EvaluationResult, UpdateResult};
+use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Multi {
@@ -106,6 +104,12 @@ impl Approximator<Projection> for Multi {
             }
             Err(err) => Err(err),
         }
+    }
+}
+
+impl Parameterised for Multi {
+    fn weights(&self) -> Matrix<f64> {
+        self.weights.clone()
     }
 }
 

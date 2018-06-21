@@ -1,9 +1,9 @@
 use approximators::{Multi, Simple};
-use core::Approximator;
+use core::{Approximator, Parameterised};
 use error::*;
+use geometry::Matrix;
 use projectors::{IndexSet, IndexT, Projection, Projector};
-use std::collections::HashMap;
-use std::marker::PhantomData;
+use std::{collections::HashMap, marker::PhantomData};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LFA<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
@@ -60,5 +60,16 @@ impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> Approximator<I> fo
 
     fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
         self.approximator.adapt(new_features)
+    }
+}
+
+impl<I, P, A> Parameterised for LFA<I, P, A>
+where
+    I: ?Sized,
+    P: Projector<I>,
+    A: Approximator<Projection> + Parameterised,
+{
+    fn weights(&self) -> Matrix<f64> {
+        self.approximator.weights()
     }
 }

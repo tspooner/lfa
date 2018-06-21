@@ -1,10 +1,8 @@
-use core::Approximator;
-use error::AdaptError;
-use geometry::Vector;
+use core::{Approximator, Parameterised};
+use error::{AdaptError, AdaptResult, EvaluationResult, UpdateResult};
+use geometry::{Matrix, Vector};
 use projectors::{IndexSet, IndexT, Projection};
-use std::collections::HashMap;
-use std::mem::replace;
-use {AdaptResult, EvaluationResult, UpdateResult};
+use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Simple {
@@ -69,6 +67,14 @@ impl Approximator<Projection> for Simple {
         self.extend_weights(new_weights?);
 
         Ok(n_nfs)
+    }
+}
+
+impl Parameterised for Simple {
+    fn weights(&self) -> Matrix<f64> {
+        let n_rows = self.weights.len();
+
+        self.weights.clone().into_shape((n_rows, 1)).unwrap()
     }
 }
 
