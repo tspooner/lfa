@@ -1,10 +1,8 @@
-use approximators::Approximator;
-use error::AdaptError;
+use core::{Approximator, Parameterised};
+use error::{AdaptError, AdaptResult, EvaluationResult, UpdateResult};
 use geometry::{Matrix, Vector};
 use projectors::{IndexSet, IndexT, Projection};
-use std::collections::HashMap;
-use std::mem::replace;
-use {AdaptResult, EvaluationResult, UpdateResult};
+use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Multi {
@@ -109,16 +107,22 @@ impl Approximator<Projection> for Multi {
     }
 }
 
+impl Parameterised for Multi {
+    fn weights(&self) -> Matrix<f64> {
+        self.weights.clone()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     extern crate seahash;
 
     use LFA;
-    use approximators::{Approximator, Multi};
+    use approximators::Multi;
+    use core::Approximator;
     use geometry::Vector;
     use projectors::fixed::{Fourier, TileCoding};
-    use std::collections::{BTreeSet, HashMap};
-    use std::hash::BuildHasherDefault;
+    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 

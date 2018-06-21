@@ -9,15 +9,15 @@ extern crate serde;
 extern crate serde_derive;
 
 mod utils;
-
 mod error;
 pub use self::error::*;
 
-pub mod projectors;
-pub use self::projectors::{AdaptiveProjector, Projection, Projector};
+pub mod core;
+pub use self::core::*;
 
 pub mod approximators;
-pub use self::approximators::Approximator;
+pub mod projectors;
+pub use self::projectors::{AdaptiveProjector, Projection, Projector};
 
 mod lfa;
 pub use self::lfa::LFA;
