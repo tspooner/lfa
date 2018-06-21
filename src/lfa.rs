@@ -1,4 +1,5 @@
-use approximators::{Approximator, Multi, Simple};
+use approximators::{Multi, Simple};
+use core::Approximator;
 use error::*;
 use projectors::{IndexSet, IndexT, Projection, Projector};
 use std::collections::HashMap;

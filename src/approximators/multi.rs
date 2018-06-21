@@ -1,4 +1,4 @@
-use approximators::Approximator;
+use core::Approximator;
 use error::AdaptError;
 use geometry::{Matrix, Vector};
 use projectors::{IndexSet, IndexT, Projection};
