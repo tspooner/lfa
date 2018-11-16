@@ -1,8 +1,8 @@
+use super::{ActivationT, DenseT, IndexSet, IndexT, SparseT};
 use geometry::Vector;
 use ndarray::{stack, Axis};
 use std::iter::FromIterator;
 use std::ops::{Add, Index};
-use super::{ActivationT, DenseT, IndexSet, IndexT, SparseT};
 
 /// Projected feature vector representation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,7 +23,7 @@ impl Projection {
             &mut Dense(ref mut activations) => activations[idx] = 0.0,
             &mut Sparse(ref mut active_indices) => {
                 active_indices.remove(&idx);
-            }
+            },
         }
     }
 
@@ -79,7 +79,7 @@ impl Add<Projection> for Projection {
             (Sparse(idx1), Sparse(idx2)) => Sparse(idx1.union(&idx2).cloned().collect()),
             (Dense(act1), Dense(act2)) => {
                 Dense(stack(Axis(0), &[act1.view(), act2.view()]).unwrap())
-            }
+            },
 
             _ => unimplemented!(
                 "Cannot combine dense/sparse with no knowledge of the full \
@@ -95,10 +95,12 @@ impl Index<usize> for Projection {
     fn index(&self, idx: usize) -> &f64 {
         match self {
             &Projection::Dense(ref activations) => activations.index(idx),
-            &Projection::Sparse(ref active_indices) => if idx < active_indices.len() {
-                &1.0
-            } else {
-                &0.0
+            &Projection::Sparse(ref active_indices) => {
+                if idx < active_indices.len() {
+                    &1.0
+                } else {
+                    &0.0
+                }
             },
         }
     }
@@ -121,15 +123,11 @@ impl PartialEq<Projection> for Projection {
 }
 
 impl Into<Projection> for DenseT {
-    fn into(self) -> Projection {
-        Projection::Dense(self)
-    }
+    fn into(self) -> Projection { Projection::Dense(self) }
 }
 
 impl Into<Projection> for Vec<ActivationT> {
-    fn into(self) -> Projection {
-        Projection::Dense(Vector::from_vec(self))
-    }
+    fn into(self) -> Projection { Projection::Dense(Vector::from_vec(self)) }
 }
 
 impl FromIterator<ActivationT> for Projection {
@@ -139,15 +137,11 @@ impl FromIterator<ActivationT> for Projection {
 }
 
 impl Into<Projection> for SparseT {
-    fn into(self) -> Projection {
-        Projection::Sparse(self)
-    }
+    fn into(self) -> Projection { Projection::Sparse(self) }
 }
 
 impl Into<Projection> for Vec<IndexT> {
-    fn into(self) -> Projection {
-        Projection::from_iter(self.into_iter())
-    }
+    fn into(self) -> Projection { Projection::from_iter(self.into_iter()) }
 }
 
 impl FromIterator<IndexT> for Projection {
