@@ -8,12 +8,11 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
+mod macros;
 mod utils;
-mod error;
-pub use self::error::*;
 
-pub mod core;
-pub use self::core::*;
+import_all!(error);
+import_all!(core);
 
 pub mod approximators;
 pub mod projectors;

@@ -1,22 +1,9 @@
 /// ! Linear basis projection module.
 
-mod rbf_network;
-pub use self::rbf_network::*;
-
-mod fourier;
-pub use self::fourier::*;
-
-mod polynomial;
-pub use self::polynomial::*;
-
-mod tile_coding;
-pub use self::tile_coding::*;
-
-mod uniform_grid;
-pub use self::uniform_grid::*;
-
-mod random;
-pub use self::random::*;
-
-mod constant;
-pub use self::constant::*;
+import_all!(rbf_network);
+import_all!(fourier);
+import_all!(polynomial);
+import_all!(tile_coding);
+import_all!(uniform_grid);
+import_all!(random);
+import_all!(constant);

@@ -1,5 +1,2 @@
-mod simple;
-pub use self::simple::Simple;
-
-mod multi;
-pub use self::multi::Multi;
+import_all!(simple);
+import_all!(multi);
