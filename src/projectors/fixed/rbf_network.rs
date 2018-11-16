@@ -94,41 +94,28 @@ mod tests {
             rbf_net.dim()
         }
 
-        assert_eq!(get_dim(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))), 1);
-        assert_eq!(
-            get_dim(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
-            3
-        );
-        assert_eq!(
-            get_dim(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
-            10
-        );
-        assert_eq!(
-            get_dim(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
-            100
-        );
+        assert_eq!(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25])).dim(), 1);
+        assert_eq!(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).dim(), 3);
+        assert_eq!(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25])).dim(), 10);
+        assert_eq!(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25])).dim(), 100);
     }
 
     #[test]
     fn test_cardinality() {
-        fn get_card(rbf_net: RBFNetwork) -> Card {
-            rbf_net.card()
-        }
-
         assert_eq!(
-            get_card(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25]))),
+            RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25])).card(),
             Card::Infinite
         );
         assert_eq!(
-            get_card(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]))),
+            RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).card(),
             Card::Infinite
         );
         assert_eq!(
-            get_card(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25]))),
+            RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25])).card(),
             Card::Infinite
         );
         assert_eq!(
-            get_card(RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25]))),
+            RBFNetwork::new(arr2(&vec![[0.0]; 100]), arr1(&[0.25])).card(),
             Card::Infinite
         );
     }
@@ -166,8 +153,7 @@ mod tests {
         let rbf = RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25]));
         let p = rbf.project_expanded(&[0.25]);
 
-        assert!(p.all_close(&arr1(&[0.49546264, 0.49546264, 0.00907471]), 1e-6));
-        assert_eq!(p.iter().fold(0.0, |acc, x| acc + *x), 1.0);
+        assert!(p.all_close(&arr1(&[0.6065307, 0.6065307, 0.0111090]), 1e-6));
     }
 
     #[test]
@@ -178,7 +164,6 @@ mod tests {
         );
         let p = rbf.project_expanded(&[0.67, -7.0]);
 
-        assert!(p.all_close(&arr1(&[0.00829727, 0.64932079, 0.34238193]), 1e-6));
-        assert_eq!(p.iter().fold(0.0, |acc, x| acc + *x), 1.0);
+        assert!(p.all_close(&arr1(&[0.0089491, 0.7003325, 0.369280]), 1e-6));
     }
 }
