@@ -161,9 +161,8 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
 mod tests {
     extern crate seahash;
 
-    use projectors::{adaptive::IFDD, fixed::TileCoding};
+    use projectors::adaptive::IFDD;
     use super::*;
-    use std::hash::BuildHasherDefault;
 
     #[derive(Clone)]
     struct BaseProjector;

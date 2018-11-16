@@ -1,2 +1,2 @@
-import_all!(simple);
-import_all!(multi);
+import_all!(scalar);
+import_all!(vector);

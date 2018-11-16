@@ -1,5 +1,4 @@
-use error::*;
-use geometry::Matrix;
+use core::error::*;
 use projectors::{IndexSet, IndexT};
 use std::collections::HashMap;
 
@@ -33,17 +32,5 @@ impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
 
     fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
         (**self).adapt(new_features)
-    }
-}
-
-/// An interface for approximators parameterised by a set of weights.
-pub trait Parameterised {
-    /// Return a copy of the approximator weights.
-    fn weights(&self) -> Matrix<f64>;
-}
-
-impl<T: Parameterised> Parameterised for Box<T> {
-    fn weights(&self) -> Matrix<f64> {
-        (**self).weights()
     }
 }

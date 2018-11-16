@@ -1,4 +1,4 @@
-use geometry::{BoundedSpace, Card, RegularSpace, Space, dimensions::Continuous, norms::l2};
+use geometry::{BoundedSpace, Card, RegularSpace, Space, dimensions::Continuous};
 use projectors::{Projection, Projector};
 use rand::{Rng, distributions::{Distribution, Range}};
 use std::{
@@ -81,8 +81,8 @@ impl Projector<[f64]> for Fourier {
             .collect::<Vec<f64>>();
 
         Projection::Dense(self.coefficients
-            .iter().enumerate()
-            .map(|(i, cfs)| {
+            .iter()
+            .map(|cfs| {
                 let cx = scaled_state
                     .iter()
                     .zip(cfs)

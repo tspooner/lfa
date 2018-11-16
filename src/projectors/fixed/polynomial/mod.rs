@@ -1,4 +1,4 @@
-use geometry::{BoundedSpace, Card, RegularSpace, Space, Vector, dimensions::Continuous};
+use geometry::{BoundedSpace, Card, RegularSpace, Space, dimensions::Continuous};
 use projectors::{Projection, Projector};
 use rand::Rng;
 use utils::cartesian_product;

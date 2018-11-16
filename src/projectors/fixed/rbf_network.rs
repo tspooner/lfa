@@ -90,10 +90,6 @@ mod tests {
 
     #[test]
     fn test_dimensionality() {
-        fn get_dim(rbf_net: RBFNetwork) -> usize {
-            rbf_net.dim()
-        }
-
         assert_eq!(RBFNetwork::new(arr2(&[[0.0]]), arr1(&[0.25])).dim(), 1);
         assert_eq!(RBFNetwork::new(arr2(&[[0.0], [0.5], [1.0]]), arr1(&[0.25])).dim(), 3);
         assert_eq!(RBFNetwork::new(arr2(&vec![[0.0]; 10]), arr1(&[0.25])).dim(), 10);
