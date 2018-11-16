@@ -1,4 +1,4 @@
-use geometry::{Card, RegularSpace, Space, Surjection, dimensions::Partitioned};
+use geometry::{Card, product::RegularSpace, Space, Surjection, discrete::Partition};
 use projectors::{Projection, Projector};
 use rand::{Rng, seq::sample_indices};
 
@@ -6,11 +6,11 @@ use rand::{Rng, seq::sample_indices};
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UniformGrid {
     n_features: usize,
-    input_space: RegularSpace<Partitioned>,
+    input_space: RegularSpace<Partition>,
 }
 
 impl UniformGrid {
-    pub fn new(input_space: RegularSpace<Partitioned>) -> Self {
+    pub fn new(input_space: RegularSpace<Partition>) -> Self {
         let n_features = input_space.card().into();
 
         UniformGrid {
@@ -59,7 +59,7 @@ mod tests {
 
     #[test]
     fn test_is_sparse() {
-        let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10)]);
+        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10)]);
         let t = UniformGrid::new(ds);
         let out = t.project(&vec![0.0]);
 
@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     fn test_1d() {
-        let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10)]);
+        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10)]);
         let t = UniformGrid::new(ds);
 
         assert_eq!(t.dim(), 10);
@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn test_2d() {
-        let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10); 2]);
+        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10); 2]);
         let t = UniformGrid::new(ds);
 
         assert_eq!(t.dim(), 100);
@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_3d() {
-        let ds = RegularSpace::new(vec![Partitioned::new(0.0, 10.0, 10); 3]);
+        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10); 3]);
         let t = UniformGrid::new(ds);
 
         assert_eq!(t.dim(), 1000);
