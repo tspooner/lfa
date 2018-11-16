@@ -1,4 +1,4 @@
-use geometry::{Vector, norms::l1};
+use geometry::Vector;
 use ndarray::{stack, Axis};
 use std::iter::FromIterator;
 use std::ops::{Add, Index};
@@ -27,16 +27,6 @@ impl Projection {
         }
     }
 
-    /// Compute the l1 normalisation constant of the projection.
-    pub fn z(&self) -> ActivationT {
-        use Projection::*;
-
-        match self {
-            &Dense(ref activations) => l1(activations.as_slice().unwrap()),
-            &Sparse(ref active_indices) => active_indices.len() as ActivationT,
-        }
-    }
-
     /// Return the maximum number of active features in the basis space.
     pub fn activity(&self) -> usize {
         use Projection::*;
@@ -61,10 +51,10 @@ impl Projection {
         }
 
         #[inline]
-        fn expand_sparse(active_indices: SparseT, z: ActivationT, size: usize) -> DenseT {
+        fn expand_sparse(active_indices: SparseT, size: usize) -> DenseT {
             let mut phi = Vector::zeros((size,));
+            let activation = 1.0 / active_indices.len() as f64;
 
-            let activation = 1.0 / z;
             for idx in active_indices.iter() {
                 phi[*idx] = activation;
             }
@@ -72,31 +62,9 @@ impl Projection {
             phi
         }
 
-        match self.z() {
-            z if z.abs() < 1e-6 => match self {
-                Dense(phi) => expand_dense(phi, dim),
-                Sparse(active_indices) => expand_sparse(active_indices, 1.0, dim),
-            },
-            z => match self {
-                Dense(phi) => expand_dense(phi.iter().map(|x| x / z).collect(), dim),
-                Sparse(active_indices) => expand_sparse(active_indices, z, dim),
-            },
-        }
-    }
-}
-
-impl PartialEq<Projection> for Projection {
-    fn eq(&self, rhs: &Projection) -> bool {
-        use Projection::*;
-
-        match (self, rhs) {
-            (&Sparse(ref idx1), &Sparse(ref idx2)) => idx1.eq(&idx2),
-            (&Dense(ref act1), &Dense(ref act2)) => act1.eq(&act2),
-
-            _ => unimplemented!(
-                "Cannot check equality of dense/sparse with no knowledge of the \
-                 full dimensionality of sparse projection."
-            ),
+        match self {
+            Dense(phi) => expand_dense(phi, dim),
+            Sparse(active_indices) => expand_sparse(active_indices, dim),
         }
     }
 }
@@ -132,6 +100,22 @@ impl Index<usize> for Projection {
             } else {
                 &0.0
             },
+        }
+    }
+}
+
+impl PartialEq<Projection> for Projection {
+    fn eq(&self, rhs: &Projection) -> bool {
+        use Projection::*;
+
+        match (self, rhs) {
+            (&Sparse(ref idx1), &Sparse(ref idx2)) => idx1.eq(&idx2),
+            (&Dense(ref act1), &Dense(ref act2)) => act1.eq(&act2),
+
+            _ => unimplemented!(
+                "Cannot check equality of dense/sparse with no knowledge of the \
+                 full dimensionality of sparse projection."
+            ),
         }
     }
 }

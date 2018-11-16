@@ -1,6 +1,6 @@
 use core::{Approximator, Parameterised};
 use error::{AdaptError, AdaptResult, EvaluationResult, UpdateResult};
-use geometry::{Matrix, Vector};
+use geometry::{Matrix, Vector, norms::l1};
 use projectors::{IndexSet, IndexT, Projection};
 use std::{collections::HashMap, mem::replace};
 
@@ -40,31 +40,29 @@ impl Approximator<Projection> for Multi {
 
     fn evaluate(&self, p: &Projection) -> EvaluationResult<Vector<f64>> {
         Ok(match p {
-            &Projection::Dense(ref dense) => self.weights.t().dot(&(dense / p.z())),
+            &Projection::Dense(ref dense) => self.weights.t().dot(dense),
             &Projection::Sparse(ref sparse) => (0..self.weights.cols())
-                .map(|c| {
-                    sparse
-                        .iter()
-                        .fold(0.0, |acc, idx| acc + self.weights[(*idx, c)])
-                })
+                .map(|c| sparse
+                    .iter()
+                    .fold(0.0, |acc, idx| acc + self.weights[(*idx, c)])
+                )
                 .collect(),
         })
     }
 
     fn update(&mut self, p: &Projection, errors: Vector<f64>) -> UpdateResult<()> {
-        let z = p.z();
-
         Ok(match p {
             &Projection::Dense(ref dense) => {
-                let view = dense.view().into_shape((self.weights.rows(), 1)).unwrap();
-                let error_matrix = errors.view().into_shape((1, self.weights.cols())).unwrap();
+                let scaled_errors = errors / l1(dense.as_slice().unwrap());
+                let phi_matrix = dense.view().into_shape((dense.len(), 1)).unwrap();
+                let error_matrix =
+                    scaled_errors.view().into_shape((1, self.weights.cols())).unwrap();
 
-                self.weights.scaled_add(1.0 / z, &view.dot(&error_matrix))
+                self.weights += &phi_matrix.dot(&error_matrix)
             }
             &Projection::Sparse(ref sparse) => for c in 0..self.weights.cols() {
                 let mut col = self.weights.column_mut(c);
-                let error = errors[c];
-                let scaled_error = error / z;
+                let scaled_error = errors[c] / sparse.len() as f64;
 
                 for idx in sparse {
                     col[*idx] += scaled_error
@@ -130,7 +128,6 @@ mod tests {
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
         let mut f = LFA::multi(p, 2);
-
         let input = vec![5.0];
 
         let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
