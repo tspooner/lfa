@@ -1,2 +1,1 @@
-mod ifdd;
-pub use self::ifdd::IFDD;
+import_all!(ifdd);

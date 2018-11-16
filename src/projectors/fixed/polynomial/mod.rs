@@ -67,15 +67,12 @@ impl Projector<[f64]> for Polynomial {
             .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        let activations = self.exponents.iter().map(|exps| {
-            scaled_state
-                .iter()
-                .zip(exps)
-                .map(|(v, e)| v.powi(*e))
-                .product()
-        });
-
-        Projection::Dense(activations.collect())
+        Projection::Dense(self.exponents.iter().map(|exps| scaled_state
+            .iter()
+            .zip(exps)
+            .map(|(v, e)| v.powi(*e))
+            .product()
+        ).collect())
     }
 }
 
@@ -166,10 +163,11 @@ impl Projector<[f64]> for Chebyshev {
             .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        let activations = self.polynomials
+        Projection::Dense(self.polynomials.iter().map(|ps| scaled_state
             .iter()
-            .map(|polys| scaled_state.iter().zip(polys).map(|(v, t)| t(*v)).product());
-
-        Projection::Dense(Vector::from_iter(activations))
+            .zip(ps)
+            .map(|(v, f)| f(*v))
+            .product()
+        ).collect())
     }
 }

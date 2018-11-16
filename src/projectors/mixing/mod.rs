@@ -1,11 +1,4 @@
-mod stack;
-pub use self::stack::Stack;
-
-mod arithmetic;
-pub use self::arithmetic::*;
-
-mod scaling;
-pub use self::scaling::*;
-
-mod shifting;
-pub use self::shifting::*;
+import_all!(stack);
+import_all!(arithmetic);
+import_all!(scaling);
+import_all!(shifting);

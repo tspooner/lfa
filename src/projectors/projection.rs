@@ -1,8 +1,8 @@
-use geometry::{Vector, norms::l1};
+use super::{ActivationT, DenseT, IndexSet, IndexT, SparseT};
+use geometry::Vector;
 use ndarray::{stack, Axis};
 use std::iter::FromIterator;
 use std::ops::{Add, Index};
-use super::{ActivationT, DenseT, IndexSet, IndexT, SparseT};
 
 /// Projected feature vector representation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,17 +23,7 @@ impl Projection {
             &mut Dense(ref mut activations) => activations[idx] = 0.0,
             &mut Sparse(ref mut active_indices) => {
                 active_indices.remove(&idx);
-            }
-        }
-    }
-
-    /// Compute the l1 normalisation constant of the projection.
-    pub fn z(&self) -> ActivationT {
-        use Projection::*;
-
-        match self {
-            &Dense(ref activations) => l1(activations.as_slice().unwrap()),
-            &Sparse(ref active_indices) => active_indices.len() as ActivationT,
+            },
         }
     }
 
@@ -61,10 +51,10 @@ impl Projection {
         }
 
         #[inline]
-        fn expand_sparse(active_indices: SparseT, z: ActivationT, size: usize) -> DenseT {
+        fn expand_sparse(active_indices: SparseT, size: usize) -> DenseT {
             let mut phi = Vector::zeros((size,));
+            let activation = 1.0 / active_indices.len() as f64;
 
-            let activation = 1.0 / z;
             for idx in active_indices.iter() {
                 phi[*idx] = activation;
             }
@@ -72,14 +62,45 @@ impl Projection {
             phi
         }
 
-        match self.z() {
-            z if z.abs() < 1e-6 => match self {
-                Dense(phi) => expand_dense(phi, dim),
-                Sparse(active_indices) => expand_sparse(active_indices, 1.0, dim),
+        match self {
+            Dense(phi) => expand_dense(phi, dim),
+            Sparse(active_indices) => expand_sparse(active_indices, dim),
+        }
+    }
+}
+
+impl Add<Projection> for Projection {
+    type Output = Projection;
+
+    fn add(self, rhs: Projection) -> Projection {
+        use Projection::*;
+
+        match (self, rhs) {
+            (Sparse(idx1), Sparse(idx2)) => Sparse(idx1.union(&idx2).cloned().collect()),
+            (Dense(act1), Dense(act2)) => {
+                Dense(stack(Axis(0), &[act1.view(), act2.view()]).unwrap())
             },
-            z => match self {
-                Dense(phi) => expand_dense(phi.iter().map(|x| x / z).collect(), dim),
-                Sparse(active_indices) => expand_sparse(active_indices, z, dim),
+
+            _ => unimplemented!(
+                "Cannot combine dense/sparse with no knowledge of the full \
+                 dimensionality of sparse projection."
+            ),
+        }
+    }
+}
+
+impl Index<usize> for Projection {
+    type Output = f64;
+
+    fn index(&self, idx: usize) -> &f64 {
+        match self {
+            &Projection::Dense(ref activations) => activations.index(idx),
+            &Projection::Sparse(ref active_indices) => {
+                if idx < active_indices.len() {
+                    &1.0
+                } else {
+                    &0.0
+                }
             },
         }
     }
@@ -101,51 +122,12 @@ impl PartialEq<Projection> for Projection {
     }
 }
 
-impl Add<Projection> for Projection {
-    type Output = Projection;
-
-    fn add(self, rhs: Projection) -> Projection {
-        use Projection::*;
-
-        match (self, rhs) {
-            (Sparse(idx1), Sparse(idx2)) => Sparse(idx1.union(&idx2).cloned().collect()),
-            (Dense(act1), Dense(act2)) => {
-                Dense(stack(Axis(0), &[act1.view(), act2.view()]).unwrap())
-            }
-
-            _ => unimplemented!(
-                "Cannot combine dense/sparse with no knowledge of the full \
-                 dimensionality of sparse projection."
-            ),
-        }
-    }
-}
-
-impl Index<usize> for Projection {
-    type Output = f64;
-
-    fn index(&self, idx: usize) -> &f64 {
-        match self {
-            &Projection::Dense(ref activations) => activations.index(idx),
-            &Projection::Sparse(ref active_indices) => if idx < active_indices.len() {
-                &1.0
-            } else {
-                &0.0
-            },
-        }
-    }
-}
-
 impl Into<Projection> for DenseT {
-    fn into(self) -> Projection {
-        Projection::Dense(self)
-    }
+    fn into(self) -> Projection { Projection::Dense(self) }
 }
 
 impl Into<Projection> for Vec<ActivationT> {
-    fn into(self) -> Projection {
-        Projection::Dense(Vector::from_vec(self))
-    }
+    fn into(self) -> Projection { Projection::Dense(Vector::from_vec(self)) }
 }
 
 impl FromIterator<ActivationT> for Projection {
@@ -155,15 +137,11 @@ impl FromIterator<ActivationT> for Projection {
 }
 
 impl Into<Projection> for SparseT {
-    fn into(self) -> Projection {
-        Projection::Sparse(self)
-    }
+    fn into(self) -> Projection { Projection::Sparse(self) }
 }
 
 impl Into<Projection> for Vec<IndexT> {
-    fn into(self) -> Projection {
-        Projection::from_iter(self.into_iter())
-    }
+    fn into(self) -> Projection { Projection::from_iter(self.into_iter()) }
 }
 
 impl FromIterator<IndexT> for Projection {

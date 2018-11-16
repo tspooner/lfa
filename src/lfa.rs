@@ -69,7 +69,5 @@ where
     P: Projector<I>,
     A: Approximator<Projection> + Parameterised,
 {
-    fn weights(&self) -> Matrix<f64> {
-        self.approximator.weights()
-    }
+    fn weights(&self) -> Matrix<f64> { self.approximator.weights() }
 }

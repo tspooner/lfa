@@ -19,9 +19,7 @@ impl Feature {
 }
 
 impl Hash for Feature {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.index.hash(state);
-    }
+    fn hash<H: Hasher>(&self, state: &mut H) { self.index.hash(state); }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -57,9 +55,7 @@ impl CandidateFeature {
 }
 
 impl Hash for CandidateFeature {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.parent_indices.hash(state);
-    }
+    fn hash<H: Hasher>(&self, state: &mut H) { self.parent_indices.hash(state); }
 }
 
 impl PartialOrd for CandidateFeature {

@@ -1,6 +1,6 @@
 use core::{Approximator, Parameterised};
 use error::{AdaptError, AdaptResult, EvaluationResult, UpdateResult};
-use geometry::{Matrix, Vector};
+use geometry::{Matrix, Vector, norms::l1};
 use projectors::{IndexSet, IndexT, Projection};
 use std::{collections::HashMap, mem::replace};
 
@@ -31,7 +31,7 @@ impl Approximator<Projection> for Simple {
 
     fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> {
         Ok(match p {
-            &Projection::Dense(ref dense) => self.weights.dot(&(dense / p.z())),
+            &Projection::Dense(ref dense) => self.weights.dot(dense),
             &Projection::Sparse(ref sparse) => {
                 sparse.iter().fold(0.0, |acc, idx| acc + self.weights[*idx])
             }
@@ -39,12 +39,18 @@ impl Approximator<Projection> for Simple {
     }
 
     fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {
-        let scaled_error = error / p.z();
-
         Ok(match p {
-            &Projection::Dense(ref dense) => self.weights.scaled_add(scaled_error, dense),
-            &Projection::Sparse(ref sparse) => for idx in sparse {
-                self.weights[*idx] += scaled_error
+            &Projection::Dense(ref dense) => {
+                let scaled_error = error / l1(dense.as_slice().unwrap());
+
+                self.weights.scaled_add(scaled_error, dense)
+            },
+            &Projection::Sparse(ref sparse) => {
+                let scaled_error = error / sparse.len() as f64;
+
+                for idx in sparse {
+                    self.weights[*idx] += scaled_error;
+                }
             },
         })
     }
@@ -94,7 +100,6 @@ mod tests {
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
         let mut f = LFA::simple(p);
-
         let input = vec![5.0];
 
         let _ = f.update(&input, 50.0);
