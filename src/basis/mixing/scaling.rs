@@ -1,4 +1,4 @@
-use basis::{Projector, Projection};
+use core::{Projector, Projection};
 use geometry::{Space, Card};
 use std::marker::PhantomData;
 

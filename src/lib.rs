@@ -14,9 +14,6 @@ mod utils;
 import_all!(core);
 import_all!(lfa);
 
-mod approximators;
-
+pub mod approximators;
 pub mod basis;
 pub mod kernel;
-
-pub use self::basis::{AdaptiveProjector, Projection, Projector};

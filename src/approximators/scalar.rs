@@ -1,4 +1,3 @@
-use basis::{IndexSet, IndexT, Projection};
 use core::*;
 use geometry::{Matrix, Vector, norms::l1};
 use std::{collections::HashMap, mem::replace};

@@ -1,4 +1,4 @@
-use basis::{Projection, Projector};
+use core::{Projector, Projection};
 use geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
 use utils::cartesian_product;
 

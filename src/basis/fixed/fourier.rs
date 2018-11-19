@@ -1,4 +1,4 @@
-use basis::{Projection, Projector};
+use core::{Projector, Projection};
 use geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
 use std::{
     f64::consts::PI,

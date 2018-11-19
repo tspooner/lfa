@@ -1,8 +1,7 @@
-use basis::{CandidateFeature, Feature, IndexSet, IndexT, AdaptiveProjector, Projection, Projector};
+use core::*;
 use geometry::{Card, Space, Vector};
 use itertools::Itertools;
 use std::collections::HashMap;
-
 
 pub struct IFDD<P: Projector<[f64]>> {
     pub base: P,

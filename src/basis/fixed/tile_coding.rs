@@ -1,4 +1,4 @@
-use basis::{Projection, Projector};
+use core::{Projector, Projection};
 use geometry::{Card, Space};
 use std::hash::{BuildHasher, Hasher};
 

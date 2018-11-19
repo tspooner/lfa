@@ -1,8 +1,8 @@
+use core::IndexSet;
 use std::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use super::IndexSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Feature {

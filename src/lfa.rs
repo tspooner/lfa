@@ -1,5 +1,4 @@
 use approximators::*;
-use basis::{IndexSet, IndexT, Projection, Projector};
 use core::*;
 use geometry::{Card, Space, Matrix};
 use std::{collections::HashMap, marker::PhantomData};

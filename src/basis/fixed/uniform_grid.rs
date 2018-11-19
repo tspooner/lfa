@@ -1,4 +1,4 @@
-use basis::{Projection, Projector};
+use core::{Projector, Projection};
 use geometry::{Card, product::LinearSpace, Space, Surjection, discrete::Partition};
 
 /// Fixed uniform basis projector.

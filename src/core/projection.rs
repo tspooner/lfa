@@ -1,8 +1,9 @@
-use super::{ActivationT, DenseT, IndexSet, IndexT, SparseT};
+use core::*;
 use geometry::Vector;
 use ndarray::{stack, Axis};
 use std::iter::FromIterator;
 use std::ops::{Add, Index};
+
 
 /// Projected feature vector representation.
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,5 +1,7 @@
-use basis::{IndexSet, IndexT};
-use core::error::*;
+use core::{
+    IndexSet, IndexT,
+    error::*,
+};
 use std::collections::HashMap;
 
 /// An interface for function approximators.

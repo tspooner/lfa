@@ -1,4 +1,4 @@
-use basis::{Projection, Projector};
+use core::{Projector, Projection};
 use geometry::{Card, Matrix, product::LinearSpace, Space, Vector, discrete::Partition};
 use ndarray::Axis;
 use utils::cartesian_product;

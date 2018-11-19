@@ -1,4 +1,4 @@
-use basis::{Projection, Projector};
+use core::{Projector, Projection};
 use geometry::{Card, Space};
 use rand::{thread_rng, distributions::{self as dists, Distribution}};
 
