@@ -1,8 +1,7 @@
 use basis::{CandidateFeature, Feature, IndexSet, IndexT, AdaptiveProjector, Projection, Projector};
 use geometry::{Card, Space, Vector};
-use std::collections::HashMap;
-use rand::{Rng, seq::sample_indices};
 use itertools::Itertools;
+use std::collections::HashMap;
 
 
 pub struct IFDD<P: Projector<[f64]>> {
@@ -80,13 +79,6 @@ impl<P: Projector<[f64]>> IFDD<P> {
 
 impl<P: Projector<[f64]>> Space for IFDD<P> {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> Projection {
-        let d = self.dim();
-        let n = rng.gen_range(1, d);
-
-        sample_indices(&mut rng, d, n).into()
-    }
 
     fn dim(&self) -> usize {
         self.features.len()
@@ -166,10 +158,6 @@ mod tests {
 
     impl Space for BaseProjector {
         type Value = Projection;
-
-        fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
-            unimplemented!()
-        }
 
         fn dim(&self) -> usize {
             5

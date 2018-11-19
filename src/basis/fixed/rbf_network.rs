@@ -1,7 +1,6 @@
 use basis::{Projection, Projector};
-use geometry::{Card, Matrix, product::RegularSpace, Space, Vector, discrete::Partition};
+use geometry::{Card, Matrix, product::LinearSpace, Space, Vector, discrete::Partition};
 use ndarray::Axis;
-use rand::Rng;
 use utils::cartesian_product;
 
 /// Radial basis function network projector.
@@ -27,7 +26,7 @@ impl RBFNetwork {
         }
     }
 
-    pub fn from_space(input_space: RegularSpace<Partition>) -> Self {
+    pub fn from_space(input_space: LinearSpace<Partition>) -> Self {
         let n_features = match input_space.card() {
             Card::Finite(s) => s,
             _ => panic!("`RBFNetwork` projection only supports partitioned input spaces."),
@@ -63,10 +62,6 @@ impl RBFNetwork {
 
 impl Space for RBFNetwork {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
-        unimplemented!()
-    }
 
     fn dim(&self) -> usize {
         self.mu.rows()

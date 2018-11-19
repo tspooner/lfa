@@ -1,16 +1,15 @@
 use basis::{Projection, Projector};
-use geometry::{Card, product::RegularSpace, Space, Surjection, discrete::Partition};
-use rand::{Rng, seq::sample_indices};
+use geometry::{Card, product::LinearSpace, Space, Surjection, discrete::Partition};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UniformGrid {
     n_features: usize,
-    input_space: RegularSpace<Partition>,
+    input_space: LinearSpace<Partition>,
 }
 
 impl UniformGrid {
-    pub fn new(input_space: RegularSpace<Partition>) -> Self {
+    pub fn new(input_space: LinearSpace<Partition>) -> Self {
         let n_features = input_space.card().into();
 
         UniformGrid {
@@ -32,10 +31,6 @@ impl UniformGrid {
 
 impl Space for UniformGrid {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> Projection {
-        sample_indices(&mut rng, self.n_features, 1).into()
-    }
 
     fn dim(&self) -> usize {
         self.n_features
@@ -59,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_is_sparse() {
-        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10)]);
+        let ds = LinearSpace::new(vec![Partition::new(0.0, 10.0, 10)]);
         let t = UniformGrid::new(ds);
         let out = t.project(&vec![0.0]);
 
@@ -71,7 +66,7 @@ mod tests {
 
     #[test]
     fn test_1d() {
-        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10)]);
+        let ds = LinearSpace::new(vec![Partition::new(0.0, 10.0, 10)]);
         let t = UniformGrid::new(ds);
 
         assert_eq!(t.dim(), 10);
@@ -97,7 +92,7 @@ mod tests {
 
     #[test]
     fn test_2d() {
-        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10); 2]);
+        let ds = LinearSpace::new(vec![Partition::new(0.0, 10.0, 10); 2]);
         let t = UniformGrid::new(ds);
 
         assert_eq!(t.dim(), 100);
@@ -125,7 +120,7 @@ mod tests {
 
     #[test]
     fn test_3d() {
-        let ds = RegularSpace::new(vec![Partition::new(0.0, 10.0, 10); 3]);
+        let ds = LinearSpace::new(vec![Partition::new(0.0, 10.0, 10); 3]);
         let t = UniformGrid::new(ds);
 
         assert_eq!(t.dim(), 1000);

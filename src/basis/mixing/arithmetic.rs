@@ -1,6 +1,5 @@
 use basis::{Projector, Projection};
 use geometry::{Space, Card, norms::l1};
-use rand::Rng;
 use std::marker::PhantomData;
 
 pub struct Sum<I: ?Sized, P1: Projector<I>, P2: Projector<I>> {
@@ -34,10 +33,6 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Sum<I, P1, P2> {
 
     fn card(&self) -> Card {
         self.p1.card() * self.p2.card()
-    }
-
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
-        unimplemented!()
     }
 }
 
@@ -90,10 +85,6 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Product<I, P1, P2>
     }
 
     fn card(&self) -> Card { unimplemented!() }
-
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
-        unimplemented!()
-    }
 }
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<I, P1, P2> {

@@ -2,7 +2,6 @@ use approximators::*;
 use basis::{IndexSet, IndexT, Projection, Projector};
 use core::*;
 use geometry::{Card, Space, Matrix};
-use rand::Rng;
 use std::{collections::HashMap, marker::PhantomData};
 
 /// Linear basis function model.
@@ -43,10 +42,6 @@ impl<I: ?Sized, P: Projector<I>> LBFM<I, P, VectorFunction> {
 
 impl<I, P: Projector<I>, A: Approximator<Projection>> Space for LBFM<I, P, A> {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
-        self.projector.sample(rng)
-    }
 
     fn dim(&self) -> usize {
         self.projector.dim()

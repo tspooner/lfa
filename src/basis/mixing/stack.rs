@@ -1,6 +1,5 @@
 use basis::{Projector, Projection, DenseT};
 use geometry::{Space, Card};
-use rand::Rng;
 use std::marker::PhantomData;
 
 fn stack_projections(p1: Projection, n1: usize, p2: Projection, n2: usize) -> Projection {
@@ -47,12 +46,6 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Stack<I, P1, P2> {
 
     fn card(&self) -> Card {
         self.p1.card() * self.p2.card()
-    }
-
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
-        let (n1, n2) = (self.p1.dim(), self.p2.dim());
-
-        stack_projections(self.p1.sample(rng), n1, self.p2.sample(rng), n2)
     }
 }
 

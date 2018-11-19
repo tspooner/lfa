@@ -1,6 +1,5 @@
 use basis::{Projector, Projection};
 use geometry::{Space, Card};
-use rand::Rng;
 use std::marker::PhantomData;
 
 pub struct Shift<I: ?Sized, P: Projector<I>> {
@@ -30,10 +29,6 @@ impl<I: ?Sized, P: Projector<I>> Space for Shift<I, P> {
 
     fn card(&self) -> Card {
         self.projector.card()
-    }
-
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
-        Projection::Dense(self.projector.sample(rng).expanded(self.dim()) + self.offset)
     }
 }
 
