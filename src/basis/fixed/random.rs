@@ -1,5 +1,5 @@
+use basis::{Projection, Projector};
 use geometry::{Card, Space};
-use projectors::{Projection, Projector};
 use rand::{Rng, thread_rng, distributions::{self as dists, Distribution}};
 
 /// Fixed uniform basis projector.

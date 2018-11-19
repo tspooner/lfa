@@ -1,10 +1,9 @@
+use basis::{CandidateFeature, Feature, IndexSet, IndexT, AdaptiveProjector, Projection, Projector};
 use geometry::{Card, Space, Vector};
-use projectors::{CandidateFeature, Feature, IndexSet, IndexT};
-use {AdaptiveProjector, Projection, Projector};
-
 use std::collections::HashMap;
 use rand::{Rng, seq::sample_indices};
 use itertools::Itertools;
+
 
 pub struct IFDD<P: Projector<[f64]>> {
     pub base: P,
@@ -125,11 +124,9 @@ impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
 
 impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
     fn discover(&mut self, input: &[f64], error: f64) -> Option<HashMap<IndexT, IndexSet>> {
-        use Projection::*;
-
         let new_features = match self.base.project(input) {
-            Sparse(active_indices) => self.discover_sparse(active_indices, error),
-            Dense(activations) => self.discover_dense(activations, error),
+            Projection::Sparse(active_indices) => self.discover_sparse(active_indices, error),
+            Projection::Dense(activations) => self.discover_dense(activations, error),
         };
 
         self.features.reserve_exact(new_features.len());
@@ -161,7 +158,7 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
 mod tests {
     extern crate seahash;
 
-    use projectors::adaptive::IFDD;
+    use basis::adaptive::IFDD;
     use super::*;
 
     #[derive(Clone)]

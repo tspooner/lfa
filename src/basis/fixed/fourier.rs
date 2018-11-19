@@ -1,5 +1,5 @@
-use geometry::{BoundedSpace, Card, RegularSpace, Space, dimensions::Continuous};
-use projectors::{Projection, Projector};
+use basis::{Projection, Projector};
+use geometry::{BoundedSpace, Card, product::RegularSpace, Space, continuous::Interval};
 use rand::{Rng, distributions::{Distribution, Range}};
 use std::{
     f64::consts::PI,
@@ -32,10 +32,10 @@ impl Fourier {
         }
     }
 
-    pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
+    pub fn from_space(order: u8, input_space: RegularSpace<Interval>) -> Self {
         Fourier::new(
             order,
-            input_space.iter().map(|d| (*d.lb(), *d.ub())).collect(),
+            input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
         )
     }
 

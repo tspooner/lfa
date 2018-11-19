@@ -1,22 +1,20 @@
+use basis::{Projector, Projection, DenseT};
 use geometry::{Space, Card};
-use projectors::{Projector, Projection, DenseT};
 use rand::Rng;
 use std::marker::PhantomData;
 
 fn stack_projections(p1: Projection, n1: usize, p2: Projection, n2: usize) -> Projection {
-    use Projection::*;
-
     match (p1, p2) {
-        (Sparse(mut p1_indices), Sparse(p2_indices)) => {
+        (Projection::Sparse(mut p1_indices), Projection::Sparse(p2_indices)) => {
             p2_indices.iter().for_each(|&i| { p1_indices.insert(i+n1); });
 
-            Sparse(p1_indices)
+            Projection::Sparse(p1_indices)
         },
         (p1, p2) => {
             let mut all_activations = p1.expanded(n1).to_vec();
             all_activations.extend_from_slice(p2.expanded(n2).as_slice().unwrap());
 
-            Dense(DenseT::from_vec(all_activations))
+            Projection::Dense(DenseT::from_vec(all_activations))
         },
     }
 }

@@ -1,6 +1,6 @@
+use basis::{IndexSet, IndexT, Projection};
 use core::*;
 use geometry::{Matrix, Vector, norms::l1};
-use projectors::{IndexSet, IndexT, Projection};
 use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -115,10 +115,10 @@ mod tests {
     extern crate seahash;
 
     use approximators::VectorFunction;
+    use basis::fixed::{Fourier, TileCoding};
     use core::Approximator;
     use geometry::Vector;
     use models::LBFM;
-    use projectors::fixed::{Fourier, TileCoding};
     use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;

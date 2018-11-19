@@ -1,5 +1,5 @@
-use geometry::{BoundedSpace, Card, RegularSpace, Space, dimensions::Continuous};
-use projectors::{Projection, Projector};
+use basis::{Projection, Projector};
+use geometry::{BoundedSpace, Card, product::RegularSpace, Space, continuous::Interval};
 use rand::Rng;
 use utils::cartesian_product;
 
@@ -24,10 +24,10 @@ impl Polynomial {
         }
     }
 
-    pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
+    pub fn from_space(order: u8, input_space: RegularSpace<Interval>) -> Self {
         Polynomial::new(
             order,
-            input_space.iter().map(|d| (*d.lb(), *d.ub())).collect(),
+            input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
         )
     }
 
@@ -99,10 +99,10 @@ impl Chebyshev {
         }
     }
 
-    pub fn from_space(order: u8, input_space: RegularSpace<Continuous>) -> Self {
+    pub fn from_space(order: u8, input_space: RegularSpace<Interval>) -> Self {
         Chebyshev::new(
             order,
-            input_space.iter().map(|d| (*d.lb(), *d.ub())).collect(),
+            input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
         )
     }
 

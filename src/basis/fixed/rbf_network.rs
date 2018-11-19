@@ -1,6 +1,6 @@
-use geometry::{Card, Matrix, RegularSpace, Space, Vector, dimensions::Partitioned};
+use basis::{Projection, Projector};
+use geometry::{Card, Matrix, product::RegularSpace, Space, Vector, discrete::Partition};
 use ndarray::Axis;
-use projectors::{Projection, Projector};
 use rand::Rng;
 use utils::cartesian_product;
 
@@ -27,7 +27,7 @@ impl RBFNetwork {
         }
     }
 
-    pub fn from_space(input_space: RegularSpace<Partitioned>) -> Self {
+    pub fn from_space(input_space: RegularSpace<Partition>) -> Self {
         let n_features = match input_space.card() {
             Card::Finite(s) => s,
             _ => panic!("`RBFNetwork` projection only supports partitioned input spaces."),

@@ -17,11 +17,9 @@ pub enum Projection {
 impl Projection {
     /// Remove/set to zero one feature entry of the projection.
     pub fn remove(&mut self, idx: usize) {
-        use Projection::*;
-
         match self {
-            &mut Dense(ref mut activations) => activations[idx] = 0.0,
-            &mut Sparse(ref mut active_indices) => {
+            &mut Projection::Dense(ref mut activations) => activations[idx] = 0.0,
+            &mut Projection::Sparse(ref mut active_indices) => {
                 active_indices.remove(&idx);
             },
         }
@@ -29,19 +27,15 @@ impl Projection {
 
     /// Return the maximum number of active features in the basis space.
     pub fn activity(&self) -> usize {
-        use Projection::*;
-
         match self {
-            &Dense(ref activations) => activations.len(),
-            &Sparse(ref active_indices) => active_indices.len(),
+            &Projection::Dense(ref activations) => activations.len(),
+            &Projection::Sparse(ref active_indices) => active_indices.len(),
         }
     }
 
     /// Expand and normalise a given projection, and convert into a raw, dense
     /// vector.
     pub fn expanded(self, dim: usize) -> DenseT {
-        use Projection::*;
-
         #[inline]
         fn expand_dense(phi: DenseT, size: usize) -> DenseT {
             let mut phi = phi.to_vec();
@@ -63,8 +57,8 @@ impl Projection {
         }
 
         match self {
-            Dense(phi) => expand_dense(phi, dim),
-            Sparse(active_indices) => expand_sparse(active_indices, dim),
+            Projection::Dense(phi) => expand_dense(phi, dim),
+            Projection::Sparse(active_indices) => expand_sparse(active_indices, dim),
         }
     }
 }
@@ -73,12 +67,11 @@ impl Add<Projection> for Projection {
     type Output = Projection;
 
     fn add(self, rhs: Projection) -> Projection {
-        use Projection::*;
-
         match (self, rhs) {
-            (Sparse(idx1), Sparse(idx2)) => Sparse(idx1.union(&idx2).cloned().collect()),
-            (Dense(act1), Dense(act2)) => {
-                Dense(stack(Axis(0), &[act1.view(), act2.view()]).unwrap())
+            (Projection::Sparse(idx1), Projection::Sparse(idx2)) =>
+                Projection::Sparse(idx1.union(&idx2).cloned().collect()),
+            (Projection::Dense(act1), Projection::Dense(act2)) => {
+                Projection::Dense(stack(Axis(0), &[act1.view(), act2.view()]).unwrap())
             },
 
             _ => unimplemented!(
@@ -108,11 +101,9 @@ impl Index<usize> for Projection {
 
 impl PartialEq<Projection> for Projection {
     fn eq(&self, rhs: &Projection) -> bool {
-        use Projection::*;
-
         match (self, rhs) {
-            (&Sparse(ref idx1), &Sparse(ref idx2)) => idx1.eq(&idx2),
-            (&Dense(ref act1), &Dense(ref act2)) => act1.eq(&act2),
+            (&Projection::Sparse(ref idx1), &Projection::Sparse(ref idx2)) => idx1.eq(&idx2),
+            (&Projection::Dense(ref act1), &Projection::Dense(ref act2)) => act1.eq(&act2),
 
             _ => unimplemented!(
                 "Cannot check equality of dense/sparse with no knowledge of the \

@@ -1,5 +1,5 @@
+use basis::{Projection, Projector};
 use geometry::{Card, Space};
-use projectors::{Projection, Projector};
 use rand::{Rng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
 

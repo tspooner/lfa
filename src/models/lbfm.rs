@@ -1,10 +1,11 @@
 use approximators::*;
+use basis::{IndexSet, IndexT, Projection, Projector};
 use core::*;
-use geometry::Matrix;
-use projectors::{IndexSet, IndexT, Projection, Projector};
+use geometry::{Card, Space, Matrix};
+use rand::Rng;
 use std::{collections::HashMap, marker::PhantomData};
 
-/// Linear Basis Function Model
+/// Linear basis function model.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LBFM<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
     pub projector: P,
@@ -14,7 +15,7 @@ pub struct LBFM<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
 }
 
 impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> LBFM<I, P, A> {
-    fn new(projector: P, approximator: A) -> Self {
+    pub fn new(projector: P, approximator: A) -> Self {
         LBFM {
             projector: projector,
             approximator: approximator,
@@ -40,16 +41,41 @@ impl<I: ?Sized, P: Projector<I>> LBFM<I, P, VectorFunction> {
     }
 }
 
+impl<I, P: Projector<I>, A: Approximator<Projection>> Space for LBFM<I, P, A> {
+    type Value = Projection;
+
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
+        self.projector.sample(rng)
+    }
+
+    fn dim(&self) -> usize {
+        self.projector.dim()
+    }
+
+    fn card(&self) -> Card {
+        self.projector.card()
+    }
+}
+
+impl<I, P: Projector<I>, A: Approximator<Projection>> Projector<I> for LBFM<I, P, A> {
+    fn project(&self, input: &I) -> Projection {
+        self.projector.project(input)
+    }
+}
+
 impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> Approximator<I> for LBFM<I, P, A> {
     type Value = A::Value;
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
-        self.approximator.evaluate(&self.projector.project(input))
+        let primal = self.projector.project(input);
+
+        self.approximator.evaluate(&primal)
     }
 
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
-        self.approximator
-            .update(&self.projector.project(input), update)
+        let primal = self.projector.project(input);
+
+        self.approximator.update(&primal, update)
     }
 
     fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {

@@ -1,5 +1,5 @@
+use basis::{Projector, Projection};
 use geometry::{Space, Card};
-use projectors::{Projector, Projection};
 use rand::Rng;
 use std::marker::PhantomData;
 
