@@ -87,10 +87,10 @@ impl Parameterised for ScalarFunction {
 mod tests {
     extern crate seahash;
 
+    use ::LFA;
     use approximators::ScalarFunction;
     use basis::fixed::{Fourier, TileCoding};
     use core::Approximator;
-    use models::LBFM;
     use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LBFM::scalar_valued(p);
+        let mut f = LFA::scalar_valued(p);
         let input = vec![5.0];
 
         let _ = f.update(&input, 50.0);
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LBFM::scalar_valued(p);
+        let mut f = LFA::scalar_valued(p);
 
         let input = vec![5.0];
 

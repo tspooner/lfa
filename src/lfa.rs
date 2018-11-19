@@ -4,18 +4,18 @@ use core::*;
 use geometry::{Card, Space, Matrix};
 use std::{collections::HashMap, marker::PhantomData};
 
-/// Linear basis function model.
+/// Linear function approximator.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct LBFM<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
+pub struct LFA<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
     pub projector: P,
     approximator: A,
 
     phantom: PhantomData<I>,
 }
 
-impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> LBFM<I, P, A> {
+impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> LFA<I, P, A> {
     pub fn new(projector: P, approximator: A) -> Self {
-        LBFM {
+        LFA {
             projector: projector,
             approximator: approximator,
 
@@ -24,7 +24,7 @@ impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> LBFM<I, P, A> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> LBFM<I, P, ScalarFunction> {
+impl<I: ?Sized, P: Projector<I>> LFA<I, P, ScalarFunction> {
     pub fn scalar_valued(projector: P) -> Self {
         let approximator = ScalarFunction::new(projector.dim());
 
@@ -32,7 +32,7 @@ impl<I: ?Sized, P: Projector<I>> LBFM<I, P, ScalarFunction> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> LBFM<I, P, VectorFunction> {
+impl<I: ?Sized, P: Projector<I>> LFA<I, P, VectorFunction> {
     pub fn vector_valued(projector: P, n_outputs: usize) -> Self {
         let approximator = VectorFunction::new(projector.dim(), n_outputs);
 
@@ -40,7 +40,7 @@ impl<I: ?Sized, P: Projector<I>> LBFM<I, P, VectorFunction> {
     }
 }
 
-impl<I, P: Projector<I>, A: Approximator<Projection>> Space for LBFM<I, P, A> {
+impl<I, P: Projector<I>, A: Approximator<Projection>> Space for LFA<I, P, A> {
     type Value = Projection;
 
     fn dim(&self) -> usize {
@@ -52,13 +52,13 @@ impl<I, P: Projector<I>, A: Approximator<Projection>> Space for LBFM<I, P, A> {
     }
 }
 
-impl<I, P: Projector<I>, A: Approximator<Projection>> Projector<I> for LBFM<I, P, A> {
+impl<I, P: Projector<I>, A: Approximator<Projection>> Projector<I> for LFA<I, P, A> {
     fn project(&self, input: &I) -> Projection {
         self.projector.project(input)
     }
 }
 
-impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> Approximator<I> for LBFM<I, P, A> {
+impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> Approximator<I> for LFA<I, P, A> {
     type Value = A::Value;
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
@@ -78,7 +78,7 @@ impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> Approximator<I> fo
     }
 }
 
-impl<I, P, A> Parameterised for LBFM<I, P, A>
+impl<I, P, A> Parameterised for LFA<I, P, A>
 where
     I: ?Sized,
     P: Projector<I>,
