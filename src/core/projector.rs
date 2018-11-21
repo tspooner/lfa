@@ -1,5 +1,5 @@
 use core::*;
-use geometry::Space;
+use geometry::{Space, Vector};
 use std::collections::HashMap;
 use super::{Projection, CandidateFeature};
 
@@ -21,6 +21,12 @@ pub trait AdaptiveProjector<I: ?Sized>: Projector<I> {
 
 impl<P: Projector<[f64]>> Projector<Vec<f64>> for P {
     fn project(&self, input: &Vec<f64>) -> Projection { Projector::<[f64]>::project(self, &input) }
+}
+
+impl<P: Projector<[f64]>> Projector<Vector<f64>> for P {
+    fn project(&self, input: &Vector<f64>) -> Projection {
+        Projector::<[f64]>::project(self, input.as_slice().unwrap())
+    }
 }
 
 macro_rules! impl_fixed {
