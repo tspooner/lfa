@@ -16,4 +16,4 @@ import_all!(lfa);
 
 pub mod approximators;
 pub mod basis;
-pub mod kernel;
+pub use geometry::kernels;

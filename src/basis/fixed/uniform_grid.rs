@@ -5,22 +5,22 @@ use geometry::{Card, product::LinearSpace, Space, Surjection, discrete::Partitio
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UniformGrid {
     n_features: usize,
-    input_space: LinearSpace<Partition>,
+    feature_space: LinearSpace<Partition>,
 }
 
 impl UniformGrid {
-    pub fn new(input_space: LinearSpace<Partition>) -> Self {
-        let n_features = input_space.card().into();
+    pub fn new(feature_space: LinearSpace<Partition>) -> Self {
+        let n_features = feature_space.card().into();
 
         UniformGrid {
-            n_features: n_features,
-            input_space: input_space,
+            n_features,
+            feature_space,
         }
     }
 
     fn hash(&self, input: &[f64]) -> usize {
         let mut in_it = input.iter().rev();
-        let mut d_it = self.input_space.iter().rev();
+        let mut d_it = self.feature_space.iter().rev();
 
         let acc = d_it.next().unwrap().map(*in_it.next().unwrap());
 

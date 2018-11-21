@@ -7,7 +7,7 @@ use std::{collections::HashMap, marker::PhantomData};
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LFA<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
     pub projector: P,
-    approximator: A,
+    pub approximator: A,
 
     phantom: PhantomData<I>,
 }
@@ -51,13 +51,22 @@ impl<I, P: Projector<I>, A: Approximator<Projection>> Space for LFA<I, P, A> {
     }
 }
 
-impl<I, P: Projector<I>, A: Approximator<Projection>> Projector<I> for LFA<I, P, A> {
+impl<I, P, A> Projector<I> for LFA<I, P, A>
+where
+    P: Projector<I>,
+    A: Approximator<Projection>,
+{
     fn project(&self, input: &I) -> Projection {
         self.projector.project(input)
     }
 }
 
-impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> Approximator<I> for LFA<I, P, A> {
+impl<I, P, A> Approximator<I> for LFA<I, P, A>
+where
+    I: ?Sized,
+    P: Projector<I>,
+    A: Approximator<Projection>,
+{
     type Value = A::Value;
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
