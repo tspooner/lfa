@@ -1,6 +1,6 @@
+use core::{Projector, Projection};
 use geometry::{Card, Space};
-use projectors::{Projection, Projector};
-use rand::{Rng, thread_rng, distributions::{self as dists, Distribution}};
+use rand::{thread_rng, distributions::{self as dists, Distribution}};
 
 /// Fixed uniform basis projector.
 #[derive(Clone)]
@@ -36,18 +36,14 @@ impl Random<dists::Gamma> {
     }
 }
 
-impl Random<dists::Range<f64>> {
+impl Random<dists::Uniform<f64>> {
     pub fn range(n_features: usize, low: f64, high: f64) -> Self {
-        Random::new(n_features, dists::Range::new(low, high))
+        Random::new(n_features, dists::Uniform::new_inclusive(low, high))
     }
 }
 
 impl<D: Distribution<f64>> Space for Random<D> {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
-        (0..self.n_features).into_iter().map(|_| self.distribution.sample(rng)).collect()
-    }
 
     fn dim(&self) -> usize {
         self.n_features
@@ -60,6 +56,8 @@ impl<D: Distribution<f64>> Space for Random<D> {
 
 impl<D: Distribution<f64>> Projector<[f64]> for Random<D> {
     fn project(&self, _: &[f64]) -> Projection {
-        self.sample(&mut thread_rng())
+        let mut rng = thread_rng();
+
+        (0..self.n_features).into_iter().map(|_| self.distribution.sample(&mut rng)).collect()
     }
 }

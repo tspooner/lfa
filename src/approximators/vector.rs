@@ -1,17 +1,15 @@
-use core::{Approximator, Parameterised};
-use error::{AdaptError, AdaptResult, EvaluationResult, UpdateResult};
+use core::*;
 use geometry::{Matrix, Vector, norms::l1};
-use projectors::{IndexSet, IndexT, Projection};
 use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Multi {
+pub struct VectorFunction {
     pub weights: Matrix<f64>,
 }
 
-impl Multi {
+impl VectorFunction {
     pub fn new(n_features: usize, n_outputs: usize) -> Self {
-        Multi {
+        VectorFunction {
             weights: Matrix::zeros((n_features, n_outputs)),
         }
     }
@@ -35,7 +33,7 @@ impl Multi {
     }
 }
 
-impl Approximator<Projection> for Multi {
+impl Approximator<Projection> for VectorFunction {
     type Value = Vector<f64>;
 
     fn evaluate(&self, p: &Projection) -> EvaluationResult<Vector<f64>> {
@@ -105,7 +103,7 @@ impl Approximator<Projection> for Multi {
     }
 }
 
-impl Parameterised for Multi {
+impl Parameterised for VectorFunction {
     fn weights(&self) -> Matrix<f64> {
         self.weights.clone()
     }
@@ -115,11 +113,11 @@ impl Parameterised for Multi {
 mod tests {
     extern crate seahash;
 
-    use LFA;
-    use approximators::Multi;
+    use ::LFA;
+    use approximators::VectorFunction;
+    use basis::fixed::{Fourier, TileCoding};
     use core::Approximator;
     use geometry::Vector;
-    use projectors::fixed::{Fourier, TileCoding};
     use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -127,7 +125,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::multi(p, 2);
+        let mut f = LFA::vector_valued(p, 2);
         let input = vec![5.0];
 
         let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
@@ -140,7 +138,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::multi(p, 2);
+        let mut f = LFA::vector_valued(p, 2);
 
         let input = vec![5.0];
 
@@ -153,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_adapt() {
-        let mut f = Multi::new(100, 2);
+        let mut f = VectorFunction::new(100, 2);
 
         let mut new_features = HashMap::new();
         new_features.insert(100, {
@@ -176,7 +174,7 @@ mod tests {
                 assert_eq!(c0[100], c0[10] / 2.0 + c0[90] / 2.0);
                 assert_eq!(c1[100], c1[10] / 2.0 + c1[90] / 2.0);
             }
-            Err(err) => panic!("Simple::adapt failed with AdaptError::{:?}", err),
+            Err(err) => panic!("VectorFunction::adapt failed with AdaptError::{:?}", err),
         }
     }
 }

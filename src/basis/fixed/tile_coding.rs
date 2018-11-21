@@ -1,6 +1,5 @@
+use core::{Projector, Projection};
 use geometry::{Card, Space};
-use projectors::{Projection, Projector};
-use rand::{Rng, seq::sample_indices};
 use std::hash::{BuildHasher, Hasher};
 
 #[inline]
@@ -52,10 +51,6 @@ impl<H: BuildHasher> TileCoding<H> {
 
 impl<H: BuildHasher> Space for TileCoding<H> {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> Projection {
-        sample_indices(&mut rng, self.memory_size, self.n_tilings).into()
-    }
 
     fn dim(&self) -> usize {
         self.memory_size

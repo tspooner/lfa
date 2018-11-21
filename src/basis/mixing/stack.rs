@@ -1,22 +1,19 @@
+use core::{DenseT, Projector, Projection};
 use geometry::{Space, Card};
-use projectors::{Projector, Projection, DenseT};
-use rand::Rng;
 use std::marker::PhantomData;
 
 fn stack_projections(p1: Projection, n1: usize, p2: Projection, n2: usize) -> Projection {
-    use Projection::*;
-
     match (p1, p2) {
-        (Sparse(mut p1_indices), Sparse(p2_indices)) => {
+        (Projection::Sparse(mut p1_indices), Projection::Sparse(p2_indices)) => {
             p2_indices.iter().for_each(|&i| { p1_indices.insert(i+n1); });
 
-            Sparse(p1_indices)
+            Projection::Sparse(p1_indices)
         },
         (p1, p2) => {
             let mut all_activations = p1.expanded(n1).to_vec();
             all_activations.extend_from_slice(p2.expanded(n2).as_slice().unwrap());
 
-            Dense(DenseT::from_vec(all_activations))
+            Projection::Dense(DenseT::from_vec(all_activations))
         },
     }
 }
@@ -49,12 +46,6 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Stack<I, P1, P2> {
 
     fn card(&self) -> Card {
         self.p1.card() * self.p2.card()
-    }
-
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projection {
-        let (n1, n2) = (self.p1.dim(), self.p2.dim());
-
-        stack_projections(self.p1.sample(rng), n1, self.p2.sample(rng), n2)
     }
 }
 

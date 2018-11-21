@@ -1,17 +1,15 @@
-use core::{Approximator, Parameterised};
-use error::{AdaptError, AdaptResult, EvaluationResult, UpdateResult};
+use core::*;
 use geometry::{Matrix, Vector, norms::l1};
-use projectors::{IndexSet, IndexT, Projection};
 use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Simple {
+pub struct ScalarFunction {
     pub weights: Vector<f64>,
 }
 
-impl Simple {
+impl ScalarFunction {
     pub fn new(n_features: usize) -> Self {
-        Simple {
+        ScalarFunction {
             weights: Vector::zeros((n_features,)),
         }
     }
@@ -26,7 +24,7 @@ impl Simple {
     }
 }
 
-impl Approximator<Projection> for Simple {
+impl Approximator<Projection> for ScalarFunction {
     type Value = f64;
 
     fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> {
@@ -76,7 +74,7 @@ impl Approximator<Projection> for Simple {
     }
 }
 
-impl Parameterised for Simple {
+impl Parameterised for ScalarFunction {
     fn weights(&self) -> Matrix<f64> {
         let n_rows = self.weights.len();
 
@@ -88,10 +86,10 @@ impl Parameterised for Simple {
 mod tests {
     extern crate seahash;
 
-    use LFA;
-    use approximators::Simple;
+    use ::LFA;
+    use approximators::ScalarFunction;
+    use basis::fixed::{Fourier, TileCoding};
     use core::Approximator;
-    use projectors::fixed::{Fourier, TileCoding};
     use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -99,7 +97,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::simple(p);
+        let mut f = LFA::scalar_valued(p);
         let input = vec![5.0];
 
         let _ = f.update(&input, 50.0);
@@ -111,7 +109,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::simple(p);
+        let mut f = LFA::scalar_valued(p);
 
         let input = vec![5.0];
 
@@ -123,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_adapt() {
-        let mut f = Simple::new(100);
+        let mut f = ScalarFunction::new(100);
 
         let mut new_features = HashMap::new();
         new_features.insert(100, {
@@ -141,7 +139,7 @@ mod tests {
                 assert_eq!(f.weights.len(), 101);
                 assert_eq!(f.weights[100], f.weights[10] / 2.0 + f.weights[90] / 2.0);
             }
-            Err(err) => panic!("Simple::adapt failed with AdaptError::{:?}", err),
+            Err(err) => panic!("ScalarFunction::adapt failed with AdaptError::{:?}", err),
         }
     }
 }

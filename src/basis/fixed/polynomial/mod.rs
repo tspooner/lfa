@@ -1,6 +1,5 @@
-use geometry::{BoundedSpace, Card, product::RegularSpace, Space, continuous::Interval};
-use projectors::{Projection, Projector};
-use rand::Rng;
+use core::{Projector, Projection};
+use geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
 use utils::cartesian_product;
 
 mod cpfk;
@@ -24,7 +23,7 @@ impl Polynomial {
         }
     }
 
-    pub fn from_space(order: u8, input_space: RegularSpace<Interval>) -> Self {
+    pub fn from_space(order: u8, input_space: LinearSpace<Interval>) -> Self {
         Polynomial::new(
             order,
             input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
@@ -44,10 +43,6 @@ impl Polynomial {
 
 impl Space for Polynomial {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> Projection {
-        unimplemented!()
-    }
 
     fn dim(&self) -> usize {
         self.exponents.len()
@@ -99,7 +94,7 @@ impl Chebyshev {
         }
     }
 
-    pub fn from_space(order: u8, input_space: RegularSpace<Interval>) -> Self {
+    pub fn from_space(order: u8, input_space: LinearSpace<Interval>) -> Self {
         Chebyshev::new(
             order,
             input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
@@ -140,10 +135,6 @@ impl Chebyshev {
 
 impl Space for Chebyshev {
     type Value = Projection;
-
-    fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> Projection {
-        unimplemented!()
-    }
 
     fn dim(&self) -> usize {
         self.polynomials.len()

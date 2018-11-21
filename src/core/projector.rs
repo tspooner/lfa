@@ -1,23 +1,7 @@
+use core::*;
 use geometry::{Space, Vector};
-use std::collections::{BTreeSet, HashMap};
-
-pub type ActivationT = f64;
-pub type IndexT = usize;
-
-pub type IndexSet = BTreeSet<IndexT>;
-
-pub type DenseT = Vector<ActivationT>;
-pub type SparseT = IndexSet;
-
-mod projection;
-pub use self::projection::Projection;
-
-mod feature;
-pub use self::feature::{CandidateFeature, Feature};
-
-pub mod adaptive;
-pub mod fixed;
-pub mod mixing;
+use std::collections::HashMap;
+use super::{Projection, CandidateFeature};
 
 /// Trait for basis projectors.
 pub trait Projector<I: ?Sized>: Space<Value = Projection> {
@@ -37,6 +21,12 @@ pub trait AdaptiveProjector<I: ?Sized>: Projector<I> {
 
 impl<P: Projector<[f64]>> Projector<Vec<f64>> for P {
     fn project(&self, input: &Vec<f64>) -> Projection { Projector::<[f64]>::project(self, &input) }
+}
+
+impl<P: Projector<[f64]>> Projector<Vector<f64>> for P {
+    fn project(&self, input: &Vector<f64>) -> Projection {
+        Projector::<[f64]>::project(self, input.as_slice().unwrap())
+    }
 }
 
 macro_rules! impl_fixed {

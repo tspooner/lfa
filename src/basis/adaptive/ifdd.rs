@@ -1,10 +1,7 @@
+use core::*;
 use geometry::{Card, Space, Vector};
-use projectors::{CandidateFeature, Feature, IndexSet, IndexT};
-use {AdaptiveProjector, Projection, Projector};
-
-use std::collections::HashMap;
-use rand::{Rng, seq::sample_indices};
 use itertools::Itertools;
+use std::collections::HashMap;
 
 pub struct IFDD<P: Projector<[f64]>> {
     pub base: P,
@@ -82,13 +79,6 @@ impl<P: Projector<[f64]>> IFDD<P> {
 impl<P: Projector<[f64]>> Space for IFDD<P> {
     type Value = Projection;
 
-    fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> Projection {
-        let d = self.dim();
-        let n = rng.gen_range(1, d);
-
-        sample_indices(&mut rng, d, n).into()
-    }
-
     fn dim(&self) -> usize {
         self.features.len()
     }
@@ -125,11 +115,9 @@ impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
 
 impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
     fn discover(&mut self, input: &[f64], error: f64) -> Option<HashMap<IndexT, IndexSet>> {
-        use Projection::*;
-
         let new_features = match self.base.project(input) {
-            Sparse(active_indices) => self.discover_sparse(active_indices, error),
-            Dense(activations) => self.discover_dense(activations, error),
+            Projection::Sparse(active_indices) => self.discover_sparse(active_indices, error),
+            Projection::Dense(activations) => self.discover_dense(activations, error),
         };
 
         self.features.reserve_exact(new_features.len());
@@ -161,19 +149,14 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
 mod tests {
     extern crate seahash;
 
-    use projectors::{adaptive::IFDD, fixed::TileCoding};
+    use basis::adaptive::IFDD;
     use super::*;
-    use std::hash::BuildHasherDefault;
 
     #[derive(Clone)]
     struct BaseProjector;
 
     impl Space for BaseProjector {
         type Value = Projection;
-
-        fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Projection {
-            unimplemented!()
-        }
 
         fn dim(&self) -> usize {
             5

@@ -11,12 +11,9 @@ extern crate serde_derive;
 mod macros;
 mod utils;
 
-import_all!(error);
 import_all!(core);
+import_all!(lfa);
 
 pub mod approximators;
-pub mod projectors;
-pub use self::projectors::{AdaptiveProjector, Projection, Projector};
-
-mod lfa;
-pub use self::lfa::LFA;
+pub mod basis;
+pub use geometry::kernels;
