@@ -34,8 +34,7 @@ impl Projection {
         }
     }
 
-    /// Expand and normalise a given projection, and convert into a raw, dense
-    /// vector.
+    /// Expand the projection and convert it into a raw, dense vector.
     pub fn expanded(self, dim: usize) -> DenseT {
         #[inline]
         fn expand_dense(phi: DenseT, size: usize) -> DenseT {
@@ -48,10 +47,9 @@ impl Projection {
         #[inline]
         fn expand_sparse(active_indices: SparseT, size: usize) -> DenseT {
             let mut phi = Vector::zeros((size,));
-            let activation = 1.0 / active_indices.len() as f64;
 
             for idx in active_indices.iter() {
-                phi[*idx] = activation;
+                phi[*idx] = 1.0;
             }
 
             phi
