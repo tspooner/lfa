@@ -1,5 +1,5 @@
 use core::*;
-use geometry::Vector;
+use geometry::{Vector, norms::{l1, l2, linf}};
 use ndarray::{stack, Axis};
 use std::iter::FromIterator;
 use std::ops::{Add, Index};
@@ -59,6 +59,30 @@ impl Projection {
             Projection::Dense(phi) => expand_dense(phi, dim),
             Projection::Sparse(active_indices) => expand_sparse(active_indices, dim),
         }
+    }
+
+    /// Return an expanded feature vector with L1 normalisation applied.
+    pub fn expanded_l1(self, dim: usize) -> DenseT {
+        let phi = self.expanded(dim);
+        let z = l1(phi.as_slice().unwrap());
+
+        phi / z
+    }
+
+    /// Return an expanded feature vector with L2 normalisation applied.
+    pub fn expanded_l2(self, dim: usize) -> DenseT {
+        let phi = self.expanded(dim);
+        let z = l2(phi.as_slice().unwrap());
+
+        phi / z
+    }
+
+    /// Return an expanded feature vector with Linf normalisation applied.
+    pub fn expanded_linf(self, dim: usize) -> DenseT {
+        let phi = self.expanded(dim);
+        let z = linf(phi.as_slice().unwrap());
+
+        phi / z
     }
 }
 
