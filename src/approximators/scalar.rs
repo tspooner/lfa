@@ -16,8 +16,9 @@ impl ScalarFunction {
     }
 
     fn extend_weights(&mut self, new_weights: Vec<f64>) {
-        let mut weights =
-            unsafe { replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec() };
+        let mut weights = unsafe {
+            replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec()
+        };
 
         weights.extend(new_weights);
 
@@ -30,24 +31,24 @@ impl Approximator<Projection> for ScalarFunction {
 
     fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> {
         Ok(match p {
-            &Projection::Dense(ref dense) => self.weights.dot(dense),
-            &Projection::Sparse(ref sparse) => {
-                sparse.iter().fold(0.0, |acc, idx| acc + self.weights[*idx])
+            &Projection::Dense(ref activations) => self.weights.dot(activations),
+            &Projection::Sparse(ref indices) => {
+                indices.iter().fold(0.0, |acc, idx| acc + self.weights[*idx])
             }
         })
     }
 
     fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {
         Ok(match p {
-            &Projection::Dense(ref dense) => {
-                let scaled_error = error / l1(dense.as_slice().unwrap());
+            &Projection::Dense(ref activations) => {
+                let scaled_error = error / l1(activations.as_slice().unwrap());
 
-                self.weights.scaled_add(scaled_error, dense)
+                self.weights.scaled_add(scaled_error, activations)
             },
-            &Projection::Sparse(ref sparse) => {
-                let scaled_error = error / sparse.len() as f64;
+            &Projection::Sparse(ref indices) => {
+                let scaled_error = error / indices.len() as f64;
 
-                for idx in sparse {
+                for idx in indices {
                     self.weights[*idx] += scaled_error;
                 }
             },

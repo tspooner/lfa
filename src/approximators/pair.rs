@@ -1,54 +1,57 @@
 use crate::approximators::adapt_matrix;
 use crate::basis::Projection;
 use crate::core::*;
-use crate::geometry::{Matrix, Vector, norms::l1};
+use crate::geometry::{Matrix, norms::l1};
 use std::collections::HashMap;
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct VectorFunction {
+pub struct PairFunction {
     pub weights: Matrix<f64>,
 }
 
-impl VectorFunction {
-    pub fn new(n_features: usize, n_outputs: usize) -> Self {
-        VectorFunction {
-            weights: Matrix::zeros((n_features, n_outputs)),
+impl PairFunction {
+    pub fn new(n_features: usize) -> Self {
+        PairFunction {
+            weights: Matrix::zeros((n_features, 2)),
         }
     }
 }
 
-impl Approximator<Projection> for VectorFunction {
-    type Value = Vector<f64>;
+impl Approximator<Projection> for PairFunction {
+    type Value = (f64, f64);
 
-    fn evaluate(&self, p: &Projection) -> EvaluationResult<Vector<f64>> {
+    fn evaluate(&self, p: &Projection) -> EvaluationResult<(f64, f64)> {
         Ok(match p {
-            &Projection::Dense(ref activations) => self.weights.t().dot(activations),
-            &Projection::Sparse(ref indices) => (0..self.weights.cols())
-                .map(|c| indices
-                    .iter()
-                    .fold(0.0, |acc, idx| acc + self.weights[(*idx, c)])
-                )
-                .collect(),
+            &Projection::Dense(ref activations) => (
+                self.weights.column(0).dot(activations),
+                self.weights.column(1).dot(activations)
+            ),
+            &Projection::Sparse(ref indices) => indices.iter().fold((0.0, 0.0), |acc, idx| {
+                (acc.0 + self.weights[(*idx, 0)], acc.1 + self.weights[(*idx, 1)])
+            })
         })
     }
 
-    fn update(&mut self, p: &Projection, errors: Vector<f64>) -> UpdateResult<()> {
+    fn update(&mut self, p: &Projection, errors: (f64, f64)) -> UpdateResult<()> {
         Ok(match p {
             &Projection::Dense(ref activations) => {
-                let scaled_errors = errors / l1(activations.as_slice().unwrap());
+                let z = l1(activations.as_slice().unwrap());
+
                 let phi_matrix = activations.view().into_shape((activations.len(), 1)).unwrap();
-                let error_matrix =
-                    scaled_errors.view().into_shape((1, self.weights.cols())).unwrap();
+                let error_matrix = Matrix::from_shape_vec((1, 2), vec![
+                    errors.0 / z, errors.1 / z,
+                ]).unwrap();
 
                 self.weights += &phi_matrix.dot(&error_matrix)
             }
-            &Projection::Sparse(ref indices) => for c in 0..self.weights.cols() {
-                let mut col = self.weights.column_mut(c);
-                let scaled_error = errors[c] / indices.len() as f64;
+            &Projection::Sparse(ref indices) => {
+                let z = indices.len() as f64;
+                let scaled_errors = (errors.0 / z, errors.1 / z);
 
-                for idx in indices {
-                    col[*idx] += scaled_error
-                }
+                indices.iter().for_each(|idx| {
+                    self.weights[(*idx, 0)] += scaled_errors.0;
+                    self.weights[(*idx, 1)] += scaled_errors.1;
+                });
             },
         })
     }
@@ -58,7 +61,7 @@ impl Approximator<Projection> for VectorFunction {
     }
 }
 
-impl Parameterised for VectorFunction {
+impl Parameterised for PairFunction {
     fn weights(&self) -> Matrix<f64> {
         self.weights.clone()
     }
@@ -69,10 +72,9 @@ mod tests {
     extern crate seahash;
 
     use crate::LFA;
-    use crate::approximators::VectorFunction;
+    use crate::approximators::PairFunction;
     use crate::basis::fixed::{Fourier, TileCoding};
     use crate::core::Approximator;
-    use crate::geometry::Vector;
     use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
@@ -80,33 +82,33 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::vector_output(p, 2);
+        let mut f = LFA::pair_output(p);
         let input = vec![5.0];
 
-        let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
+        let _ = f.update(input.as_slice(), (20.0, 50.0));
         let out = f.evaluate(input.as_slice()).unwrap();
 
-        assert!((out[0] - 20.0).abs() < 1e-6);
-        assert!((out[1] - 50.0).abs() < 1e-6);
+        assert!((out.0 - 20.0).abs() < 1e-6);
+        assert!((out.1 - 50.0).abs() < 1e-6);
     }
 
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::vector_output(p, 2);
+        let mut f = LFA::pair_output(p);
 
         let input = vec![5.0];
 
-        let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
+        let _ = f.update(input.as_slice(), (20.0, 50.0));
         let out = f.evaluate(input.as_slice()).unwrap();
 
-        assert!((out[0] - 20.0).abs() < 1e-6);
-        assert!((out[1] - 50.0).abs() < 1e-6);
+        assert!((out.0 - 20.0).abs() < 1e-6);
+        assert!((out.1 - 50.0).abs() < 1e-6);
     }
 
     #[test]
     fn test_adapt() {
-        let mut f = VectorFunction::new(100, 2);
+        let mut f = PairFunction::new(100);
 
         let mut new_features = HashMap::new();
         new_features.insert(100, {
@@ -129,7 +131,7 @@ mod tests {
                 assert_eq!(c0[100], c0[10] / 2.0 + c0[90] / 2.0);
                 assert_eq!(c1[100], c1[10] / 2.0 + c1[90] / 2.0);
             }
-            Err(err) => panic!("VectorFunction::adapt failed with AdaptError::{:?}", err),
+            Err(err) => panic!("PairFunction::adapt failed with AdaptError::{:?}", err),
         }
     }
 }
