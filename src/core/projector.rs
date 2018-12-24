@@ -1,5 +1,5 @@
-use core::*;
-use geometry::{Space, Vector};
+use crate::core::*;
+use crate::geometry::{Space, Vector};
 use std::collections::HashMap;
 use super::{Projection, CandidateFeature};
 

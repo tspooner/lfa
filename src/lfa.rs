@@ -1,6 +1,6 @@
-use approximators::*;
-use core::*;
-use geometry::{Card, Space, Matrix};
+use crate::approximators::*;
+use crate::core::*;
+use crate::geometry::{Card, Space, Matrix};
 use std::{collections::HashMap, marker::PhantomData};
 
 /// Linear function approximator.

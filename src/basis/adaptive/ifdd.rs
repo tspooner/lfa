@@ -1,5 +1,5 @@
-use core::*;
-use geometry::{Card, Space, Vector};
+use crate::core::*;
+use crate::geometry::{Card, Space, Vector};
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -149,7 +149,7 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
 mod tests {
     extern crate seahash;
 
-    use basis::adaptive::IFDD;
+    use crate::basis::adaptive::IFDD;
     use super::*;
 
     #[derive(Clone)]

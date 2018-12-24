@@ -1,12 +1,12 @@
-use core::{Projector, Projection};
-use geometry::{
+use crate::core::{Projector, Projection};
+use crate::geometry::{
     Space, Card, Vector,
     product::LinearSpace,
     discrete::Partition,
     continuous::Reals,
 };
-use kernels::{self, Kernel};
-use utils::cartesian_product;
+use crate::kernels::{self, Kernel};
+use crate::utils::cartesian_product;
 
 
 pub type RealLinearSpaceVec = <LinearSpace<Reals> as Space>::Value;
@@ -90,7 +90,7 @@ impl<I, K: Kernel<I>> Projector<I> for KernelProjector<I, K> {
 
 #[cfg(test)]
 mod tests {
-    use geometry::Vector;
+    use crate::geometry::Vector;
     use super::*;
 
     /// Construct an RBF network.

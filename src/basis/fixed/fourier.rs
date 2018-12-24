@@ -1,10 +1,10 @@
-use core::{Projector, Projection};
-use geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
+use crate::core::{Projector, Projection};
+use crate::geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
 use std::{
     f64::consts::PI,
     iter,
 };
-use utils::cartesian_product;
+use crate::utils::cartesian_product;
 
 // TODO: Add support for i-th term alphas scale factors.
 /// Fourier basis projector.

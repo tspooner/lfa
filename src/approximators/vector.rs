@@ -1,5 +1,5 @@
-use core::*;
-use geometry::{Matrix, Vector, norms::l1};
+use crate::core::*;
+use crate::geometry::{Matrix, Vector, norms::l1};
 use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -113,11 +113,11 @@ impl Parameterised for VectorFunction {
 mod tests {
     extern crate seahash;
 
-    use ::LFA;
-    use approximators::VectorFunction;
-    use basis::fixed::{Fourier, TileCoding};
-    use core::Approximator;
-    use geometry::Vector;
+    use crate::LFA;
+    use crate::approximators::VectorFunction;
+    use crate::basis::fixed::{Fourier, TileCoding};
+    use crate::core::Approximator;
+    use crate::geometry::Vector;
     use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;

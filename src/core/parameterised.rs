@@ -1,4 +1,4 @@
-use geometry::Matrix;
+use crate::geometry::Matrix;
 
 /// An interface for approximators parameterised by a set of weights.
 pub trait Parameterised {

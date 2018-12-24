@@ -1,5 +1,5 @@
-use core::{Projector, Projection};
-use geometry::{Space, Card, norms::l1};
+use crate::core::{Projector, Projection};
+use crate::geometry::{Space, Card, norms::l1};
 use std::marker::PhantomData;
 
 pub struct Sum<I: ?Sized, P1: Projector<I>, P2: Projector<I>> {
