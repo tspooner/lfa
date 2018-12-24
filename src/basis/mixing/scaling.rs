@@ -1,4 +1,4 @@
-use crate::core::{Projector, Projection};
+use crate::basis::{Projector, Projection};
 use crate::geometry::{Space, Card};
 use std::marker::PhantomData;
 

@@ -1,6 +1,6 @@
-use crate::core::{Projector, Projection};
+use crate::basis::{Projector, Projection};
 use crate::geometry::{
-    Space, Card, Vector,
+    Space, Card,
     product::LinearSpace,
     discrete::Partition,
     continuous::Reals,

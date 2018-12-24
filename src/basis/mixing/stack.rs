@@ -1,4 +1,5 @@
-use crate::core::{DenseT, Projector, Projection};
+use crate::basis::{Projector, Projection};
+use crate::core::DenseT;
 use crate::geometry::{Space, Card};
 use std::marker::PhantomData;
 

@@ -1,3 +1,4 @@
+use crate::basis::{Feature, CandidateFeature, Projector, AdaptiveProjector, Projection};
 use crate::core::*;
 use crate::geometry::{Card, Space, Vector};
 use itertools::Itertools;

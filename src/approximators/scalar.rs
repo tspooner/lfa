@@ -1,3 +1,4 @@
+use crate::basis::Projection;
 use crate::core::*;
 use crate::geometry::{Matrix, Vector, norms::l1};
 use std::{collections::HashMap, mem::replace};

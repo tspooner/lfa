@@ -1,4 +1,4 @@
-use crate::core::{Projector, Projection};
+use crate::basis::{Projector, Projection};
 use crate::geometry::{Card, Space};
 use std::hash::{BuildHasher, Hasher};
 

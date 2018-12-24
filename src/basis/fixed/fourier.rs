@@ -1,4 +1,4 @@
-use crate::core::{Projector, Projection};
+use crate::basis::{Projector, Projection};
 use crate::geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
 use std::{
     f64::consts::PI,

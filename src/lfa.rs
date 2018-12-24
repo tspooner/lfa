@@ -1,4 +1,5 @@
-use crate::approximators::*;
+use crate::approximators::{ScalarFunction, VectorFunction};
+use crate::basis::{Projection, Projector};
 use crate::core::*;
 use crate::geometry::{Card, Space, Matrix};
 use std::{collections::HashMap, marker::PhantomData};
