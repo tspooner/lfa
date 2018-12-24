@@ -17,7 +17,7 @@ pub trait Approximator<I: ?Sized> {
     #[allow(unused_variables)]
     /// Adapt the approximator in light of newly discovered features.
     fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
-        Err(AdaptError::NotImplemented)
+        unimplemented!()
     }
 }
 
