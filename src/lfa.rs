@@ -4,6 +4,32 @@ use crate::core::*;
 use crate::geometry::{Card, Space, Matrix};
 use std::{collections::HashMap, marker::PhantomData};
 
+macro_rules! impl_concrete_builder {
+    ($ftype:ty => $fname:ident) => {
+        impl<I, P> LFA<I, P, $ftype>
+        where
+            I: ?Sized,
+            P: Projector<I>,
+        {
+            pub fn $fname(projector: P) -> Self {
+                let approximator = <$ftype>::new(projector.dim());
+
+                Self::new(projector, approximator)
+            }
+        }
+
+        impl<I, P> From<P> for LFA<I, P, $ftype>
+        where
+            I: ?Sized,
+            P: Projector<I>,
+        {
+            fn from(projector: P) -> Self {
+                Self::$fname(projector)
+            }
+        }
+    }
+}
+
 /// Linear function approximator.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LFA<I: ?Sized, P, A> {
@@ -29,41 +55,9 @@ where
     }
 }
 
-impl<I, P> LFA<I, P, ScalarFunction>
-where
-    I: ?Sized,
-    P: Projector<I>,
-{
-    pub fn scalar_output(projector: P) -> Self {
-        let approximator = ScalarFunction::new(projector.dim());
-
-        Self::new(projector, approximator)
-    }
-}
-
-impl<I, P> LFA<I, P, PairFunction>
-where
-    I: ?Sized,
-    P: Projector<I>,
-{
-    pub fn pair_output(projector: P) -> Self {
-        let approximator = PairFunction::new(projector.dim());
-
-        Self::new(projector, approximator)
-    }
-}
-
-impl<I, P> LFA<I, P, TripleFunction>
-where
-    I: ?Sized,
-    P: Projector<I>,
-{
-    pub fn triple_output(projector: P) -> Self {
-        let approximator = TripleFunction::new(projector.dim());
-
-        Self::new(projector, approximator)
-    }
-}
+impl_concrete_builder!(ScalarFunction => scalar_output);
+impl_concrete_builder!(PairFunction => pair_output);
+impl_concrete_builder!(TripleFunction => triple_output);
 
 impl<I, P> LFA<I, P, VectorFunction>
 where
