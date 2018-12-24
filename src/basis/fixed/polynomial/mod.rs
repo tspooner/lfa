@@ -1,6 +1,6 @@
-use core::{Projector, Projection};
-use geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
-use utils::cartesian_product;
+use crate::core::{Projector, Projection};
+use crate::geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
+use crate::utils::cartesian_product;
 
 mod cpfk;
 

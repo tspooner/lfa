@@ -1,5 +1,5 @@
-use core::{Projector, Projection};
-use geometry::{Space, Card};
+use crate::core::{Projector, Projection};
+use crate::geometry::{Space, Card};
 use std::marker::PhantomData;
 
 pub struct Scale<I: ?Sized, P: Projector<I>> {

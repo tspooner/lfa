@@ -1,5 +1,5 @@
-use core::{DenseT, Projector, Projection};
-use geometry::{Space, Card};
+use crate::core::{DenseT, Projector, Projection};
+use crate::geometry::{Space, Card};
 use std::marker::PhantomData;
 
 fn stack_projections(p1: Projection, n1: usize, p2: Projection, n2: usize) -> Projection {

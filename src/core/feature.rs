@@ -1,4 +1,4 @@
-use core::IndexSet;
+use crate::core::IndexSet;
 use std::{
     cmp::Ordering,
     hash::{Hash, Hasher},

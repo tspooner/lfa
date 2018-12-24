@@ -1,5 +1,5 @@
-use core::{Projector, Projection};
-use geometry::{Card, product::LinearSpace, Space, Surjection, discrete::Partition};
+use crate::core::{Projector, Projection};
+use crate::geometry::{Card, product::LinearSpace, Space, Surjection, discrete::Partition};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize)]

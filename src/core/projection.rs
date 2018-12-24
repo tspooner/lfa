@@ -1,5 +1,5 @@
-use core::*;
-use geometry::{Vector, norms::{l1, l2, linf}};
+use crate::core::*;
+use crate::geometry::{Vector, norms::{l1, l2, linf}};
 use ndarray::{stack, Axis};
 use std::iter::FromIterator;
 use std::ops::{Add, Index};
