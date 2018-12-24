@@ -74,7 +74,6 @@ where
 impl<I, P, A> LFA<I, P, A>
 where
     I: ?Sized,
-    P: Projector<I>,
     A: Approximator<Projection>,
 {
     #[allow(dead_code)]
@@ -92,7 +91,6 @@ impl<I, P, A> Space for LFA<I, P, A>
 where
     I: ?Sized,
     P: Projector<I>,
-    A: Approximator<Projection>,
 {
     type Value = Projection;
 
@@ -108,7 +106,6 @@ where
 impl<I, P, A> Projector<I> for LFA<I, P, A>
 where
     P: Projector<I>,
-    A: Approximator<Projection>,
 {
     fn project(&self, input: &I) -> Projection {
         self.projector.project(input)
@@ -118,7 +115,6 @@ where
 impl<I, P, A> AdaptiveProjector<I> for LFA<I, P, A>
 where
     P: AdaptiveProjector<I>,
-    A: Approximator<Projection>,
 {
     fn discover(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>> {
         self.projector.discover(input, error)
@@ -157,8 +153,7 @@ where
 impl<I, P, A> Parameterised for LFA<I, P, A>
 where
     I: ?Sized,
-    P: Projector<I>,
-    A: Approximator<Projection> + Parameterised,
+    A: Parameterised,
 {
     fn weights(&self) -> Matrix<f64> { self.approximator.weights() }
 }
