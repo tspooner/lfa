@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::vector_valued(p, 2);
+        let mut f = LFA::vector_output(p, 2);
         let input = vec![5.0];
 
         let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
@@ -139,7 +139,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::vector_valued(p, 2);
+        let mut f = LFA::vector_output(p, 2);
 
         let input = vec![5.0];
 

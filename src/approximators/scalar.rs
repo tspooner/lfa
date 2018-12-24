@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::scalar_valued(p);
+        let mut f = LFA::scalar_output(p);
         let input = vec![5.0];
 
         let _ = f.update(&input, 50.0);
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::scalar_valued(p);
+        let mut f = LFA::scalar_output(p);
 
         let input = vec![5.0];
 

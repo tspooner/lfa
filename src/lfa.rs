@@ -7,8 +7,8 @@ use std::{collections::HashMap, marker::PhantomData};
 /// Linear function approximator.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LFA<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> {
-    pub projector: P,
-    pub approximator: A,
+    projector: P,
+    approximator: A,
 
     phantom: PhantomData<I>,
 }
@@ -25,7 +25,7 @@ impl<I: ?Sized, P: Projector<I>, A: Approximator<Projection>> LFA<I, P, A> {
 }
 
 impl<I: ?Sized, P: Projector<I>> LFA<I, P, ScalarFunction> {
-    pub fn scalar_valued(projector: P) -> Self {
+    pub fn scalar_output(projector: P) -> Self {
         let approximator = ScalarFunction::new(projector.dim());
 
         Self::new(projector, approximator)
@@ -33,7 +33,7 @@ impl<I: ?Sized, P: Projector<I>> LFA<I, P, ScalarFunction> {
 }
 
 impl<I: ?Sized, P: Projector<I>> LFA<I, P, VectorFunction> {
-    pub fn vector_valued(projector: P, n_outputs: usize) -> Self {
+    pub fn vector_output(projector: P, n_outputs: usize) -> Self {
         let approximator = VectorFunction::new(projector.dim(), n_outputs);
 
         Self::new(projector, approximator)
