@@ -14,9 +14,9 @@ extern crate quickcheck;
 mod macros;
 mod utils;
 
-import_all!(core);
 import_all!(lfa);
 
+pub mod core;
 pub mod approximators;
 pub mod basis;
 pub use crate::geometry::kernels;

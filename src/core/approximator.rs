@@ -1,6 +1,6 @@
 use crate::core::{
-    IndexSet, IndexT,
     error::*,
+    primitives::{IndexT, IndexSet},
 };
 use std::collections::HashMap;
 
