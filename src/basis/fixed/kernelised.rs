@@ -35,11 +35,7 @@ impl<I, K: Kernel<I>> KernelProjector<I, K> {
         KernelProjector { prototypes }
     }
 
-    pub fn from_centroids<C, T>(centroids: T, kernel: K) -> Self
-    where
-        C: Into<I>,
-        T: IntoIterator<Item=C>,
-    {
+    pub fn from_centroids(centroids: impl IntoIterator<Item = impl Into<I>>, kernel: K) -> Self {
         KernelProjector::new(centroids
             .into_iter()
             .map(|c| Prototype {
@@ -93,7 +89,6 @@ mod tests {
     use crate::geometry::Vector;
     use super::*;
 
-    /// Construct an RBF network.
     fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> RBFNetwork {
         let kernel = kernels::ExpQuad::new(1.0, Vector::from_vec(ls));
 
