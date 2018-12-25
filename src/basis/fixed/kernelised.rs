@@ -1,6 +1,6 @@
 use crate::basis::{Projector, Projection};
 use crate::geometry::{
-    Space, Card,
+    Space, Card, Vector,
     product::LinearSpace,
     discrete::Partition,
     continuous::Reals,
@@ -9,8 +9,7 @@ use crate::kernels::{self, Kernel};
 use crate::utils::cartesian_product;
 
 
-pub type RealLinearSpaceVec = <LinearSpace<Reals> as Space>::Value;
-pub type RBFNetwork = KernelProjector<RealLinearSpaceVec, kernels::ExpQuad>;
+pub type RBFNetwork = KernelProjector<Vector<f64>, kernels::ExpQuad>;
 
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -47,7 +46,7 @@ impl<I, K: Kernel<I>> KernelProjector<I, K> {
     }
 }
 
-impl<K: Kernel<RealLinearSpaceVec>> KernelProjector<RealLinearSpaceVec, K> {
+impl<K: Kernel<Vector<f64>>> KernelProjector<Vector<f64>, K> {
     pub fn from_partitioning(partitioning: LinearSpace<Partition>, kernel: K) -> Self {
         let centroids = cartesian_product(&partitioning.centres());
 
@@ -55,7 +54,7 @@ impl<K: Kernel<RealLinearSpaceVec>> KernelProjector<RealLinearSpaceVec, K> {
     }
 }
 
-impl KernelProjector<RealLinearSpaceVec, kernels::ExpQuad> {
+impl KernelProjector<Vector<f64>, kernels::ExpQuad> {
     pub fn rbf_network(partitioning: LinearSpace<Partition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
         let kernel = kernels::RBF::new(1.0, lengthscales);
