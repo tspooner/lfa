@@ -45,20 +45,48 @@ impl Projector<[f64]> for Constant {
 
 #[cfg(test)]
 mod tests {
+    use quickcheck::quickcheck;
     use super::*;
 
     #[test]
-    fn test_project() {
-        assert_eq!(Constant::zeros(1).project(&[0.0]), vec![0.0; 1].into());
-        assert_eq!(Constant::zeros(10).project(&[0.0]), vec![0.0; 10].into());
-        assert_eq!(Constant::zeros(100).project(&[0.0]), vec![0.0; 100].into());
+    fn test_project_zeros() {
+        fn prop_output(length: usize, input: Vec<f64>) -> bool {
+            match Constant::zeros(length).project(&input) {
+                Projection::Sparse(_) => false,
+                Projection::Dense(activations) => {
+                    activations.len() == length && activations.into_iter().all(|&v| v == 0.0)
+                },
+            }
+        }
 
-        assert_eq!(Constant::ones(1).project(&[0.0]), vec![1.0; 1].into());
-        assert_eq!(Constant::ones(10).project(&[0.0]), vec![1.0; 10].into());
-        assert_eq!(Constant::ones(100).project(&[0.0]), vec![1.0; 100].into());
+        quickcheck(prop_output as fn(usize, Vec<f64>) -> bool);
+    }
 
-        assert_eq!(Constant::new(10, -1.5).project(&[0.0]), vec![-1.5; 10].into());
-        assert_eq!(Constant::new(10, 5.6).project(&[0.0]), vec![5.6; 10].into());
-        assert_eq!(Constant::new(10, 123.0).project(&[0.0]), vec![123.0; 10].into());
+    #[test]
+    fn test_project_ones() {
+        fn prop_output(length: usize, input: Vec<f64>) -> bool {
+            match Constant::ones(length).project(&input) {
+                Projection::Sparse(_) => false,
+                Projection::Dense(activations) => {
+                    activations.len() == length && activations.into_iter().all(|&v| v == 1.0)
+                },
+            }
+        }
+
+        quickcheck(prop_output as fn(usize, Vec<f64>) -> bool);
+    }
+
+    #[test]
+    fn test_project_general() {
+        fn prop_output(length: usize, value: f64, input: Vec<f64>) -> bool {
+            match Constant::new(length, value).project(&input) {
+                Projection::Sparse(_) => false,
+                Projection::Dense(activations) => {
+                    activations.len() == length && activations.into_iter().all(|&v| v == value)
+                },
+            }
+        }
+
+        quickcheck(prop_output as fn(usize, f64, Vec<f64>) -> bool);
     }
 }

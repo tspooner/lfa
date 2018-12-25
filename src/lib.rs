@@ -8,6 +8,9 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
+#[cfg(tests)]
+extern crate quickcheck;
+
 mod macros;
 mod utils;
 
