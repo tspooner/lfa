@@ -21,7 +21,7 @@ macro_rules! impl_concrete_builder {
 }
 
 /// Linear function approximator.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LFA<P, A> {
     projector: P,
     approximator: A,
