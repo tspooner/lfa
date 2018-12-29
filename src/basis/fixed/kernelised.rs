@@ -3,8 +3,6 @@ use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Ve
 use crate::kernels::{self, Kernel};
 use crate::utils::cartesian_product;
 
-pub type RBFNetwork = KernelProjector<Vector<f64>, kernels::ExpQuad>;
-
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Prototype<I, K> {
     pub centroid: I,
@@ -45,9 +43,29 @@ impl<K: Kernel<Vector<f64>>> KernelProjector<Vector<f64>, K> {
 }
 
 impl KernelProjector<Vector<f64>, kernels::ExpQuad> {
-    pub fn rbf_network(partitioning: LinearSpace<Partition>) -> Self {
+    pub fn exp_quad(partitioning: LinearSpace<Partition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
-        let kernel = kernels::RBF::new(1.0, lengthscales);
+        let kernel = kernels::ExpQuad::new(1.0, lengthscales);
+        let centroids = cartesian_product(&partitioning.centres());
+
+        KernelProjector::from_centroids(centroids, kernel)
+    }
+}
+
+impl KernelProjector<Vector<f64>, kernels::Matern32> {
+    pub fn matern_32(partitioning: LinearSpace<Partition>) -> Self {
+        let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
+        let kernel = kernels::Matern32::new(1.0, lengthscales);
+        let centroids = cartesian_product(&partitioning.centres());
+
+        KernelProjector::from_centroids(centroids, kernel)
+    }
+}
+
+impl KernelProjector<Vector<f64>, kernels::Matern52> {
+    pub fn matern_52(partitioning: LinearSpace<Partition>) -> Self {
+        let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
+        let kernel = kernels::Matern52::new(1.0, lengthscales);
         let centroids = cartesian_product(&partitioning.centres());
 
         KernelProjector::from_centroids(centroids, kernel)
@@ -74,14 +92,15 @@ impl<I, K: Kernel<I>> Composable for KernelProjector<I, K> {}
 mod tests {
     use super::*;
     use crate::geometry::Vector;
+    use crate::kernels::ExpQuad;
 
-    fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> RBFNetwork {
-        let kernel = kernels::ExpQuad::new(1.0, Vector::from_vec(ls));
+    fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> KernelProjector<Vector<f64>, ExpQuad> {
+        let kernel = ExpQuad::new(1.0, Vector::from_vec(ls));
 
         KernelProjector::from_centroids(centroids, kernel)
     }
 
-    fn make_net_1d(centroids: Vec<f64>, ls: f64) -> RBFNetwork {
+    fn make_net_1d(centroids: Vec<f64>, ls: f64) -> KernelProjector<Vector<f64>, ExpQuad> {
         make_net(centroids.into_iter().map(|c| vec![c]).collect(), vec![ls])
     }
 
