@@ -1,10 +1,6 @@
 use crate::core::IndexSet;
 use crate::core::*;
-use crate::geometry::{
-    norms::{l1, l2},
-    Matrix,
-    Vector,
-};
+use crate::geometry::{Matrix, Vector};
 use ndarray::{stack, Axis};
 use std::{
     iter::FromIterator,
@@ -164,42 +160,6 @@ impl Projection {
                 phi
             },
         }
-    }
-
-    /// Return an expanded feature vector with L<sub>1</sub> normalisation
-    /// applied.
-    ///
-    /// ```
-    /// use lfa::basis::Projection;
-    ///
-    /// assert_eq!(
-    ///     Projection::expanded_l1(vec![0, 2, 1, 4].into(), 5),
-    ///     vec![0.25, 0.25, 0.25, 0.0, 0.25].into()
-    /// );
-    /// ```
-    pub fn expanded_l1(self, dim: usize) -> DenseT {
-        let phi = self.expanded(dim);
-        let z = l1(phi.as_slice().unwrap());
-
-        phi / z
-    }
-
-    /// Return an expanded feature vector with L<sub>2</sub> normalisation
-    /// applied.
-    ///
-    /// ```
-    /// use lfa::basis::Projection;
-    ///
-    /// assert_eq!(
-    ///     Projection::expanded_l2(vec![0, 2, 1, 4].into(), 5),
-    ///     vec![0.5, 0.5, 0.5, 0.0, 0.5].into()
-    /// );
-    /// ```
-    pub fn expanded_l2(self, dim: usize) -> DenseT {
-        let phi = self.expanded(dim);
-        let z = l2(phi.as_slice().unwrap());
-
-        phi / z
     }
 
     /// Apply the function `f` to the projection if the `Dense` variant or

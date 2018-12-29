@@ -1,4 +1,4 @@
-use crate::basis::composition::{Product, Scale, Shift, Stack, Sum};
+use crate::basis::composition::*;
 use crate::geometry::Space;
 
 pub trait Composable: Sized {
@@ -22,6 +22,18 @@ pub trait Composable: Sized {
 
     ///
     fn scale(self, factor: f64) -> Scale<Self> { Scale::new(self, factor) }
+
+    ///
+    fn normalise_l1(self) -> L1Normalise<Self> { L1Normalise::new(self) }
+
+    ///
+    fn normalise_l2(self) -> L2Normalise<Self> { L2Normalise::new(self) }
+
+    ///
+    fn normalise_lp(self, p: u8) -> LpNormalise<Self> { LpNormalise::new(self, p) }
+
+    ///
+    fn normalise_linf(self) -> LinfNormalise<Self> { LinfNormalise::new(self) }
 }
 
 #[cfg(test)]
