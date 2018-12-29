@@ -1,7 +1,7 @@
 use crate::approximators::adapt_matrix;
 use crate::basis::Projection;
 use crate::core::*;
-use crate::geometry::{Matrix, norms::l1};
+use crate::geometry::{norms::l1, Matrix};
 use std::collections::HashMap;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -33,7 +33,7 @@ impl Approximator<Projection> for TripleFunction {
                     acc.1 + self.weights[(*idx, 1)],
                     acc.2 + self.weights[(*idx, 2)],
                 )
-            })
+            }),
         })
     }
 
@@ -42,13 +42,16 @@ impl Approximator<Projection> for TripleFunction {
             &Projection::Dense(ref activations) => {
                 let z = l1(activations.as_slice().unwrap());
 
-                let phi_matrix = activations.view().into_shape((activations.len(), 1)).unwrap();
-                let error_matrix = Matrix::from_shape_vec((1, 3), vec![
-                    errors.0 / z, errors.1 / z, errors.2 / z
-                ]).unwrap();
+                let phi_matrix = activations
+                    .view()
+                    .into_shape((activations.len(), 1))
+                    .unwrap();
+                let error_matrix =
+                    Matrix::from_shape_vec((1, 3), vec![errors.0 / z, errors.1 / z, errors.2 / z])
+                        .unwrap();
 
                 self.weights += &phi_matrix.dot(&error_matrix)
-            }
+            },
             &Projection::Sparse(ref indices) => {
                 let z = indices.len() as f64;
                 let scaled_errors = (errors.0 / z, errors.1 / z, errors.2 / z);
@@ -68,20 +71,21 @@ impl Approximator<Projection> for TripleFunction {
 }
 
 impl Parameterised for TripleFunction {
-    fn weights(&self) -> Matrix<f64> {
-        self.weights.clone()
-    }
+    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
 }
 
 #[cfg(test)]
 mod tests {
     extern crate seahash;
 
-    use crate::LFA;
     use crate::approximators::TripleFunction;
     use crate::basis::fixed::{Fourier, TileCoding};
     use crate::core::Approximator;
-    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
+    use crate::LFA;
+    use std::{
+        collections::{BTreeSet, HashMap},
+        hash::BuildHasherDefault,
+    };
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
@@ -140,7 +144,7 @@ mod tests {
                 assert_eq!(c0[100], c0[10] / 2.0 + c0[90] / 2.0);
                 assert_eq!(c1[100], c1[10] / 2.0 + c1[90] / 2.0);
                 assert_eq!(c2[100], c2[10] / 2.0 + c2[90] / 2.0);
-            }
+            },
             Err(err) => panic!("TripleFunction::adapt failed with AdaptError::{:?}", err),
         }
     }

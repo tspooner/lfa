@@ -1,5 +1,12 @@
-use crate::basis::{Projector, Composable, Projection};
-use crate::geometry::{BoundedSpace, Card, product::LinearSpace, Space, Vector, continuous::Interval};
+use crate::basis::{Composable, Projection, Projector};
+use crate::geometry::{
+    continuous::Interval,
+    product::LinearSpace,
+    BoundedSpace,
+    Card,
+    Space,
+    Vector,
+};
 use crate::utils::cartesian_product;
 
 mod cpfk;
@@ -26,7 +33,10 @@ impl Polynomial {
     pub fn from_space(order: u8, input_space: LinearSpace<Interval>) -> Self {
         Polynomial::new(
             order,
-            input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
+            input_space
+                .iter()
+                .map(|d| (d.inf().unwrap(), d.sup().unwrap()))
+                .collect(),
         )
     }
 
@@ -44,13 +54,9 @@ impl Polynomial {
 impl Space for Polynomial {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.exponents.len()
-    }
+    fn dim(&self) -> usize { self.exponents.len() }
 
-    fn card(&self) -> Card {
-        Card::Infinite
-    }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl Projector<[f64]> for Polynomial {
@@ -62,12 +68,18 @@ impl Projector<[f64]> for Polynomial {
             .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        Projection::Dense(self.exponents.iter().map(|exps| scaled_state
-            .iter()
-            .zip(exps)
-            .map(|(v, e)| v.powi(*e))
-            .product()
-        ).collect())
+        Projection::Dense(
+            self.exponents
+                .iter()
+                .map(|exps| {
+                    scaled_state
+                        .iter()
+                        .zip(exps)
+                        .map(|(v, e)| v.powi(*e))
+                        .product()
+                })
+                .collect(),
+        )
     }
 }
 
@@ -101,7 +113,10 @@ impl Chebyshev {
     pub fn from_space(order: u8, input_space: LinearSpace<Interval>) -> Self {
         Chebyshev::new(
             order,
-            input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
+            input_space
+                .iter()
+                .map(|d| (d.inf().unwrap(), d.sup().unwrap()))
+                .collect(),
         )
     }
 
@@ -140,13 +155,9 @@ impl Chebyshev {
 impl Space for Chebyshev {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.polynomials.len()
-    }
+    fn dim(&self) -> usize { self.polynomials.len() }
 
-    fn card(&self) -> Card {
-        Card::Infinite
-    }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl Projector<[f64]> for Chebyshev {
@@ -158,12 +169,12 @@ impl Projector<[f64]> for Chebyshev {
             .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        Projection::Dense(self.polynomials.iter().map(|ps| scaled_state
-            .iter()
-            .zip(ps)
-            .map(|(v, f)| f(*v))
-            .product()
-        ).collect())
+        Projection::Dense(
+            self.polynomials
+                .iter()
+                .map(|ps| scaled_state.iter().zip(ps).map(|(v, f)| f(*v)).product())
+                .collect(),
+        )
     }
 }
 

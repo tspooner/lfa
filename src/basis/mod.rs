@@ -4,5 +4,5 @@ import_all!(projector with macros);
 import_all!(composable);
 
 pub mod adaptive;
-pub mod fixed;
 pub mod composition;
+pub mod fixed;

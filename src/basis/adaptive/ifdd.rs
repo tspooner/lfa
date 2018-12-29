@@ -1,4 +1,11 @@
-use crate::basis::{Feature, CandidateFeature, Projector, Composable, AdaptiveProjector, Projection};
+use crate::basis::{
+    AdaptiveProjector,
+    CandidateFeature,
+    Composable,
+    Feature,
+    Projection,
+    Projector,
+};
 use crate::core::*;
 use crate::geometry::{Card, Space, Vector};
 use itertools::Itertools;
@@ -43,7 +50,8 @@ impl<P: Space> IFDD<P> {
     fn inspect_candidate(&mut self, g: usize, h: usize, error: f64) -> Option<CandidateFeature> {
         let key = self.features[g].union(&self.features[h]);
         let rel = {
-            let c = self.candidates
+            let c = self
+                .candidates
                 .entry(key.clone())
                 .or_insert_with(|| CandidateFeature::new(key.clone()));
 
@@ -81,13 +89,9 @@ impl<P: Space> IFDD<P> {
 impl<P: Space> Space for IFDD<P> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.features.len()
-    }
+    fn dim(&self) -> usize { self.features.len() }
 
-    fn card(&self) -> Card {
-        unimplemented!()
-    }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
@@ -128,7 +132,7 @@ impl<I: ?Sized, P: Projector<I>> AdaptiveProjector<I> for IFDD<P> {
             match self.add_feature(f) {
                 Some(nf) => {
                     acc.get_or_insert_with(HashMap::new).insert(nf.0, nf.1);
-                }
+                },
                 None => (),
             };
 
@@ -153,8 +157,8 @@ impl<P> Composable for IFDD<P> {}
 mod tests {
     extern crate seahash;
 
-    use crate::basis::adaptive::IFDD;
     use super::*;
+    use crate::basis::adaptive::IFDD;
 
     #[derive(Clone)]
     struct BaseProjector;
@@ -162,13 +166,9 @@ mod tests {
     impl Space for BaseProjector {
         type Value = Projection;
 
-        fn dim(&self) -> usize {
-            5
-        }
+        fn dim(&self) -> usize { 5 }
 
-        fn card(&self) -> Card {
-            unimplemented!()
-        }
+        fn card(&self) -> Card { unimplemented!() }
     }
 
     impl Projector<[f64]> for BaseProjector {

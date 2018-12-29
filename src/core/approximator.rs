@@ -1,6 +1,6 @@
 use crate::core::{
     error::*,
-    primitives::{IndexT, IndexSet},
+    primitives::{IndexSet, IndexT},
 };
 use std::collections::HashMap;
 
@@ -24,9 +24,7 @@ pub trait Approximator<I: ?Sized> {
 impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
     type Value = T::Value;
 
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
-        (**self).evaluate(input)
-    }
+    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> { (**self).evaluate(input) }
 
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
         (**self).update(input, update)

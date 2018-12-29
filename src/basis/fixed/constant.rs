@@ -1,4 +1,4 @@
-use crate::basis::{Projector, Composable, Projection};
+use crate::basis::{Composable, Projection, Projector};
 use crate::geometry::{Card, Space};
 
 /// Fixed uniform basis projector.
@@ -16,31 +16,21 @@ impl Constant {
         }
     }
 
-    pub fn zeros(n_features: usize) -> Self {
-        Constant::new(n_features, 0.0)
-    }
+    pub fn zeros(n_features: usize) -> Self { Constant::new(n_features, 0.0) }
 
-    pub fn ones(n_features: usize) -> Self {
-        Constant::new(n_features, 1.0)
-    }
+    pub fn ones(n_features: usize) -> Self { Constant::new(n_features, 1.0) }
 }
 
 impl Space for Constant {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.n_features
-    }
+    fn dim(&self) -> usize { self.n_features }
 
-    fn card(&self) -> Card {
-        unimplemented!()
-    }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<I: ?Sized> Projector<I> for Constant {
-    fn project(&self, _: &I) -> Projection {
-        vec![self.value; self.n_features].into()
-    }
+    fn project(&self, _: &I) -> Projection { vec![self.value; self.n_features].into() }
 }
 
 impl Composable for Constant {}
@@ -64,27 +54,21 @@ impl Indices {
 impl Space for Indices {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.n_features
-    }
+    fn dim(&self) -> usize { self.n_features }
 
-    fn card(&self) -> Card {
-        unimplemented!()
-    }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<I: ?Sized> Projector<I> for Indices {
-    fn project(&self, _: &I) -> Projection {
-        self.active_features.iter().cloned().collect()
-    }
+    fn project(&self, _: &I) -> Projection { self.active_features.iter().cloned().collect() }
 }
 
 impl Composable for Indices {}
 
 #[cfg(test)]
 mod tests {
-    use quickcheck::quickcheck;
     use super::*;
+    use quickcheck::quickcheck;
 
     #[test]
     fn test_project_zeros() {

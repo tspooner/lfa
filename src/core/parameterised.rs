@@ -7,7 +7,5 @@ pub trait Parameterised {
 }
 
 impl<T: Parameterised> Parameterised for Box<T> {
-    fn weights(&self) -> Matrix<f64> {
-        (**self).weights()
-    }
+    fn weights(&self) -> Matrix<f64> { (**self).weights() }
 }

@@ -1,6 +1,9 @@
-use crate::basis::{Projector, Composable, Projection};
+use crate::basis::{Composable, Projection, Projector};
 use crate::geometry::{Card, Space};
-use rand::{thread_rng, distributions::{self as dists, Distribution}};
+use rand::{
+    distributions::{self as dists, Distribution},
+    thread_rng,
+};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -45,20 +48,19 @@ impl Random<dists::Uniform<f64>> {
 impl<D: Distribution<f64>> Space for Random<D> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.n_features
-    }
+    fn dim(&self) -> usize { self.n_features }
 
-    fn card(&self) -> Card {
-        unimplemented!()
-    }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<I: ?Sized, D: Distribution<f64>> Projector<I> for Random<D> {
     fn project(&self, _: &I) -> Projection {
         let mut rng = thread_rng();
 
-        (0..self.n_features).into_iter().map(|_| self.distribution.sample(&mut rng)).collect()
+        (0..self.n_features)
+            .into_iter()
+            .map(|_| self.distribution.sample(&mut rng))
+            .collect()
     }
 }
 
@@ -66,8 +68,8 @@ impl<D: Distribution<f64>> Composable for Random<D> {}
 
 #[cfg(test)]
 mod tests {
-    use quickcheck::{quickcheck, TestResult};
     use super::*;
+    use quickcheck::{quickcheck, TestResult};
 
     #[test]
     fn test_project_normal() {
@@ -96,7 +98,7 @@ mod tests {
                 match Random::log_normal(length, mean, std).project(&input) {
                     Projection::Sparse(_) => TestResult::failed(),
                     Projection::Dense(activations) => TestResult::from_bool(
-                        activations.len() == length && activations.iter().all(|&v| v > 0.0)
+                        activations.len() == length && activations.iter().all(|&v| v > 0.0),
                     ),
                 }
             }
@@ -114,7 +116,7 @@ mod tests {
                 match Random::gamma(length, shape, scale).project(&input) {
                     Projection::Sparse(_) => TestResult::failed(),
                     Projection::Dense(activations) => TestResult::from_bool(
-                        activations.len() == length && activations.iter().all(|&v| v > 0.0)
+                        activations.len() == length && activations.iter().all(|&v| v > 0.0),
                     ),
                 }
             }
@@ -132,8 +134,8 @@ mod tests {
                 match Random::uniform(length, lb, ub).project(&input) {
                     Projection::Sparse(_) => TestResult::failed(),
                     Projection::Dense(activations) => TestResult::from_bool(
-                        activations.len() == length &&
-                            activations.into_iter().all(|&v| v >= lb && v < ub)
+                        activations.len() == length
+                            && activations.into_iter().all(|&v| v >= lb && v < ub),
                     ),
                 }
             }

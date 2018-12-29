@@ -1,4 +1,4 @@
-use crate::basis::{Projector, Composable, Projection};
+use crate::basis::{Composable, Projection, Projector};
 use crate::geometry::{Card, Space, Vector};
 use std::hash::{BuildHasher, Hasher};
 
@@ -16,7 +16,8 @@ fn hash_state<H: Hasher>(
     state: &[isize],
     n_tilings: usize,
     memory_size: usize,
-) -> Vec<usize> {
+) -> Vec<usize>
+{
     let state_len = state.len();
 
     (0..n_tilings)
@@ -56,13 +57,9 @@ impl<H: BuildHasher> TileCoding<H> {
 impl<H> Space for TileCoding<H> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.memory_size
-    }
+    fn dim(&self) -> usize { self.memory_size }
 
-    fn card(&self) -> Card {
-        unimplemented!()
-    }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
@@ -75,9 +72,7 @@ impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
 }
 
 impl<H: BuildHasher> Projector<Vec<f64>> for TileCoding<H> {
-    fn project(&self, input: &Vec<f64>) -> Projection {
-        Projector::<[f64]>::project(self, &input)
-    }
+    fn project(&self, input: &Vec<f64>) -> Projection { Projector::<[f64]>::project(self, &input) }
 }
 
 impl<H: BuildHasher> Projector<Vector<f64>> for TileCoding<H> {
@@ -90,8 +85,8 @@ impl<H: BuildHasher> Composable for TileCoding<H> {}
 
 #[cfg(test)]
 mod tests {
-    use quickcheck::quickcheck;
     use super::*;
+    use quickcheck::quickcheck;
 
     #[test]
     fn test_bin_state() {

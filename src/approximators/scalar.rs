@@ -1,6 +1,6 @@
 use crate::basis::Projection;
 use crate::core::*;
-use crate::geometry::{Matrix, Vector, norms::l1};
+use crate::geometry::{norms::l1, Matrix, Vector};
 use std::{collections::HashMap, mem::replace};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -16,9 +16,8 @@ impl ScalarFunction {
     }
 
     fn extend_weights(&mut self, new_weights: Vec<f64>) {
-        let mut weights = unsafe {
-            replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec()
-        };
+        let mut weights =
+            unsafe { replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec() };
 
         weights.extend(new_weights);
 
@@ -29,9 +28,7 @@ impl ScalarFunction {
 impl Approximator<Projection> for ScalarFunction {
     type Value = f64;
 
-    fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> {
-        Ok(p.dot(&self.weights))
-    }
+    fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> { Ok(p.dot(&self.weights)) }
 
     fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {
         Ok(match p {
@@ -83,11 +80,14 @@ impl Parameterised for ScalarFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::LFA;
     use crate::approximators::ScalarFunction;
     use crate::basis::fixed::{Fourier, TileCoding};
     use crate::core::Approximator;
-    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
+    use crate::LFA;
+    use std::{
+        collections::{BTreeSet, HashMap},
+        hash::BuildHasherDefault,
+    };
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
@@ -135,7 +135,7 @@ mod tests {
                 assert_eq!(n, 1);
                 assert_eq!(f.weights.len(), 101);
                 assert_eq!(f.weights[100], f.weights[10] / 2.0 + f.weights[90] / 2.0);
-            }
+            },
             Err(err) => panic!("ScalarFunction::adapt failed with AdaptError::{:?}", err),
         }
     }

@@ -1,7 +1,7 @@
 use crate::approximators::adapt_matrix;
 use crate::basis::Projection;
 use crate::core::*;
-use crate::geometry::{Matrix, norms::l1};
+use crate::geometry::{norms::l1, Matrix};
 use std::collections::HashMap;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -24,11 +24,14 @@ impl Approximator<Projection> for PairFunction {
         Ok(match p {
             &Projection::Dense(ref activations) => (
                 self.weights.column(0).dot(activations),
-                self.weights.column(1).dot(activations)
+                self.weights.column(1).dot(activations),
             ),
             &Projection::Sparse(ref indices) => indices.iter().fold((0.0, 0.0), |acc, idx| {
-                (acc.0 + self.weights[(*idx, 0)], acc.1 + self.weights[(*idx, 1)])
-            })
+                (
+                    acc.0 + self.weights[(*idx, 0)],
+                    acc.1 + self.weights[(*idx, 1)],
+                )
+            }),
         })
     }
 
@@ -37,13 +40,15 @@ impl Approximator<Projection> for PairFunction {
             &Projection::Dense(ref activations) => {
                 let z = l1(activations.as_slice().unwrap());
 
-                let phi_matrix = activations.view().into_shape((activations.len(), 1)).unwrap();
-                let error_matrix = Matrix::from_shape_vec((1, 2), vec![
-                    errors.0 / z, errors.1 / z,
-                ]).unwrap();
+                let phi_matrix = activations
+                    .view()
+                    .into_shape((activations.len(), 1))
+                    .unwrap();
+                let error_matrix =
+                    Matrix::from_shape_vec((1, 2), vec![errors.0 / z, errors.1 / z]).unwrap();
 
                 self.weights += &phi_matrix.dot(&error_matrix)
-            }
+            },
             &Projection::Sparse(ref indices) => {
                 let z = indices.len() as f64;
                 let scaled_errors = (errors.0 / z, errors.1 / z);
@@ -62,20 +67,21 @@ impl Approximator<Projection> for PairFunction {
 }
 
 impl Parameterised for PairFunction {
-    fn weights(&self) -> Matrix<f64> {
-        self.weights.clone()
-    }
+    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
 }
 
 #[cfg(test)]
 mod tests {
     extern crate seahash;
 
-    use crate::LFA;
     use crate::approximators::PairFunction;
     use crate::basis::fixed::{Fourier, TileCoding};
     use crate::core::Approximator;
-    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
+    use crate::LFA;
+    use std::{
+        collections::{BTreeSet, HashMap},
+        hash::BuildHasherDefault,
+    };
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
@@ -130,7 +136,7 @@ mod tests {
 
                 assert_eq!(c0[100], c0[10] / 2.0 + c0[90] / 2.0);
                 assert_eq!(c1[100], c1[10] / 2.0 + c1[90] / 2.0);
-            }
+            },
             Err(err) => panic!("PairFunction::adapt failed with AdaptError::{:?}", err),
         }
     }

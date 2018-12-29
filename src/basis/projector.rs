@@ -1,6 +1,6 @@
 use crate::basis::{CandidateFeature, Projection};
+use crate::core::{DenseT, IndexSet};
 use crate::geometry::Space;
-use crate::core::{IndexSet, DenseT};
 use std::collections::HashMap;
 
 /// Trait for basis projectors.
@@ -8,7 +8,8 @@ pub trait Projector<I: ?Sized>: Space<Value = Projection> {
     /// Project data from an input space onto the basis.
     fn project(&self, input: &I) -> Projection;
 
-    /// Project data from an input space onto the basis and expand into a dense vector form.
+    /// Project data from an input space onto the basis and expand into a dense
+    /// vector form.
     fn project_expanded(&self, input: &I) -> DenseT { self.project(input).expanded(self.dim()) }
 }
 

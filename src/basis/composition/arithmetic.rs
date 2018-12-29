@@ -1,5 +1,5 @@
-use crate::basis::{Projector, Composable, Projection, fixed::Constant};
-use crate::geometry::{Space, Card, norms::l1};
+use crate::basis::{fixed::Constant, Composable, Projection, Projector};
+use crate::geometry::{norms::l1, Card, Space};
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Negate<P> {
@@ -17,13 +17,9 @@ impl<P> Negate<P> {
 impl<P: Space> Space for Negate<P> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.projector.dim()
-    }
+    fn dim(&self) -> usize { self.projector.dim() }
 
-    fn card(&self) -> Card {
-        self.projector.card()
-    }
+    fn card(&self) -> Card { self.projector.card() }
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
@@ -46,16 +42,12 @@ impl<P1: Space, P2: Space> Sum<P1, P2> {
             panic!("Projectors p1 and p2 must have the same dimensionality.");
         }
 
-        Sum {
-            p1, p2,
-        }
+        Sum { p1, p2 }
     }
 }
 
 impl<P1: Space, P2: Space> Sum<P1, Negate<P2>> {
-    pub fn subtract(p1: P1, p2: P2) -> Self {
-        Self::new(p1, Negate::new(p2))
-    }
+    pub fn subtract(p1: P1, p2: P2) -> Self { Self::new(p1, Negate::new(p2)) }
 }
 
 impl<P: Space> Sum<P, Constant> {
@@ -72,13 +64,9 @@ impl<P: Space> Sum<P, Constant> {
 impl<P1: Space, P2: Space> Space for Sum<P1, P2> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.p1.dim().max(self.p2.dim())
-    }
+    fn dim(&self) -> usize { self.p1.dim().max(self.p2.dim()) }
 
-    fn card(&self) -> Card {
-        self.p1.card() * self.p2.card()
-    }
+    fn card(&self) -> Card { self.p1.card() * self.p2.card() }
 }
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<P1, P2> {
@@ -114,9 +102,7 @@ impl<P1: Space, P2: Space> Product<P1, P2> {
             panic!("Projectors p1 and p2 must have the same dimensionality.");
         }
 
-        Product {
-            p1, p2,
-        }
+        Product { p1, p2 }
     }
 }
 
@@ -134,9 +120,7 @@ impl<P: Space> Product<P, Constant> {
 impl<P1: Space, P2: Space> Space for Product<P1, P2> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.p1.dim()
-    }
+    fn dim(&self) -> usize { self.p1.dim() }
 
     fn card(&self) -> Card { unimplemented!() }
 }

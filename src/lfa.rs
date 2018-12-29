@@ -1,7 +1,7 @@
 use crate::approximators::*;
-use crate::basis::{Projection, Projector, AdaptiveProjector, CandidateFeature};
+use crate::basis::{AdaptiveProjector, CandidateFeature, Projection, Projector};
 use crate::core::*;
-use crate::geometry::{Card, Space, Matrix};
+use crate::geometry::{Card, Matrix, Space};
 use std::collections::HashMap;
 
 macro_rules! impl_concrete_builder {
@@ -15,11 +15,9 @@ macro_rules! impl_concrete_builder {
         }
 
         impl<P: Space> From<P> for LFA<P, $ftype> {
-            fn from(projector: P) -> Self {
-                Self::$fname(projector)
-            }
+            fn from(projector: P) -> Self { Self::$fname(projector) }
         }
-    }
+    };
 }
 
 /// Linear function approximator.
@@ -50,10 +48,7 @@ impl<P: Space> LFA<P, VectorFunction> {
     }
 }
 
-impl<P, A> LFA<P, A>
-where
-    A: Approximator<Projection>,
-{
+impl<P, A: Approximator<Projection>> LFA<P, A> {
     #[allow(dead_code)]
     fn evaluate_primal(&mut self, primal: &Projection) -> EvaluationResult<A::Value> {
         self.approximator.evaluate(primal)
@@ -65,19 +60,12 @@ where
     }
 }
 
-impl<P, A> Space for LFA<P, A>
-where
-    P: Space,
-{
+impl<P: Space, A> Space for LFA<P, A> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.projector.dim()
-    }
+    fn dim(&self) -> usize { self.projector.dim() }
 
-    fn card(&self) -> Card {
-        self.projector.card()
-    }
+    fn card(&self) -> Card { self.projector.card() }
 }
 
 impl<I, P, A> Projector<I> for LFA<P, A>
@@ -85,9 +73,7 @@ where
     I: ?Sized,
     P: Projector<I>,
 {
-    fn project(&self, input: &I) -> Projection {
-        self.projector.project(input)
-    }
+    fn project(&self, input: &I) -> Projection { self.projector.project(input) }
 }
 
 impl<I, P, A> AdaptiveProjector<I> for LFA<P, A>
@@ -129,9 +115,6 @@ where
     }
 }
 
-impl<P, A> Parameterised for LFA<P, A>
-where
-    A: Parameterised,
-{
+impl<P, A: Parameterised> Parameterised for LFA<P, A> {
     fn weights(&self) -> Matrix<f64> { self.approximator.weights() }
 }

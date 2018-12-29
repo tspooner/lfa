@@ -1,38 +1,34 @@
-use crate::basis::composition::{Sum, Product, Stack, Shift, Scale};
+use crate::basis::composition::{Product, Scale, Shift, Stack, Sum};
 use crate::geometry::Space;
 
-pub trait Composable {
+pub trait Composable: Sized {
     ///
-    fn stack<P>(self, p: P) -> Stack<Self, P> where Self: Sized {
-        Stack::new(self, p)
-    }
+    fn stack<P>(self, p: P) -> Stack<Self, P> { Stack::new(self, p) }
 
     ///
-    fn sum<P: Space>(self, p: P) -> Sum<Self, P> where Self: Sized + Space {
+    fn sum<P: Space>(self, p: P) -> Sum<Self, P>
+    where Self: Space {
         Sum::new(self, p)
     }
 
     ///
-    fn shift(self, offset: f64) -> Shift<Self> where Self: Sized {
-        Shift::new(self, offset)
-    }
+    fn shift(self, offset: f64) -> Shift<Self> { Shift::new(self, offset) }
 
     ///
-    fn product<P: Space>(self, p: P) -> Product<Self, P> where Self: Sized + Space {
+    fn product<P: Space>(self, p: P) -> Product<Self, P>
+    where Self: Space {
         Product::new(self, p)
     }
 
     ///
-    fn scale(self, factor: f64) -> Scale<Self> where Self: Sized {
-        Scale::new(self, factor)
-    }
+    fn scale(self, factor: f64) -> Scale<Self> { Scale::new(self, factor) }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::basis::{Projector, composition::Stack, fixed::Constant};
-    use quickcheck::quickcheck;
     use super::Composable;
+    use crate::basis::{composition::Stack, fixed::Constant, Projector};
+    use quickcheck::quickcheck;
 
     #[test]
     fn test_stack_constant() {

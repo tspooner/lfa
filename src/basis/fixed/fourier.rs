@@ -1,4 +1,4 @@
-use crate::basis::{Projection, Composable, Projector};
+use crate::basis::{Composable, Projection, Projector};
 use crate::geometry::{
     continuous::Interval,
     product::LinearSpace,

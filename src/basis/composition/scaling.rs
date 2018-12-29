@@ -1,5 +1,5 @@
-use crate::basis::{Projector, Composable, Projection};
-use crate::geometry::{Space, Card};
+use crate::basis::{Composable, Projection, Projector};
+use crate::geometry::{Card, Space};
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Scale<P> {
@@ -19,13 +19,9 @@ impl<P> Scale<P> {
 impl<P: Space> Space for Scale<P> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.projector.dim()
-    }
+    fn dim(&self) -> usize { self.projector.dim() }
 
-    fn card(&self) -> Card {
-        self.projector.card()
-    }
+    fn card(&self) -> Card { self.projector.card() }
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for Scale<P> {

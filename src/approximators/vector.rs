@@ -1,7 +1,7 @@
 use crate::approximators::adapt_matrix;
 use crate::basis::Projection;
 use crate::core::*;
-use crate::geometry::{Matrix, Vector, norms::l1};
+use crate::geometry::{norms::l1, Matrix, Vector};
 use std::collections::HashMap;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -28,18 +28,25 @@ impl Approximator<Projection> for VectorFunction {
         Ok(match p {
             &Projection::Dense(ref activations) => {
                 let scaled_errors = errors / l1(activations.as_slice().unwrap());
-                let phi_matrix = activations.view().into_shape((activations.len(), 1)).unwrap();
-                let error_matrix =
-                    scaled_errors.view().into_shape((1, self.weights.cols())).unwrap();
+                let phi_matrix = activations
+                    .view()
+                    .into_shape((activations.len(), 1))
+                    .unwrap();
+                let error_matrix = scaled_errors
+                    .view()
+                    .into_shape((1, self.weights.cols()))
+                    .unwrap();
 
                 self.weights += &phi_matrix.dot(&error_matrix)
-            }
-            &Projection::Sparse(ref indices) => for c in 0..self.weights.cols() {
-                let mut col = self.weights.column_mut(c);
-                let scaled_error = errors[c] / indices.len() as f64;
+            },
+            &Projection::Sparse(ref indices) => {
+                for c in 0..self.weights.cols() {
+                    let mut col = self.weights.column_mut(c);
+                    let scaled_error = errors[c] / indices.len() as f64;
 
-                for idx in indices {
-                    col[*idx] += scaled_error
+                    for idx in indices {
+                        col[*idx] += scaled_error
+                    }
                 }
             },
         })
@@ -51,21 +58,22 @@ impl Approximator<Projection> for VectorFunction {
 }
 
 impl Parameterised for VectorFunction {
-    fn weights(&self) -> Matrix<f64> {
-        self.weights.clone()
-    }
+    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
 }
 
 #[cfg(test)]
 mod tests {
     extern crate seahash;
 
-    use crate::LFA;
     use crate::approximators::VectorFunction;
     use crate::basis::fixed::{Fourier, TileCoding};
     use crate::core::Approximator;
     use crate::geometry::Vector;
-    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
+    use crate::LFA;
+    use std::{
+        collections::{BTreeSet, HashMap},
+        hash::BuildHasherDefault,
+    };
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
@@ -120,7 +128,7 @@ mod tests {
 
                 assert_eq!(c0[100], c0[10] / 2.0 + c0[90] / 2.0);
                 assert_eq!(c1[100], c1[10] / 2.0 + c1[90] / 2.0);
-            }
+            },
             Err(err) => panic!("VectorFunction::adapt failed with AdaptError::{:?}", err),
         }
     }
