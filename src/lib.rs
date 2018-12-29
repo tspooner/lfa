@@ -16,7 +16,7 @@ mod utils;
 
 import_all!(lfa);
 
-pub mod core;
 pub mod approximators;
 pub mod basis;
+pub mod core;
 pub use crate::geometry::kernels;

@@ -1,8 +1,8 @@
-use crate::basis::{Projector, Projection};
-use crate::geometry::{Card, product::LinearSpace, Space, Surjection, discrete::Partition};
+use crate::basis::{Projector, Composable, Projection};
+use crate::geometry::{Card, product::LinearSpace, Space, Surjection, Vector, discrete::Partition};
 
 /// Fixed uniform basis projector.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct UniformGrid {
     n_features: usize,
     feature_space: LinearSpace<Partition>,
@@ -46,6 +46,10 @@ impl Projector<[f64]> for UniformGrid {
         vec![self.hash(input)].into()
     }
 }
+
+impl_array_proxies!(UniformGrid; f64);
+
+impl Composable for UniformGrid {}
 
 #[cfg(test)]
 mod tests {

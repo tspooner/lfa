@@ -1,11 +1,11 @@
-use crate::basis::{Projector, Projection};
-use crate::geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
+use crate::basis::{Projector, Composable, Projection};
+use crate::geometry::{BoundedSpace, Card, product::LinearSpace, Space, Vector, continuous::Interval};
 use crate::utils::cartesian_product;
 
 mod cpfk;
 
 /// Polynomial basis projector.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Polynomial {
     pub order: u8,
     pub limits: Vec<(f64, f64)>,
@@ -71,8 +71,12 @@ impl Projector<[f64]> for Polynomial {
     }
 }
 
+impl_array_proxies!(Polynomial; f64);
+
+impl Composable for Polynomial {}
+
 /// Chebyshev polynomial basis projector.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Chebyshev {
     pub order: u8,
     pub limits: Vec<(f64, f64)>,
@@ -162,3 +166,7 @@ impl Projector<[f64]> for Chebyshev {
         ).collect())
     }
 }
+
+impl_array_proxies!(Chebyshev; f64);
+
+impl Composable for Chebyshev {}

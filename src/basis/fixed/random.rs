@@ -1,9 +1,9 @@
-use crate::basis::{Projector, Projection};
+use crate::basis::{Projector, Composable, Projection};
 use crate::geometry::{Card, Space};
 use rand::{thread_rng, distributions::{self as dists, Distribution}};
 
 /// Fixed uniform basis projector.
-#[derive(Clone)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Random<D: Distribution<f64>> {
     n_features: usize,
     distribution: D,
@@ -54,13 +54,15 @@ impl<D: Distribution<f64>> Space for Random<D> {
     }
 }
 
-impl<D: Distribution<f64>> Projector<[f64]> for Random<D> {
-    fn project(&self, _: &[f64]) -> Projection {
+impl<I: ?Sized, D: Distribution<f64>> Projector<I> for Random<D> {
+    fn project(&self, _: &I) -> Projection {
         let mut rng = thread_rng();
 
         (0..self.n_features).into_iter().map(|_| self.distribution.sample(&mut rng)).collect()
     }
 }
+
+impl<D: Distribution<f64>> Composable for Random<D> {}
 
 #[cfg(test)]
 mod tests {

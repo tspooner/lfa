@@ -30,12 +30,7 @@ impl Approximator<Projection> for ScalarFunction {
     type Value = f64;
 
     fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> {
-        Ok(match p {
-            &Projection::Dense(ref activations) => self.weights.dot(activations),
-            &Projection::Sparse(ref indices) => {
-                indices.iter().fold(0.0, |acc, idx| acc + self.weights[*idx])
-            }
-        })
+        Ok(p.dot(&self.weights))
     }
 
     fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {

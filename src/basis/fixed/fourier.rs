@@ -1,10 +1,14 @@
-use crate::basis::{Projector, Projection};
-use crate::geometry::{BoundedSpace, Card, product::LinearSpace, Space, continuous::Interval};
-use std::{
-    f64::consts::PI,
-    iter,
+use crate::basis::{Projection, Composable, Projector};
+use crate::geometry::{
+    continuous::Interval,
+    product::LinearSpace,
+    BoundedSpace,
+    Card,
+    Space,
+    Vector,
 };
 use crate::utils::cartesian_product;
+use std::{f64::consts::PI, iter};
 
 // TODO: Add support for i-th term alphas scale factors.
 /// Fourier basis projector.
@@ -13,7 +17,7 @@ use crate::utils::cartesian_product;
 /// - [Konidaris, George, Sarah Osentoski, and Philip S. Thomas. "Value
 /// function approximation in reinforcement learning using the Fourier basis."
 /// AAAI. Vol. 6. 2011.](http://lis.csail.mit.edu/pubs/konidaris-aaai11a.pdf)
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Fourier {
     pub order: u8,
     pub limits: Vec<(f64, f64)>,
@@ -34,14 +38,21 @@ impl Fourier {
     pub fn from_space(order: u8, input_space: LinearSpace<Interval>) -> Self {
         Fourier::new(
             order,
-            input_space.iter().map(|d| (d.inf().unwrap(), d.sup().unwrap())).collect(),
+            input_space
+                .iter()
+                .map(|d| (d.inf().unwrap(), d.sup().unwrap()))
+                .collect(),
         )
     }
 
     fn compute_coefficients(order: u8, dim: usize) -> Vec<Vec<f64>> {
         let mut coefficients = cartesian_product(&vec![
-            (0..(order + 1)).map(|v| v as f64).collect::<Vec<f64>>(); dim
-        ]).split_off(1);
+            (0..(order + 1))
+                .map(|v| v as f64)
+                .collect::<Vec<f64>>();
+            dim
+        ])
+        .split_off(1);
 
         coefficients.sort_by(|a, b| b.partial_cmp(a).unwrap());
         coefficients.dedup();
@@ -53,13 +64,9 @@ impl Fourier {
 impl Space for Fourier {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.coefficients.len() + 1
-    }
+    fn dim(&self) -> usize { self.coefficients.len() + 1 }
 
-    fn card(&self) -> Card {
-        Card::Infinite
-    }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl Projector<[f64]> for Fourier {
@@ -70,21 +77,26 @@ impl Projector<[f64]> for Fourier {
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
             .collect::<Vec<f64>>();
 
-        Projection::Dense(self.coefficients
-            .iter()
-            .map(|cfs| {
-                let cx = scaled_state
-                    .iter()
-                    .zip(cfs)
-                    .fold(0.0, |acc, (v, c)| acc + *c * v);
+        Projection::Dense(
+            self.coefficients
+                .iter()
+                .map(|cfs| {
+                    let cx = scaled_state
+                        .iter()
+                        .zip(cfs)
+                        .fold(0.0, |acc, (v, c)| acc + *c * v);
 
-                (PI * cx).cos()
-            })
-            .chain(iter::once(1.0))
-            .collect()
+                    (PI * cx).cos()
+                })
+                .chain(iter::once(1.0))
+                .collect(),
         )
     }
 }
+
+impl_array_proxies!(Fourier; f64);
+
+impl Composable for Fourier {}
 
 #[cfg(test)]
 mod tests {
@@ -121,43 +133,34 @@ mod tests {
         assert_eq!(f.dim(), 2);
         assert_eq!(f.card(), Card::Infinite);
 
-        assert!(
-            f.project_expanded(&vec![-1.0])
-                .all_close(&arr1(&vec![-1.0, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![-0.5])
-                .all_close(&arr1(&vec![0.0, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![0.0])
-                .all_close(&arr1(&vec![1.0, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![0.5])
-                .all_close(&arr1(&vec![0.0, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![1.0])
-                .all_close(&arr1(&vec![-1.0, 1.0]), 1e-6)
-        );
+        assert!(f
+            .project_expanded(&vec![-1.0])
+            .all_close(&arr1(&vec![-1.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![-0.5])
+            .all_close(&arr1(&vec![0.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![0.0])
+            .all_close(&arr1(&vec![1.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![0.5])
+            .all_close(&arr1(&vec![0.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![1.0])
+            .all_close(&arr1(&vec![-1.0, 1.0]), 1e-6));
 
-        assert!(
-            f.project_expanded(&vec![-2.0 / 3.0])
-                .all_close(&arr1(&vec![-0.5, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![-1.0 / 3.0])
-                .all_close(&arr1(&vec![0.5, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![1.0 / 3.0])
-                .all_close(&arr1(&vec![0.5, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![2.0 / 3.0])
-                .all_close(&arr1(&vec![-0.5, 1.0]), 1e-6)
-        );
+        assert!(f
+            .project_expanded(&vec![-2.0 / 3.0])
+            .all_close(&arr1(&vec![-0.5, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![-1.0 / 3.0])
+            .all_close(&arr1(&vec![0.5, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![1.0 / 3.0])
+            .all_close(&arr1(&vec![0.5, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![2.0 / 3.0])
+            .all_close(&arr1(&vec![-0.5, 1.0]), 1e-6));
     }
 
     #[test]
@@ -167,43 +170,34 @@ mod tests {
         assert_eq!(f.dim(), 3);
         assert_eq!(f.card(), Card::Infinite);
 
-        assert!(
-            f.project_expanded(&vec![-1.0])
-                .all_close(&arr1(&vec![1.0, -1.0, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![-0.5])
-                .all_close(&arr1(&vec![-1.0, 0.0, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![0.0])
-                .all_close(&arr1(&vec![1.0; 3]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![0.5])
-                .all_close(&arr1(&vec![-1.0, 0.0, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![1.0])
-                .all_close(&arr1(&vec![1.0, -1.0, 1.0]), 1e-6)
-        );
+        assert!(f
+            .project_expanded(&vec![-1.0])
+            .all_close(&arr1(&vec![1.0, -1.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![-0.5])
+            .all_close(&arr1(&vec![-1.0, 0.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![0.0])
+            .all_close(&arr1(&vec![1.0; 3]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![0.5])
+            .all_close(&arr1(&vec![-1.0, 0.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![1.0])
+            .all_close(&arr1(&vec![1.0, -1.0, 1.0]), 1e-6));
 
-        assert!(
-            f.project_expanded(&vec![-2.0 / 3.0])
-                .all_close(&arr1(&vec![-0.5, -0.5, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![-1.0 / 3.0])
-                .all_close(&arr1(&vec![-0.5, 0.5, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![1.0 / 3.0])
-                .all_close(&arr1(&vec![-0.5, 0.5, 1.0]), 1e-6)
-        );
-        assert!(
-            f.project_expanded(&vec![2.0 / 3.0])
-                .all_close(&arr1(&vec![-0.5, -0.5, 1.0]), 1e-6)
-        );
+        assert!(f
+            .project_expanded(&vec![-2.0 / 3.0])
+            .all_close(&arr1(&vec![-0.5, -0.5, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![-1.0 / 3.0])
+            .all_close(&arr1(&vec![-0.5, 0.5, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![1.0 / 3.0])
+            .all_close(&arr1(&vec![-0.5, 0.5, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![2.0 / 3.0])
+            .all_close(&arr1(&vec![-0.5, -0.5, 1.0]), 1e-6));
     }
 
     #[test]
@@ -213,34 +207,27 @@ mod tests {
         assert_eq!(f.dim(), 4);
         assert_eq!(f.card(), Card::Infinite);
 
-        assert!(f.project_expanded(&vec![0.0, 5.0]).all_close(
-            &arr1(&vec![1.0; 4]),
-            1e-6
-        ));
-        assert!(f.project_expanded(&vec![0.5, 5.0]).all_close(
-            &arr1(&vec![0.0, 0.0, 1.0, 1.0]),
-            1e-6,
-        ));
-        assert!(f.project_expanded(&vec![0.0, 5.5]).all_close(
-            &arr1(&vec![0.0, 1.0, 0.0, 1.0]),
-            1e-6,
-        ));
-        assert!(f.project_expanded(&vec![0.5, 5.5]).all_close(
-            &arr1(&vec![-1.0, 0.0, 0.0, 1.0]),
-            1e-6
-        ));
-        assert!(f.project_expanded(&vec![1.0, 5.5]).all_close(
-            &arr1(&vec![0.0, -1.0, 0.0, 1.0]),
-            1e-6,
-        ));
-        assert!(f.project_expanded(&vec![0.5, 6.0]).all_close(
-            &arr1(&vec![0.0, 0.0, -1.0, 1.0]),
-            1e-6,
-        ));
-        assert!(f.project_expanded(&vec![1.0, 6.0]).all_close(
-            &arr1(&vec![1.0, -1.0, -1.0, 1.0]),
-            1e-6
-        ));
+        assert!(f
+            .project_expanded(&vec![0.0, 5.0])
+            .all_close(&arr1(&vec![1.0; 4]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![0.5, 5.0])
+            .all_close(&arr1(&vec![0.0, 0.0, 1.0, 1.0]), 1e-6,));
+        assert!(f
+            .project_expanded(&vec![0.0, 5.5])
+            .all_close(&arr1(&vec![0.0, 1.0, 0.0, 1.0]), 1e-6,));
+        assert!(f
+            .project_expanded(&vec![0.5, 5.5])
+            .all_close(&arr1(&vec![-1.0, 0.0, 0.0, 1.0]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![1.0, 5.5])
+            .all_close(&arr1(&vec![0.0, -1.0, 0.0, 1.0]), 1e-6,));
+        assert!(f
+            .project_expanded(&vec![0.5, 6.0])
+            .all_close(&arr1(&vec![0.0, 0.0, -1.0, 1.0]), 1e-6,));
+        assert!(f
+            .project_expanded(&vec![1.0, 6.0])
+            .all_close(&arr1(&vec![1.0, -1.0, -1.0, 1.0]), 1e-6));
     }
 
     #[test]
@@ -250,10 +237,9 @@ mod tests {
         assert_eq!(f.dim(), 9);
         assert_eq!(f.card(), Card::Infinite);
 
-        assert!(f.project_expanded(&vec![0.0, 5.0]).all_close(
-            &arr1(&vec![1.0; 9]),
-            1e-6
-        ));
+        assert!(f
+            .project_expanded(&vec![0.0, 5.0])
+            .all_close(&arr1(&vec![1.0; 9]), 1e-6));
         assert!(f.project_expanded(&vec![0.5, 5.0],).all_close(
             &arr1(&vec![-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0]),
             1e-6,

@@ -1,30 +1,75 @@
-use crate::basis::{Projector, Projection};
+use crate::basis::{Projector, Composable, Projection, fixed::Constant};
 use crate::geometry::{Space, Card, norms::l1};
-use std::marker::PhantomData;
 
-pub struct Sum<I: ?Sized, P1: Projector<I>, P2: Projector<I>> {
-    p1: P1,
-    p2: P2,
-
-    phantom: PhantomData<I>,
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+pub struct Negate<P> {
+    projector: P,
 }
 
-impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Sum<I, P1, P2> {
+impl<P> Negate<P> {
+    pub fn new(projector: P) -> Self {
+        Negate {
+            projector: projector,
+        }
+    }
+}
+
+impl<P: Space> Space for Negate<P> {
+    type Value = Projection;
+
+    fn dim(&self) -> usize {
+        self.projector.dim()
+    }
+
+    fn card(&self) -> Card {
+        self.projector.card()
+    }
+}
+
+impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
+    fn project(&self, input: &I) -> Projection {
+        Projection::Dense(-self.projector.project_expanded(input))
+    }
+}
+
+impl<P> Composable for Negate<P> {}
+
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+pub struct Sum<P1, P2> {
+    p1: P1,
+    p2: P2,
+}
+
+impl<P1: Space, P2: Space> Sum<P1, P2> {
     pub fn new(p1: P1, p2: P2) -> Self {
         if p1.dim() != p2.dim() {
             panic!("Projectors p1 and p2 must have the same dimensionality.");
         }
 
         Sum {
-            p1: p1,
-            p2: p2,
-
-            phantom: PhantomData,
+            p1, p2,
         }
     }
 }
 
-impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Sum<I, P1, P2> {
+impl<P1: Space, P2: Space> Sum<P1, Negate<P2>> {
+    pub fn subtract(p1: P1, p2: P2) -> Self {
+        Self::new(p1, Negate::new(p2))
+    }
+}
+
+impl<P: Space> Sum<P, Constant> {
+    pub fn with_constant(projector: P, offset: f64) -> Self {
+        let p2 = Constant::new(projector.dim(), offset);
+
+        Sum {
+            p1: projector,
+            p2: p2,
+        }
+    }
+}
+
+impl<P1: Space, P2: Space> Space for Sum<P1, P2> {
     type Value = Projection;
 
     fn dim(&self) -> usize {
@@ -36,7 +81,7 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Sum<I, P1, P2> {
     }
 }
 
-impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<I, P1, P2> {
+impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<P1, P2> {
     fn project(&self, input: &I) -> Projection {
         let p1 = self.p1.project(input);
         let p2 = self.p2.project(input);
@@ -55,29 +100,38 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<I, P1, 
     }
 }
 
-pub struct Product<I: ?Sized, P1: Projector<I>, P2: Projector<I>> {
+impl<P1, P2> Composable for Sum<P1, P2> {}
+
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+pub struct Product<P1, P2> {
     p1: P1,
     p2: P2,
-
-    phantom: PhantomData<I>,
 }
 
-impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Product<I, P1, P2> {
+impl<P1: Space, P2: Space> Product<P1, P2> {
     pub fn new(p1: P1, p2: P2) -> Self {
         if p1.dim() != p2.dim() {
             panic!("Projectors p1 and p2 must have the same dimensionality.");
         }
 
         Product {
-            p1: p1,
-            p2: p2,
-
-            phantom: PhantomData,
+            p1, p2,
         }
     }
 }
 
-impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Product<I, P1, P2> {
+impl<P: Space> Product<P, Constant> {
+    pub fn with_factor(projector: P, factor: f64) -> Self {
+        let p2 = Constant::new(projector.dim(), factor);
+
+        Product {
+            p1: projector,
+            p2: p2,
+        }
+    }
+}
+
+impl<P1: Space, P2: Space> Space for Product<P1, P2> {
     type Value = Projection;
 
     fn dim(&self) -> usize {
@@ -87,7 +141,7 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Space for Product<I, P1, P2>
     fn card(&self) -> Card { unimplemented!() }
 }
 
-impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<I, P1, P2> {
+impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<P1, P2> {
     fn project(&self, input: &I) -> Projection {
         let p1 = self.p1.project(input);
         let p2 = self.p2.project(input);
@@ -109,3 +163,4 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<I, 
     }
 }
 
+impl<P1, P2> Composable for Product<P1, P2> {}

@@ -1,21 +1,18 @@
-use crate::basis::{Projector, Projection};
+use crate::basis::{Projection, Composable, Projector};
 use crate::geometry::{
     Space, Card, Vector,
     product::LinearSpace,
     discrete::Partition,
-    continuous::Reals,
 };
 use crate::kernels::{self, Kernel};
 use crate::utils::cartesian_product;
 
-
 pub type RBFNetwork = KernelProjector<Vector<f64>, kernels::ExpQuad>;
 
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Prototype<I, K: Kernel<I>> {
-    pub kernel: K,
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+pub struct Prototype<I, K> {
     pub centroid: I,
+    pub kernel: K,
 }
 
 impl<I, K: Kernel<I>> Prototype<I, K> {
@@ -24,8 +21,8 @@ impl<I, K: Kernel<I>> Prototype<I, K> {
     }
 }
 
-#[derive(Clone)]
-pub struct KernelProjector<I, K: Kernel<I>> {
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct KernelProjector<I, K> {
     pub prototypes: Vec<Prototype<I, K>>,
 }
 
@@ -82,6 +79,7 @@ impl<I, K: Kernel<I>> Projector<I> for KernelProjector<I, K> {
     }
 }
 
+impl<I, K: Kernel<I>> Composable for KernelProjector<I, K> {}
 
 #[cfg(test)]
 mod tests {

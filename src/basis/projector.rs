@@ -1,5 +1,5 @@
 use crate::basis::{CandidateFeature, Projection};
-use crate::geometry::{Space, Vector};
+use crate::geometry::Space;
 use crate::core::{IndexSet, DenseT};
 use std::collections::HashMap;
 
@@ -19,28 +19,45 @@ pub trait AdaptiveProjector<I: ?Sized>: Projector<I> {
     fn add_feature(&mut self, feature: CandidateFeature) -> Option<(usize, IndexSet)>;
 }
 
-impl<P: Projector<[f64]>> Projector<Vec<f64>> for P {
-    fn project(&self, input: &Vec<f64>) -> Projection {
-        Projector::<[f64]>::project(self, &input)
-    }
-}
-
-impl<P: Projector<[f64]>> Projector<Vector<f64>> for P {
-    fn project(&self, input: &Vector<f64>) -> Projection {
-        Projector::<[f64]>::project(self, input.as_slice().unwrap())
-    }
-}
-
-macro_rules! impl_fixed {
-    ($($n:expr),*) => {
+// #[macro_export]
+macro_rules! impl_array_proxy {
+    ([$itype:ty; $($n:expr),*] for $type:ty) => {
         $(
-            impl<P: Projector<[f64]>> Projector<[f64; $n]> for P {
-                fn project(&self, input: &[f64; $n]) -> Projection {
-                    Projector::<[f64]>::project(self, input)
+            impl Projector<[$itype; $n]> for $type where $type: Projector<[$itype]> {
+                fn project(&self, input: &[$itype; $n]) -> Projection {
+                    Projector::<[$itype]>::project(self, input)
                 }
             }
         )*
-    }
+    };
+    ([$itype:ty; +] for $type:ty) => {
+        impl_array_proxy!([$itype;
+             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24
+        ] for $type);
+    };
+    (Vec<$itype:ty> for $type:ty) => {
+        impl Projector<Vec<$itype>> for $type where $type: Projector<[$itype]> {
+            fn project(&self, input: &Vec<$itype>) -> Projection {
+                Projector::<[$itype]>::project(self, &input)
+            }
+        }
+    };
+    (Vector<$itype:ty> for $type:ty) => {
+        impl Projector<Vector<$itype>> for $type where $type: Projector<[$itype]> {
+            fn project(&self, input: &Vector<$itype>) -> Projection {
+                Projector::<[$itype]>::project(self, input.as_slice().unwrap())
+            }
+        }
+    };
 }
 
-impl_fixed!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
+// #[macro_export]
+macro_rules! impl_array_proxies {
+    ($type:ty; $($itype:ty),*) => {
+        $(
+            // impl_array_proxy!([$itype; +] for $type);
+            impl_array_proxy!(Vec<$itype> for $type);
+            impl_array_proxy!(Vector<$itype> for $type);
+        )*
+    }
+}

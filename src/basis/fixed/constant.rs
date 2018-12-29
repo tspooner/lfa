@@ -1,8 +1,8 @@
-use crate::basis::{Projector, Projection};
+use crate::basis::{Projector, Composable, Projection};
 use crate::geometry::{Card, Space};
 
 /// Fixed uniform basis projector.
-#[derive(Clone)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Constant {
     n_features: usize,
     value: f64,
@@ -37,11 +37,49 @@ impl Space for Constant {
     }
 }
 
-impl Projector<[f64]> for Constant {
-    fn project(&self, _: &[f64]) -> Projection {
+impl<I: ?Sized> Projector<I> for Constant {
+    fn project(&self, _: &I) -> Projection {
         vec![self.value; self.n_features].into()
     }
 }
+
+impl Composable for Constant {}
+
+/// Fixed uniform basis projector.
+#[derive(Clone)]
+pub struct Indices {
+    n_features: usize,
+    active_features: Vec<usize>,
+}
+
+impl Indices {
+    pub fn new(n_features: usize, active_features: Vec<usize>) -> Self {
+        Indices {
+            n_features,
+            active_features,
+        }
+    }
+}
+
+impl Space for Indices {
+    type Value = Projection;
+
+    fn dim(&self) -> usize {
+        self.n_features
+    }
+
+    fn card(&self) -> Card {
+        unimplemented!()
+    }
+}
+
+impl<I: ?Sized> Projector<I> for Indices {
+    fn project(&self, _: &I) -> Projection {
+        self.active_features.iter().cloned().collect()
+    }
+}
+
+impl Composable for Indices {}
 
 #[cfg(test)]
 mod tests {

@@ -2,15 +2,11 @@ use crate::approximators::*;
 use crate::basis::{Projection, Projector, AdaptiveProjector, CandidateFeature};
 use crate::core::*;
 use crate::geometry::{Card, Space, Matrix};
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
 
 macro_rules! impl_concrete_builder {
     ($ftype:ty => $fname:ident) => {
-        impl<I, P> LFA<I, P, $ftype>
-        where
-            I: ?Sized,
-            P: Projector<I>,
-        {
+        impl<P: Space> LFA<P, $ftype> {
             pub fn $fname(projector: P) -> Self {
                 let approximator = <$ftype>::new(projector.dim());
 
@@ -18,11 +14,7 @@ macro_rules! impl_concrete_builder {
             }
         }
 
-        impl<I, P> From<P> for LFA<I, P, $ftype>
-        where
-            I: ?Sized,
-            P: Projector<I>,
-        {
+        impl<P: Space> From<P> for LFA<P, $ftype> {
             fn from(projector: P) -> Self {
                 Self::$fname(projector)
             }
@@ -32,25 +24,16 @@ macro_rules! impl_concrete_builder {
 
 /// Linear function approximator.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct LFA<I: ?Sized, P, A> {
+pub struct LFA<P, A> {
     projector: P,
     approximator: A,
-
-    phantom: PhantomData<I>,
 }
 
-impl<I, P, A> LFA<I, P, A>
-where
-    I: ?Sized,
-    P: Projector<I>,
-    A: Approximator<Projection>,
-{
+impl<P, A> LFA<P, A> {
     pub fn new(projector: P, approximator: A) -> Self {
         LFA {
             projector: projector,
             approximator: approximator,
-
-            phantom: PhantomData,
         }
     }
 }
@@ -59,11 +42,7 @@ impl_concrete_builder!(ScalarFunction => scalar_output);
 impl_concrete_builder!(PairFunction => pair_output);
 impl_concrete_builder!(TripleFunction => triple_output);
 
-impl<I, P> LFA<I, P, VectorFunction>
-where
-    I: ?Sized,
-    P: Projector<I>,
-{
+impl<P: Space> LFA<P, VectorFunction> {
     pub fn vector_output(projector: P, n_outputs: usize) -> Self {
         let approximator = VectorFunction::new(projector.dim(), n_outputs);
 
@@ -71,9 +50,8 @@ where
     }
 }
 
-impl<I, P, A> LFA<I, P, A>
+impl<P, A> LFA<P, A>
 where
-    I: ?Sized,
     A: Approximator<Projection>,
 {
     #[allow(dead_code)]
@@ -87,10 +65,9 @@ where
     }
 }
 
-impl<I, P, A> Space for LFA<I, P, A>
+impl<P, A> Space for LFA<P, A>
 where
-    I: ?Sized,
-    P: Projector<I>,
+    P: Space,
 {
     type Value = Projection;
 
@@ -103,8 +80,9 @@ where
     }
 }
 
-impl<I, P, A> Projector<I> for LFA<I, P, A>
+impl<I, P, A> Projector<I> for LFA<P, A>
 where
+    I: ?Sized,
     P: Projector<I>,
 {
     fn project(&self, input: &I) -> Projection {
@@ -112,8 +90,9 @@ where
     }
 }
 
-impl<I, P, A> AdaptiveProjector<I> for LFA<I, P, A>
+impl<I, P, A> AdaptiveProjector<I> for LFA<P, A>
 where
+    I: ?Sized,
     P: AdaptiveProjector<I>,
 {
     fn discover(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>> {
@@ -125,7 +104,7 @@ where
     }
 }
 
-impl<I, P, A> Approximator<I> for LFA<I, P, A>
+impl<I, P, A> Approximator<I> for LFA<P, A>
 where
     I: ?Sized,
     P: Projector<I>,
@@ -134,13 +113,13 @@ where
     type Value = A::Value;
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
-        let primal = self.projector.project(input);
+        let primal = self.project(input);
 
         self.approximator.evaluate(&primal)
     }
 
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
-        let primal = self.projector.project(input);
+        let primal = self.project(input);
 
         self.approximator.update(&primal, update)
     }
@@ -150,9 +129,8 @@ where
     }
 }
 
-impl<I, P, A> Parameterised for LFA<I, P, A>
+impl<P, A> Parameterised for LFA<P, A>
 where
-    I: ?Sized,
     A: Parameterised,
 {
     fn weights(&self) -> Matrix<f64> { self.approximator.weights() }

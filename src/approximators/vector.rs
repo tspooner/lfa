@@ -21,15 +21,7 @@ impl Approximator<Projection> for VectorFunction {
     type Value = Vector<f64>;
 
     fn evaluate(&self, p: &Projection) -> EvaluationResult<Vector<f64>> {
-        Ok(match p {
-            &Projection::Dense(ref activations) => self.weights.t().dot(activations),
-            &Projection::Sparse(ref indices) => (0..self.weights.cols())
-                .map(|c| indices
-                    .iter()
-                    .fold(0.0, |acc, idx| acc + self.weights[(*idx, c)])
-                )
-                .collect(),
-        })
+        Ok(p.matmul(&self.weights))
     }
 
     fn update(&mut self, p: &Projection, errors: Vector<f64>) -> UpdateResult<()> {

@@ -1,10 +1,11 @@
-use crate::basis::{Feature, CandidateFeature, Projector, AdaptiveProjector, Projection};
+use crate::basis::{Feature, CandidateFeature, Projector, Composable, AdaptiveProjector, Projection};
 use crate::core::*;
 use crate::geometry::{Card, Space, Vector};
 use itertools::Itertools;
 use std::collections::HashMap;
 
-pub struct IFDD<P: Projector<[f64]>> {
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct IFDD<P> {
     pub base: P,
     pub features: Vec<Feature>,
 
@@ -12,7 +13,7 @@ pub struct IFDD<P: Projector<[f64]>> {
     discovery_threshold: f64,
 }
 
-impl<P: Projector<[f64]>> IFDD<P> {
+impl<P: Space> IFDD<P> {
     pub fn new(base_projector: P, discovery_threshold: f64) -> Self {
         let initial_dim: usize = base_projector.dim();
         let mut base_features: Vec<Feature> = (0..initial_dim)
@@ -77,7 +78,7 @@ impl<P: Projector<[f64]>> IFDD<P> {
     }
 }
 
-impl<P: Projector<[f64]>> Space for IFDD<P> {
+impl<P: Space> Space for IFDD<P> {
     type Value = Projection;
 
     fn dim(&self) -> usize {
@@ -89,8 +90,8 @@ impl<P: Projector<[f64]>> Space for IFDD<P> {
     }
 }
 
-impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
-    fn project(&self, input: &[f64]) -> Projection {
+impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
+    fn project(&self, input: &I) -> Projection {
         let mut p = self.base.project(input);
         let np: Vec<usize> = (self.base.dim()..self.dim())
             .filter_map(|i| {
@@ -114,8 +115,8 @@ impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
     }
 }
 
-impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
-    fn discover(&mut self, input: &[f64], error: f64) -> Option<HashMap<IndexT, IndexSet>> {
+impl<I: ?Sized, P: Projector<I>> AdaptiveProjector<I> for IFDD<P> {
+    fn discover(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>> {
         let new_features = match self.base.project(input) {
             Projection::Sparse(active_indices) => self.discover_sparse(active_indices, error),
             Projection::Dense(activations) => self.discover_dense(activations, error),
@@ -145,6 +146,8 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
         Some(mapping)
     }
 }
+
+impl<P> Composable for IFDD<P> {}
 
 #[cfg(test)]
 mod tests {

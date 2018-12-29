@@ -1,4 +1,4 @@
-use crate::core::{IndexT, IndexSet, AdaptError, AdaptResult};
+use crate::core::{AdaptError, AdaptResult, IndexSet, IndexT};
 use crate::geometry::Matrix;
 use std::{collections::HashMap, mem::replace};
 
@@ -8,9 +8,7 @@ fn append_matrix_rows(weights: &mut Matrix<f64>, new_rows: Vec<Vec<f64>>) {
     let n_rows_new = new_rows.len();
 
     // Weight matrix stored in row-major format.
-    let mut new_weights = unsafe {
-        replace(weights, Matrix::uninitialized((0, 0))).into_raw_vec()
-    };
+    let mut new_weights = unsafe { replace(weights, Matrix::uninitialized((0, 0))).into_raw_vec() };
 
     new_weights.reserve_exact(n_rows_new);
 
@@ -21,8 +19,11 @@ fn append_matrix_rows(weights: &mut Matrix<f64>, new_rows: Vec<Vec<f64>>) {
     *weights = Matrix::from_shape_vec((n_rows + n_rows_new, n_cols), new_weights).unwrap();
 }
 
-
-fn adapt_matrix(weights: &mut Matrix<f64>, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
+fn adapt_matrix(
+    weights: &mut Matrix<f64>,
+    new_features: &HashMap<IndexT, IndexSet>,
+) -> AdaptResult<usize>
+{
     let n_nfs = new_features.len();
     let n_outputs = weights.cols();
     let max_index = weights.len() + n_nfs - 1;
@@ -49,7 +50,7 @@ fn adapt_matrix(weights: &mut Matrix<f64>, new_features: &HashMap<IndexT, IndexS
             append_matrix_rows(weights, new_weights);
 
             Ok(n_nfs)
-        }
+        },
         Err(err) => Err(err),
     }
 }
