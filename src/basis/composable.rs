@@ -6,18 +6,30 @@ pub trait Composable: Sized {
     fn stack<P>(self, p: P) -> Stack<Self, P> { Stack::new(self, p) }
 
     ///
-    fn sum<P: Space>(self, p: P) -> Sum<Self, P>
+    fn add<P: Space>(self, p: P) -> Sum<Self, P>
     where Self: Space {
         Sum::new(self, p)
+    }
+
+    ///
+    fn subtract<P: Space>(self, p: P) -> Sum<Self, Negate<P>>
+    where Self: Space {
+        Sum::new(self, Negate::new(p))
     }
 
     ///
     fn shift(self, offset: f64) -> Shift<Self> { Shift::new(self, offset) }
 
     ///
-    fn product<P: Space>(self, p: P) -> Product<Self, P>
+    fn multiply<P: Space>(self, p: P) -> Product<Self, P>
     where Self: Space {
         Product::new(self, p)
+    }
+
+    ///
+    fn divide<P: Space>(self, p: P) -> Product<Self, Reciprocal<P>>
+    where Self: Space {
+        Product::new(self, Reciprocal::new(p))
     }
 
     ///
