@@ -3,6 +3,7 @@ use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Ve
 use crate::kernels::{self, Kernel};
 use crate::utils::cartesian_product;
 
+/// Feature prototype used by the `KernelProjector` basis.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Prototype<I, K> {
     pub centroid: I,
@@ -13,6 +14,7 @@ impl<I, K: Kernel<I>> Prototype<I, K> {
     pub fn kernel(&self, x: &I) -> f64 { self.kernel.kernel(x, &self.centroid) }
 }
 
+/// Kernel machine basis projector.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct KernelProjector<I, K> {
     pub prototypes: Vec<Prototype<I, K>>,
@@ -21,24 +23,16 @@ pub struct KernelProjector<I, K> {
 impl<I, K: Kernel<I>> KernelProjector<I, K> {
     pub fn new(prototypes: Vec<Prototype<I, K>>) -> Self { KernelProjector { prototypes } }
 
-    pub fn from_centroids(centroids: impl IntoIterator<Item = impl Into<I>>, kernel: K) -> Self {
+    pub fn homogeneous(centroids: impl IntoIterator<Item = impl Into<I>>, kernel: K) -> Self {
         KernelProjector::new(
             centroids
                 .into_iter()
                 .map(|c| Prototype {
-                    kernel: kernel.clone(),
                     centroid: c.into(),
+                    kernel: kernel.clone(),
                 })
                 .collect(),
         )
-    }
-}
-
-impl<K: Kernel<Vector<f64>>> KernelProjector<Vector<f64>, K> {
-    pub fn from_partitioning(partitioning: LinearSpace<Partition>, kernel: K) -> Self {
-        let centroids = cartesian_product(&partitioning.centres());
-
-        KernelProjector::from_centroids(centroids, kernel)
     }
 }
 
@@ -48,7 +42,7 @@ impl KernelProjector<Vector<f64>, kernels::ExpQuad> {
         let kernel = kernels::ExpQuad::new(1.0, lengthscales);
         let centroids = cartesian_product(&partitioning.centres());
 
-        KernelProjector::from_centroids(centroids, kernel)
+        KernelProjector::homogeneous(centroids, kernel)
     }
 }
 
@@ -58,7 +52,7 @@ impl KernelProjector<Vector<f64>, kernels::Matern32> {
         let kernel = kernels::Matern32::new(1.0, lengthscales);
         let centroids = cartesian_product(&partitioning.centres());
 
-        KernelProjector::from_centroids(centroids, kernel)
+        KernelProjector::homogeneous(centroids, kernel)
     }
 }
 
@@ -68,7 +62,7 @@ impl KernelProjector<Vector<f64>, kernels::Matern52> {
         let kernel = kernels::Matern52::new(1.0, lengthscales);
         let centroids = cartesian_product(&partitioning.centres());
 
-        KernelProjector::from_centroids(centroids, kernel)
+        KernelProjector::homogeneous(centroids, kernel)
     }
 }
 
@@ -97,7 +91,7 @@ mod tests {
     fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> KernelProjector<Vector<f64>, ExpQuad> {
         let kernel = ExpQuad::new(1.0, Vector::from_vec(ls));
 
-        KernelProjector::from_centroids(centroids, kernel)
+        KernelProjector::homogeneous(centroids, kernel)
     }
 
     fn make_net_1d(centroids: Vec<f64>, ls: f64) -> KernelProjector<Vector<f64>, ExpQuad> {
