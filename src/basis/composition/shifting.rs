@@ -26,8 +26,26 @@ impl<P: Space> Space for Shift<P> {
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for Shift<P> {
     fn project(&self, input: &I) -> Projection {
-        Projection::Dense(self.offset + self.project_expanded(input))
+        Projection::Dense(self.offset + self.projector.project_expanded(input))
     }
 }
 
 impl<P> Composable for Shift<P> {}
+
+#[cfg(test)]
+mod tests {
+    use crate::basis::fixed::Constant;
+    use quickcheck::quickcheck;
+    use super::*;
+
+    #[test]
+    fn test_shifting() {
+        fn prop_output(length: usize, v1: f64, v2: f64) -> bool {
+            let p = Shift::new(Constant::new(length, v1), v2);
+
+            p.project_expanded(&[0.0]).into_iter().all(|&v| (v - (v1 + v2)) < 1e-7)
+        }
+
+        quickcheck(prop_output as fn(usize, f64, f64) -> bool);
+    }
+}
