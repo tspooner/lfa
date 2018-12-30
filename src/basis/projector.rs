@@ -6,10 +6,38 @@ use std::collections::HashMap;
 /// Trait for basis projectors.
 pub trait Projector<I: ?Sized>: Space<Value = Projection> {
     /// Project data from an input space onto the basis.
+    ///
+    /// ```
+    /// use lfa::basis::{Projector, Projection, fixed::Constant};
+    ///
+    /// let projector = Constant::ones(2);
+    ///
+    /// assert!(projector.project(&[0.0]).is_dense());
+    /// assert_eq!(
+    ///     projector.project(&[0.0]),
+    ///     Projection::from(vec![1.0, 1.0])
+    /// );
+    /// ```
     fn project(&self, input: &I) -> Projection;
 
     /// Project data from an input space onto the basis and expand into a dense
-    /// vector form.
+    /// vector form using `Projection::expanded(self.dim())`.
+    ///
+    /// ```
+    /// use lfa::basis::{Projector, Projection, fixed::Indices};
+    ///
+    /// let projector = Indices::new(2, vec![0, 1]);
+    ///
+    /// assert!(projector.project(&[0.0]).is_sparse());
+    /// assert_eq!(
+    ///     projector.project(&[0.0]),
+    ///     Projection::from(vec![0, 1]),
+    /// );
+    /// assert_eq!(
+    ///     projector.project_expanded(&[0.0]),
+    ///     vec![1.0, 1.0].into(),
+    /// );
+    /// ```
     fn project_expanded(&self, input: &I) -> DenseT { self.project(input).expanded(self.dim()) }
 }
 
