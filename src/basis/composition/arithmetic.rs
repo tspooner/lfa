@@ -1,5 +1,30 @@
 use crate::basis::{fixed::Constant, Composable, Projection, Projector};
-use crate::geometry::{norms::l1, Card, Space};
+use crate::geometry::{Card, Space};
+
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+pub struct Negate<P>(P);
+
+impl<P> Negate<P> {
+    pub fn new(projector: P) -> Self {
+        Negate(projector)
+    }
+}
+
+impl<P: Space> Space for Negate<P> {
+    type Value = Projection;
+
+    fn dim(&self) -> usize { self.0.dim() }
+
+    fn card(&self) -> Card { self.0.card() }
+}
+
+impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
+    fn project(&self, input: &I) -> Projection {
+        Projection::Dense(-self.0.project_expanded(input))
+    }
+}
+
+impl<P> Composable for Negate<P> {}
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Sum<P1, P2> {
@@ -15,10 +40,6 @@ impl<P1: Space, P2: Space> Sum<P1, P2> {
 
         Sum { p1, p2 }
     }
-}
-
-impl<P1: Space, P2: Space> Sum<P1, Negate<P2>> {
-    pub fn subtract(p1: P1, p2: P2) -> Self { Self::new(p1, Negate::new(p2)) }
 }
 
 impl<P: Space> Sum<P, Constant> {
@@ -62,33 +83,34 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<P1, P2>
 impl<P1, P2> Composable for Sum<P1, P2> {}
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
-pub struct Negate<P> {
-    projector: P,
+pub struct Reciprocal<P>(P);
+
+impl<P: Space> Reciprocal<P> {
+    pub fn new(projector: P) -> Self {
+        Reciprocal(projector)
+    }
 }
 
-impl<P> Negate<P> {
-    pub fn new(projector: P) -> Self {
-        Negate {
-            projector: projector,
+impl<P: Space> Space for Reciprocal<P> {
+    type Value = Projection;
+
+    fn dim(&self) -> usize { self.0.dim() }
+
+    fn card(&self) -> Card { unimplemented!() }
+}
+
+impl<I: ?Sized, P: Projector<I>> Projector<I> for Reciprocal<P> {
+    fn project(&self, input: &I) -> Projection {
+        let p = self.0.project(input);
+
+        match p {
+            Projection::Sparse(_) => p,
+            Projection::Dense(activations) => Projection::Dense(1.0 / activations),
         }
     }
 }
 
-impl<P: Space> Space for Negate<P> {
-    type Value = Projection;
-
-    fn dim(&self) -> usize { self.projector.dim() }
-
-    fn card(&self) -> Card { self.projector.card() }
-}
-
-impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
-    fn project(&self, input: &I) -> Projection {
-        Projection::Dense(-self.projector.project_expanded(input))
-    }
-}
-
-impl<P> Composable for Negate<P> {}
+impl<P> Composable for Reciprocal<P> {}
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Product<P1, P2> {
@@ -146,38 +168,6 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<P1,
 
 impl<P1, P2> Composable for Product<P1, P2> {}
 
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
-pub struct Reciprocal<P> {
-    projector: P,
-}
-
-impl<P: Space> Reciprocal<P> {
-    pub fn new(projector: P) -> Self {
-        Reciprocal { projector }
-    }
-}
-
-impl<P: Space> Space for Reciprocal<P> {
-    type Value = Projection;
-
-    fn dim(&self) -> usize { self.projector.dim() }
-
-    fn card(&self) -> Card { unimplemented!() }
-}
-
-impl<I: ?Sized, P: Projector<I>> Projector<I> for Reciprocal<P> {
-    fn project(&self, input: &I) -> Projection {
-        let p = self.projector.project(input);
-
-        match p {
-            Projection::Sparse(_) => p,
-            Projection::Dense(activations) => Projection::Dense(1.0 / activations),
-        }
-    }
-}
-
-impl<P> Composable for Reciprocal<P> {}
-
 #[cfg(test)]
 mod tests {
     use quickcheck::quickcheck;
@@ -188,7 +178,7 @@ mod tests {
         fn prop_output(length: usize, value: f64) -> bool {
             let p = Negate::new(Constant::new(length, value));
 
-            p.project_expanded(&[0.0]).iter().all(|&v| v == -value)
+            p.project_expanded(&[0.0]).into_iter().all(|&v| v == -value)
         }
 
         quickcheck(prop_output as fn(usize, f64) -> bool);
@@ -199,7 +189,7 @@ mod tests {
         fn prop_output(length: usize, v1: f64, v2: f64) -> bool {
             let p = Sum::new(Constant::new(length, v1), Constant::new(length, v2));
 
-            p.project_expanded(&[0.0]).iter().all(|&v| v == v1 + v2)
+            p.project_expanded(&[0.0]).into_iter().all(|&v| v == v1 + v2)
         }
 
         quickcheck(prop_output as fn(usize, f64, f64) -> bool);
@@ -210,7 +200,7 @@ mod tests {
         fn prop_output(length: usize, v1: f64, v2: f64) -> bool {
             let p = Sum::new(Constant::new(length, v1), Negate::new(Constant::new(length, v2)));
 
-            p.project_expanded(&[0.0]).iter().all(|&v| v == v1 - v2)
+            p.project_expanded(&[0.0]).into_iter().all(|&v| v == v1 - v2)
         }
 
         quickcheck(prop_output as fn(usize, f64, f64) -> bool);
@@ -221,7 +211,7 @@ mod tests {
         fn prop_output(length: usize, value: f64) -> bool {
             let p = Reciprocal::new(Constant::new(length, value));
 
-            p.project_expanded(&[0.0]).iter().all(|&v| v == 1.0 / value)
+            p.project_expanded(&[0.0]).into_iter().all(|&v| v == 1.0 / value)
         }
 
         quickcheck(prop_output as fn(usize, f64) -> bool);
@@ -232,7 +222,7 @@ mod tests {
         fn prop_output(length: usize, v1: f64, v2: f64) -> bool {
             let p = Product::new(Constant::new(length, v1), Constant::new(length, v2));
 
-            p.project_expanded(&[0.0]).iter().all(|&v| (v - v1 * v2) < 1e-7)
+            p.project_expanded(&[0.0]).into_iter().all(|&v| (v - v1 * v2) < 1e-7)
         }
 
         quickcheck(prop_output as fn(usize, f64, f64) -> bool);
@@ -246,7 +236,7 @@ mod tests {
                 Reciprocal::new(Constant::new(length, v2))
             );
 
-            p.project_expanded(&[0.0]).iter().all(|&v| (v - v1 / v2) < 1e-7)
+            p.project_expanded(&[0.0]).into_iter().all(|&v| (v - v1 / v2) < 1e-7)
         }
 
         quickcheck(prop_output as fn(usize, f64, f64) -> bool);

@@ -20,7 +20,7 @@ impl<P: Space> Space for L1Normalise<P> {
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for L1Normalise<P> {
     fn project(&self, input: &I) -> Projection {
-        let phi = self.project_expanded(input);
+        let phi = self.0.project_expanded(input);
         let z = l1(phi.as_slice().unwrap());
 
         Projection::Dense(phi / z)
@@ -48,7 +48,7 @@ impl<P: Space> Space for L2Normalise<P> {
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for L2Normalise<P> {
     fn project(&self, input: &I) -> Projection {
-        let phi = self.project_expanded(input);
+        let phi = self.0.project_expanded(input);
         let z = l2(phi.as_slice().unwrap());
 
         Projection::Dense(phi / z)
@@ -76,7 +76,7 @@ impl<P: Space> Space for LpNormalise<P> {
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for LpNormalise<P> {
     fn project(&self, input: &I) -> Projection {
-        let phi = self.project_expanded(input);
+        let phi = self.0.project_expanded(input);
         let z = lp(phi.as_slice().unwrap(), self.1);
 
         Projection::Dense(phi / z)
@@ -104,7 +104,7 @@ impl<P: Space> Space for LinfNormalise<P> {
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for LinfNormalise<P> {
     fn project(&self, input: &I) -> Projection {
-        let phi = self.project_expanded(input);
+        let phi = self.0.project_expanded(input);
         let z = linf(phi.as_slice().unwrap());
 
         Projection::Dense(phi / z)
@@ -112,3 +112,58 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for LinfNormalise<P> {
 }
 
 impl<P> Composable for LinfNormalise<P> {}
+
+#[cfg(test)]
+mod tests {
+    use crate::basis::fixed::Constant;
+    use quickcheck::quickcheck;
+    use super::*;
+
+    #[test]
+    fn test_l1() {
+        fn prop_output(length: usize, value: f64) -> bool {
+            let p = L1Normalise::new(Constant::new(length, value));
+            let z = length as f64;
+
+            p.project_expanded(&[0.0]).into_iter().all(|&v| (v - 1.0 / z) < 1e-7)
+        }
+
+        quickcheck(prop_output as fn(usize, f64) -> bool);
+    }
+
+    #[test]
+    fn test_l2() {
+        fn prop_output(length: usize, value: f64) -> bool {
+            let p = L2Normalise::new(Constant::new(length, value));
+            let z = (length as f64).sqrt();
+
+            p.project_expanded(&[0.0]).into_iter().all(|&v| (v - 1.0 / z) < 1e-7)
+        }
+
+        quickcheck(prop_output as fn(usize, f64) -> bool);
+    }
+
+    #[test]
+    fn test_lp() {
+        fn prop_output(length: usize, value: f64, pow: u8) -> bool {
+            let p = LpNormalise::new(Constant::new(length, value), pow);
+            let z = (length as f64).powf(1.0 / pow as f64);
+
+            p.project_expanded(&[0.0]).into_iter().all(|&v| (v - 1.0 / z) < 1e-7)
+        }
+
+        quickcheck(prop_output as fn(usize, f64, u8) -> bool);
+    }
+
+    #[test]
+    fn test_linf() {
+        fn prop_output(length: usize, value: f64) -> bool {
+            let p = LinfNormalise::new(Constant::new(length, value));
+            let z = 1.0;
+
+            p.project_expanded(&[0.0]).into_iter().all(|&v| (v - 1.0 / z) < 1e-7)
+        }
+
+        quickcheck(prop_output as fn(usize, f64) -> bool);
+    }
+}
