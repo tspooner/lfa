@@ -14,6 +14,8 @@ pub enum Projection {
     Dense(DenseT),
 
     /// Sparse, index-based activation vector.
+    ///
+    /// Note: it is taken that all active indices have implied activation of 1.
     Sparse(SparseT),
 }
 
@@ -244,12 +246,14 @@ impl PartialEq<Projection> for Projection {
     }
 }
 
-impl Into<Projection> for DenseT {
-    fn into(self) -> Projection { DenseProjection(self) }
+impl From<DenseT> for Projection {
+    fn from(activations: DenseT) -> Projection { DenseProjection(activations) }
 }
 
-impl Into<Projection> for Vec<ActivationT> {
-    fn into(self) -> Projection { DenseProjection(Vector::from_vec(self)) }
+impl From<Vec<ActivationT>> for Projection {
+    fn from(activations: Vec<ActivationT>) -> Projection {
+        DenseProjection(Vector::from_vec(activations))
+    }
 }
 
 impl FromIterator<ActivationT> for Projection {
@@ -258,12 +262,12 @@ impl FromIterator<ActivationT> for Projection {
     }
 }
 
-impl Into<Projection> for SparseT {
-    fn into(self) -> Projection { SparseProjection(self) }
+impl From<SparseT> for Projection {
+    fn from(indices: SparseT) -> Projection { SparseProjection(indices) }
 }
 
-impl Into<Projection> for Vec<IndexT> {
-    fn into(self) -> Projection { Projection::from_iter(self.into_iter()) }
+impl From<Vec<IndexT>> for Projection {
+    fn from(indices: Vec<IndexT>) -> Projection { Projection::from_iter(indices.into_iter()) }
 }
 
 impl FromIterator<IndexT> for Projection {
