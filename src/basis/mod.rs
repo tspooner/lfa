@@ -7,3 +7,5 @@ import_all!(composable);
 pub mod adaptive;
 pub mod composition;
 pub mod fixed;
+
+pub use crate::geometry::kernels;
