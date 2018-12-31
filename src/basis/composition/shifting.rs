@@ -1,6 +1,7 @@
 use crate::basis::{Composable, Projection, Projector};
 use crate::geometry::{Card, Space};
 
+/// Shift the output of a `Projector` instance by some fixed amount.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Shift<P> {
     projector: P,

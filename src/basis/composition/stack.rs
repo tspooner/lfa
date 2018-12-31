@@ -20,6 +20,7 @@ fn stack_projections(p1: Projection, n1: usize, p2: Projection, n2: usize) -> Pr
     }
 }
 
+/// Stack the output of two `Projector` instances.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Stack<P1, P2> {
     p1: P1,

@@ -1,6 +1,7 @@
 use crate::basis::{fixed::Constant, Composable, Projection, Projector};
 use crate::geometry::{Card, Space};
 
+/// Apply negation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Negate<P>(P);
 
@@ -26,6 +27,7 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
 
 impl<P> Composable for Negate<P> {}
 
+/// Sum the output of two `Projector` instances.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Sum<P1, P2> {
     p1: P1,
@@ -82,6 +84,7 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<P1, P2>
 
 impl<P1, P2> Composable for Sum<P1, P2> {}
 
+/// Apply inversion to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Reciprocal<P>(P);
 
@@ -112,6 +115,7 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for Reciprocal<P> {
 
 impl<P> Composable for Reciprocal<P> {}
 
+/// Multiply the output of two `Projector` instances.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Product<P1, P2> {
     p1: P1,
