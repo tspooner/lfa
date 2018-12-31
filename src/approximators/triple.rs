@@ -79,9 +79,8 @@ impl Parameterised for TripleFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::TripleFunction;
+    use crate::approximators::{Approximator, TripleFunction};
     use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::core::Approximator;
     use crate::LFA;
     use std::{
         collections::{BTreeSet, HashMap},

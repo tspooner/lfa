@@ -66,9 +66,8 @@ impl Parameterised for VectorFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::VectorFunction;
+    use crate::approximators::{Approximator, VectorFunction};
     use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::core::Approximator;
     use crate::geometry::Vector;
     use crate::LFA;
     use std::{

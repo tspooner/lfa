@@ -75,9 +75,8 @@ impl Parameterised for PairFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::PairFunction;
+    use crate::approximators::{Approximator, PairFunction};
     use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::core::Approximator;
     use crate::LFA;
     use std::{
         collections::{BTreeSet, HashMap},

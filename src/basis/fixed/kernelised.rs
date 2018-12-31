@@ -83,9 +83,9 @@ impl<I, K: Kernel<I>> Composable for KernelProjector<I, K> {}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::basis::kernels::ExpQuad;
     use crate::geometry::Vector;
-    use crate::kernels::ExpQuad;
+    use super::*;
 
     fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> KernelProjector<Vector<f64>, ExpQuad> {
         let kernel = ExpQuad::new(1.0, Vector::from_vec(ls));

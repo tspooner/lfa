@@ -12,6 +12,28 @@ use crate::utils::cartesian_product;
 mod cpfk;
 
 /// Polynomial basis projector.
+///
+/// ## Linear regression on the interval [0, 1]
+/// ```
+/// use lfa::basis::{Projector, fixed::Polynomial};
+///
+/// let p = Polynomial::new(1, vec![(0.0, 1.0)]);
+///
+/// assert_eq!(p.project(&vec![0.0]), vec![0.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.5]), vec![0.5, 1.0].into());
+/// assert_eq!(p.project(&vec![1.0]), vec![1.0, 1.0].into());
+/// ```
+///
+/// ## Quadratic regression on the interval [0, 1]
+/// ```
+/// use lfa::basis::{Projector, fixed::Polynomial};
+///
+/// let p = Polynomial::new(2, vec![(0.0, 1.0)]);
+///
+/// assert_eq!(p.project(&vec![0.0]), vec![0.0, 0.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.5]), vec![0.25, 0.5, 1.0].into());
+/// assert_eq!(p.project(&vec![1.0]), vec![1.0, 1.0, 1.0].into());
+/// ```
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Polynomial {
     pub order: u8,
@@ -65,7 +87,6 @@ impl Projector<[f64]> for Polynomial {
             .iter()
             .enumerate()
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
-            .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
         Projection::Dense(
@@ -166,7 +187,6 @@ impl Projector<[f64]> for Chebyshev {
             .iter()
             .enumerate()
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
-            .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
         Projection::Dense(

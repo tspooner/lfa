@@ -82,9 +82,8 @@ impl Parameterised for ScalarFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::ScalarFunction;
+    use crate::approximators::{Approximator, ScalarFunction};
     use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::core::Approximator;
     use crate::LFA;
     use std::{
         collections::{BTreeSet, HashMap},
