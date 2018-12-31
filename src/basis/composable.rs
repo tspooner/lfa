@@ -1,4 +1,5 @@
 use crate::basis::composition::*;
+use crate::approximators::Approximator;
 use crate::geometry::Space;
 
 pub trait Composable: Sized {

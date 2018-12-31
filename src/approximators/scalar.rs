@@ -1,8 +1,10 @@
+use crate::approximators::Approximator;
 use crate::basis::Projection;
 use crate::core::*;
 use crate::geometry::{norms::l1, Matrix, Vector};
 use std::{collections::HashMap, mem::replace};
 
+/// Weight-`Projection` evaluator with scalar `f64` output.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ScalarFunction {
     pub weights: Vector<f64>,

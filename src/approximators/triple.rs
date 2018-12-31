@@ -1,9 +1,10 @@
-use crate::approximators::adapt_matrix;
+use crate::approximators::{Approximator, adapt_matrix};
 use crate::basis::Projection;
 use crate::core::*;
 use crate::geometry::{norms::l1, Matrix};
 use std::collections::HashMap;
 
+/// Weight-`Projection` evaluator with triple `(f64, f64, f64)` output.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TripleFunction {
     pub weights: Matrix<f64>,
