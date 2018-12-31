@@ -1,3 +1,4 @@
+//! Module for basis function representations used by `LFA`.
 import_all!(feature);
 import_all!(projection);
 import_all!(projector with macros);

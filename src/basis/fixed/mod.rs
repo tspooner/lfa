@@ -1,5 +1,4 @@
-/// ! Linear basis projection module.
-
+//! Module for _fixed_ basis representations.
 import_all!(fourier);
 import_all!(polynomial);
 import_all!(tile_coding);
