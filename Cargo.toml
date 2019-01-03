@@ -22,7 +22,7 @@ coveralls = { repository = "tspooner/lfa", branch = "master", service = "github"
 rand = "0.6"
 spaces = "4.1"
 ndarray = "0.12"
-itertools = "0.7"
+itertools = "0.8"
 
 serde = "1.0"
 serde_derive = "1.0"
