@@ -30,6 +30,8 @@ impl ScalarFunction {
 impl Approximator<Projection> for ScalarFunction {
     type Value = f64;
 
+    fn n_outputs(&self) -> usize { 1 }
+
     fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> { Ok(p.dot(&self.weights)) }
 
     fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {

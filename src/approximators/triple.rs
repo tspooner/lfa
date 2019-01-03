@@ -21,6 +21,8 @@ impl TripleFunction {
 impl Approximator<Projection> for TripleFunction {
     type Value = (f64, f64, f64);
 
+    fn n_outputs(&self) -> usize { 3 }
+
     fn evaluate(&self, p: &Projection) -> EvaluationResult<(f64, f64, f64)> {
         Ok(match p {
             &Projection::Dense(ref activations) => (

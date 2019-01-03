@@ -7,6 +7,9 @@ use std::{collections::HashMap, mem::replace};
 pub trait Approximator<I: ?Sized> {
     type Value;
 
+    /// Return the dimensionality of the output value `Approximator::Value`.
+    fn n_outputs(&self) -> usize;
+
     /// Evaluate the function and return its value.
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value>;
 
@@ -22,6 +25,8 @@ pub trait Approximator<I: ?Sized> {
 
 impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
     type Value = T::Value;
+
+    fn n_outputs(&self) -> usize { (**self).n_outputs() }
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> { (**self).evaluate(input) }
 

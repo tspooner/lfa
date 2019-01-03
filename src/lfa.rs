@@ -23,8 +23,8 @@ macro_rules! impl_concrete_builder {
 /// Linear function approximator.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LFA<P, A> {
-    projector: P,
-    approximator: A,
+    pub projector: P,
+    pub approximator: A,
 }
 
 impl<P, A> LFA<P, A> {
@@ -50,43 +50,13 @@ impl<P: Space> LFA<P, VectorFunction> {
 
 impl<P, A: Approximator<Projection>> LFA<P, A> {
     #[allow(dead_code)]
-    fn evaluate_primal(&mut self, primal: &Projection) -> EvaluationResult<A::Value> {
+    pub fn evaluate_primal(&mut self, primal: &Projection) -> EvaluationResult<A::Value> {
         self.approximator.evaluate(primal)
     }
 
     #[allow(dead_code)]
-    fn update_primal(&mut self, primal: &Projection, update: A::Value) -> UpdateResult<()> {
+    pub fn update_primal(&mut self, primal: &Projection, update: A::Value) -> UpdateResult<()> {
         self.approximator.update(primal, update)
-    }
-}
-
-impl<P: Space, A> Space for LFA<P, A> {
-    type Value = Projection;
-
-    fn dim(&self) -> usize { self.projector.dim() }
-
-    fn card(&self) -> Card { self.projector.card() }
-}
-
-impl<I, P, A> Projector<I> for LFA<P, A>
-where
-    I: ?Sized,
-    P: Projector<I>,
-{
-    fn project(&self, input: &I) -> Projection { self.projector.project(input) }
-}
-
-impl<I, P, A> AdaptiveProjector<I> for LFA<P, A>
-where
-    I: ?Sized,
-    P: AdaptiveProjector<I>,
-{
-    fn discover(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>> {
-        self.projector.discover(input, error)
-    }
-
-    fn add_feature(&mut self, candidate: CandidateFeature) -> Option<(usize, IndexSet)> {
-        self.projector.add_feature(candidate)
     }
 }
 
@@ -98,14 +68,18 @@ where
 {
     type Value = A::Value;
 
+    fn n_outputs(&self) -> usize {
+        self.approximator.n_outputs()
+    }
+
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
-        let primal = self.project(input);
+        let primal = self.projector.project(input);
 
         self.approximator.evaluate(&primal)
     }
 
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
-        let primal = self.project(input);
+        let primal = self.projector.project(input);
 
         self.approximator.update(&primal, update)
     }
