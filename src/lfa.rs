@@ -50,7 +50,7 @@ impl<P: Space> LFA<P, VectorFunction> {
 
 impl<P, A: Approximator<Projection>> LFA<P, A> {
     #[allow(dead_code)]
-    pub fn evaluate_primal(&mut self, primal: &Projection) -> EvaluationResult<A::Value> {
+    pub fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<A::Value> {
         self.approximator.evaluate(primal)
     }
 
