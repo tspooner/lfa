@@ -1,8 +1,8 @@
-use core::{Projector, Projection};
-use geometry::{Card, product::LinearSpace, Space, Surjection, discrete::Partition};
+use crate::basis::{Composable, Projection, Projector};
+use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Surjection, Vector};
 
 /// Fixed uniform basis projector.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct UniformGrid {
     n_features: usize,
     feature_space: LinearSpace<Partition>,
@@ -32,20 +32,18 @@ impl UniformGrid {
 impl Space for UniformGrid {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.n_features
-    }
+    fn dim(&self) -> usize { self.n_features }
 
-    fn card(&self) -> Card {
-        unimplemented!()
-    }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
 impl Projector<[f64]> for UniformGrid {
-    fn project(&self, input: &[f64]) -> Projection {
-        vec![self.hash(input)].into()
-    }
+    fn project(&self, input: &[f64]) -> Projection { vec![self.hash(input)].into() }
 }
+
+impl_array_proxies!(UniformGrid; f64);
+
+impl Composable for UniformGrid {}
 
 #[cfg(test)]
 mod tests {
@@ -79,7 +77,7 @@ mod tests {
                 Projection::Sparse(ref idx) => {
                     assert_eq!(idx.len(), 1);
                     assert!(idx.contains(&expected_bin));
-                }
+                },
                 _ => assert!(false),
             }
 
@@ -106,7 +104,7 @@ mod tests {
                     Projection::Sparse(ref idx) => {
                         assert_eq!(idx.len(), 1);
                         assert!(idx.contains(&expected_bin));
-                    }
+                    },
                     _ => assert!(false),
                 }
 
@@ -135,7 +133,7 @@ mod tests {
                         Projection::Sparse(ref idx) => {
                             assert_eq!(idx.len(), 1);
                             assert!(idx.contains(&expected_bin));
-                        }
+                        },
                         _ => assert!(false),
                     }
 

@@ -8,12 +8,14 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
+#[cfg(tests)]
+extern crate quickcheck;
+
 mod macros;
 mod utils;
 
-import_all!(core);
 import_all!(lfa);
 
 pub mod approximators;
 pub mod basis;
-pub use geometry::kernels;
+pub mod core;

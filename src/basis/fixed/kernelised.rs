@@ -1,84 +1,76 @@
-use core::{Projector, Projection};
-use geometry::{
-    Space, Card, Vector,
-    product::LinearSpace,
-    discrete::Partition,
-    continuous::Reals,
-};
-use kernels::{self, Kernel};
-use utils::cartesian_product;
+use crate::basis::{Composable, Projection, Projector, kernels::{self, Kernel}};
+use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Vector};
+use crate::utils::cartesian_product;
 
-
-pub type RealLinearSpaceVec = <LinearSpace<Reals> as Space>::Value;
-pub type RBFNetwork = KernelProjector<RealLinearSpaceVec, kernels::ExpQuad>;
-
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Prototype<I, K: Kernel<I>> {
-    pub kernel: K,
+/// Feature prototype used by the `KernelProjector` basis.
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+pub struct Prototype<I, K> {
     pub centroid: I,
+    pub kernel: K,
 }
 
 impl<I, K: Kernel<I>> Prototype<I, K> {
-    pub fn kernel(&self, x: &I) -> f64 {
-        self.kernel.kernel(x, &self.centroid)
-    }
+    pub fn kernel(&self, x: &I) -> f64 { self.kernel.kernel(x, &self.centroid) }
 }
 
-#[derive(Clone)]
-pub struct KernelProjector<I, K: Kernel<I>> {
+/// Kernel machine basis projector.
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct KernelProjector<I, K> {
     pub prototypes: Vec<Prototype<I, K>>,
 }
 
 impl<I, K: Kernel<I>> KernelProjector<I, K> {
-    pub fn new(prototypes: Vec<Prototype<I, K>>) -> Self {
-        KernelProjector { prototypes }
-    }
+    pub fn new(prototypes: Vec<Prototype<I, K>>) -> Self { KernelProjector { prototypes } }
 
-    pub fn from_centroids<C, T>(centroids: T, kernel: K) -> Self
-    where
-        C: Into<I>,
-        T: IntoIterator<Item=C>,
-    {
-        KernelProjector::new(centroids
-            .into_iter()
-            .map(|c| Prototype {
-                kernel: kernel.clone(),
-                centroid: c.into(),
-            })
-            .collect()
+    pub fn homogeneous(centroids: impl IntoIterator<Item = impl Into<I>>, kernel: K) -> Self {
+        KernelProjector::new(
+            centroids
+                .into_iter()
+                .map(|c| Prototype {
+                    centroid: c.into(),
+                    kernel: kernel.clone(),
+                })
+                .collect(),
         )
     }
 }
 
-impl<K: Kernel<RealLinearSpaceVec>> KernelProjector<RealLinearSpaceVec, K> {
-    pub fn from_partitioning(partitioning: LinearSpace<Partition>, kernel: K) -> Self {
+impl KernelProjector<Vector<f64>, kernels::ExpQuad> {
+    pub fn exp_quad(partitioning: LinearSpace<Partition>) -> Self {
+        let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
+        let kernel = kernels::ExpQuad::new(1.0, lengthscales);
         let centroids = cartesian_product(&partitioning.centres());
 
-        KernelProjector::from_centroids(centroids, kernel)
+        KernelProjector::homogeneous(centroids, kernel)
     }
 }
 
-impl KernelProjector<RealLinearSpaceVec, kernels::ExpQuad> {
-    pub fn rbf_network(partitioning: LinearSpace<Partition>) -> Self {
+impl KernelProjector<Vector<f64>, kernels::Matern32> {
+    pub fn matern_32(partitioning: LinearSpace<Partition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
-        let kernel = kernels::RBF::new(1.0, lengthscales);
+        let kernel = kernels::Matern32::new(1.0, lengthscales);
         let centroids = cartesian_product(&partitioning.centres());
 
-        KernelProjector::from_centroids(centroids, kernel)
+        KernelProjector::homogeneous(centroids, kernel)
+    }
+}
+
+impl KernelProjector<Vector<f64>, kernels::Matern52> {
+    pub fn matern_52(partitioning: LinearSpace<Partition>) -> Self {
+        let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
+        let kernel = kernels::Matern52::new(1.0, lengthscales);
+        let centroids = cartesian_product(&partitioning.centres());
+
+        KernelProjector::homogeneous(centroids, kernel)
     }
 }
 
 impl<I, K: Kernel<I>> Space for KernelProjector<I, K> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.prototypes.len()
-    }
+    fn dim(&self) -> usize { self.prototypes.len() }
 
-    fn card(&self) -> Card {
-        Card::Infinite
-    }
+    fn card(&self) -> Card { Card::Infinite }
 }
 
 impl<I, K: Kernel<I>> Projector<I> for KernelProjector<I, K> {
@@ -87,20 +79,21 @@ impl<I, K: Kernel<I>> Projector<I> for KernelProjector<I, K> {
     }
 }
 
+impl<I, K: Kernel<I>> Composable for KernelProjector<I, K> {}
 
 #[cfg(test)]
 mod tests {
-    use geometry::Vector;
+    use crate::basis::kernels::ExpQuad;
+    use crate::geometry::Vector;
     use super::*;
 
-    /// Construct an RBF network.
-    fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> RBFNetwork {
-        let kernel = kernels::ExpQuad::new(1.0, Vector::from_vec(ls));
+    fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> KernelProjector<Vector<f64>, ExpQuad> {
+        let kernel = ExpQuad::new(1.0, Vector::from_vec(ls));
 
-        KernelProjector::from_centroids(centroids, kernel)
+        KernelProjector::homogeneous(centroids, kernel)
     }
 
-    fn make_net_1d(centroids: Vec<f64>, ls: f64) -> RBFNetwork {
+    fn make_net_1d(centroids: Vec<f64>, ls: f64) -> KernelProjector<Vector<f64>, ExpQuad> {
         make_net(centroids.into_iter().map(|c| vec![c]).collect(), vec![ls])
     }
 
@@ -115,7 +108,10 @@ mod tests {
     #[test]
     fn test_cardinality() {
         assert_eq!(make_net_1d(vec![0.0], 0.25).card(), Card::Infinite);
-        assert_eq!(make_net_1d(vec![0.0, 0.5, 1.0], 0.25).card(), Card::Infinite);
+        assert_eq!(
+            make_net_1d(vec![0.0, 0.5, 1.0], 0.25).card(),
+            Card::Infinite
+        );
         assert_eq!(make_net_1d(vec![0.0; 10], 0.25).card(), Card::Infinite);
         assert_eq!(make_net_1d(vec![0.0; 100], 0.25).card(), Card::Infinite);
     }
@@ -125,7 +121,10 @@ mod tests {
         let net = make_net_1d(vec![0.0, 0.5, 1.0], 0.25);
         let p = net.project_expanded(&Vector::from_vec(vec![0.25]));
 
-        assert!(p.all_close(&Vector::from_vec(vec![0.6065307, 0.6065307, 0.0111090]), 1e-6));
+        assert!(p.all_close(
+            &Vector::from_vec(vec![0.6065307, 0.6065307, 0.0111090]),
+            1e-6
+        ));
     }
 
     #[test]
@@ -136,6 +135,9 @@ mod tests {
         );
         let p = net.project_expanded(&Vector::from_vec(vec![0.67, -7.0]));
 
-        assert!(p.all_close(&Vector::from_vec(vec![0.0089491, 0.7003325, 0.369280]), 1e-6));
+        assert!(p.all_close(
+            &Vector::from_vec(vec![0.0089491, 0.7003325, 0.369280]),
+            1e-6
+        ));
     }
 }

@@ -1,10 +1,10 @@
-use core::IndexSet;
+use crate::core::IndexSet;
 use std::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Feature {
     pub index: usize,
     pub parent_indices: IndexSet,
@@ -23,7 +23,7 @@ impl Hash for Feature {
     fn hash<H: Hasher>(&self, state: &mut H) { self.index.hash(state); }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CandidateFeature {
     pub relevance: f64,
     pub parent_indices: IndexSet,

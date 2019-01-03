@@ -15,7 +15,6 @@ pub type UpdateResult<T> = Result<T, UpdateError>;
 #[derive(Debug)]
 pub enum AdaptError {
     Failed,
-    NotImplemented,
 }
 
 pub type AdaptResult<T> = Result<T, AdaptError>;

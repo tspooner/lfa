@@ -1,9 +1,18 @@
-use core::*;
-use geometry::{Card, Space, Vector};
+use crate::basis::{
+    AdaptiveProjector,
+    CandidateFeature,
+    Composable,
+    Feature,
+    Projection,
+    Projector,
+};
+use crate::core::*;
+use crate::geometry::{Card, Space, Vector};
 use itertools::Itertools;
 use std::collections::HashMap;
 
-pub struct IFDD<P: Projector<[f64]>> {
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct IFDD<P> {
     pub base: P,
     pub features: Vec<Feature>,
 
@@ -11,7 +20,7 @@ pub struct IFDD<P: Projector<[f64]>> {
     discovery_threshold: f64,
 }
 
-impl<P: Projector<[f64]>> IFDD<P> {
+impl<P: Space> IFDD<P> {
     pub fn new(base_projector: P, discovery_threshold: f64) -> Self {
         let initial_dim: usize = base_projector.dim();
         let mut base_features: Vec<Feature> = (0..initial_dim)
@@ -41,7 +50,8 @@ impl<P: Projector<[f64]>> IFDD<P> {
     fn inspect_candidate(&mut self, g: usize, h: usize, error: f64) -> Option<CandidateFeature> {
         let key = self.features[g].union(&self.features[h]);
         let rel = {
-            let c = self.candidates
+            let c = self
+                .candidates
                 .entry(key.clone())
                 .or_insert_with(|| CandidateFeature::new(key.clone()));
 
@@ -76,20 +86,16 @@ impl<P: Projector<[f64]>> IFDD<P> {
     }
 }
 
-impl<P: Projector<[f64]>> Space for IFDD<P> {
+impl<P: Space> Space for IFDD<P> {
     type Value = Projection;
 
-    fn dim(&self) -> usize {
-        self.features.len()
-    }
+    fn dim(&self) -> usize { self.features.len() }
 
-    fn card(&self) -> Card {
-        unimplemented!()
-    }
+    fn card(&self) -> Card { unimplemented!() }
 }
 
-impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
-    fn project(&self, input: &[f64]) -> Projection {
+impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
+    fn project(&self, input: &I) -> Projection {
         let mut p = self.base.project(input);
         let np: Vec<usize> = (self.base.dim()..self.dim())
             .filter_map(|i| {
@@ -113,8 +119,8 @@ impl<P: Projector<[f64]>> Projector<[f64]> for IFDD<P> {
     }
 }
 
-impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
-    fn discover(&mut self, input: &[f64], error: f64) -> Option<HashMap<IndexT, IndexSet>> {
+impl<I: ?Sized, P: Projector<I>> AdaptiveProjector<I> for IFDD<P> {
+    fn discover(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>> {
         let new_features = match self.base.project(input) {
             Projection::Sparse(active_indices) => self.discover_sparse(active_indices, error),
             Projection::Dense(activations) => self.discover_dense(activations, error),
@@ -126,7 +132,7 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
             match self.add_feature(f) {
                 Some(nf) => {
                     acc.get_or_insert_with(HashMap::new).insert(nf.0, nf.1);
-                }
+                },
                 None => (),
             };
 
@@ -145,12 +151,14 @@ impl<P: Projector<[f64]>> AdaptiveProjector<[f64]> for IFDD<P> {
     }
 }
 
+impl<P> Composable for IFDD<P> {}
+
 #[cfg(test)]
 mod tests {
     extern crate seahash;
 
-    use basis::adaptive::IFDD;
     use super::*;
+    use crate::basis::adaptive::IFDD;
 
     #[derive(Clone)]
     struct BaseProjector;
@@ -158,13 +166,9 @@ mod tests {
     impl Space for BaseProjector {
         type Value = Projection;
 
-        fn dim(&self) -> usize {
-            5
-        }
+        fn dim(&self) -> usize { 5 }
 
-        fn card(&self) -> Card {
-            unimplemented!()
-        }
+        fn card(&self) -> Card { unimplemented!() }
     }
 
     impl Projector<[f64]> for BaseProjector {

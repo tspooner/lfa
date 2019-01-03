@@ -1,7 +1,10 @@
-use core::*;
-use geometry::{Matrix, Vector, norms::l1};
+use crate::approximators::Approximator;
+use crate::basis::Projection;
+use crate::core::*;
+use crate::geometry::{norms::l1, Matrix, Vector};
 use std::{collections::HashMap, mem::replace};
 
+/// Weight-`Projection` evaluator with scalar `f64` output.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ScalarFunction {
     pub weights: Vector<f64>,
@@ -27,26 +30,19 @@ impl ScalarFunction {
 impl Approximator<Projection> for ScalarFunction {
     type Value = f64;
 
-    fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> {
-        Ok(match p {
-            &Projection::Dense(ref dense) => self.weights.dot(dense),
-            &Projection::Sparse(ref sparse) => {
-                sparse.iter().fold(0.0, |acc, idx| acc + self.weights[*idx])
-            }
-        })
-    }
+    fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> { Ok(p.dot(&self.weights)) }
 
     fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {
         Ok(match p {
-            &Projection::Dense(ref dense) => {
-                let scaled_error = error / l1(dense.as_slice().unwrap());
+            &Projection::Dense(ref activations) => {
+                let scaled_error = error / l1(activations.as_slice().unwrap());
 
-                self.weights.scaled_add(scaled_error, dense)
+                self.weights.scaled_add(scaled_error, activations)
             },
-            &Projection::Sparse(ref sparse) => {
-                let scaled_error = error / sparse.len() as f64;
+            &Projection::Sparse(ref indices) => {
+                let scaled_error = error / indices.len() as f64;
 
-                for idx in sparse {
+                for idx in indices {
                     self.weights[*idx] += scaled_error;
                 }
             },
@@ -86,18 +82,20 @@ impl Parameterised for ScalarFunction {
 mod tests {
     extern crate seahash;
 
-    use ::LFA;
-    use approximators::ScalarFunction;
-    use basis::fixed::{Fourier, TileCoding};
-    use core::Approximator;
-    use std::{collections::{BTreeSet, HashMap}, hash::BuildHasherDefault};
+    use crate::approximators::{Approximator, ScalarFunction};
+    use crate::basis::fixed::{Fourier, TileCoding};
+    use crate::LFA;
+    use std::{
+        collections::{BTreeSet, HashMap},
+        hash::BuildHasherDefault,
+    };
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::scalar_valued(p);
+        let mut f = LFA::scalar_output(p);
         let input = vec![5.0];
 
         let _ = f.update(&input, 50.0);
@@ -109,7 +107,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::scalar_valued(p);
+        let mut f = LFA::scalar_output(p);
 
         let input = vec![5.0];
 
@@ -138,7 +136,7 @@ mod tests {
                 assert_eq!(n, 1);
                 assert_eq!(f.weights.len(), 101);
                 assert_eq!(f.weights[100], f.weights[10] / 2.0 + f.weights[90] / 2.0);
-            }
+            },
             Err(err) => panic!("ScalarFunction::adapt failed with AdaptError::{:?}", err),
         }
     }

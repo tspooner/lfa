@@ -1,4 +1,4 @@
-use geometry::Vector;
+use crate::geometry::Vector;
 use std::collections::BTreeSet;
 
 pub type ActivationT = f64;
