@@ -155,8 +155,6 @@ impl<P> Composable for IFDD<P> {}
 
 #[cfg(test)]
 mod tests {
-    extern crate seahash;
-
     use super::*;
     use crate::basis::adaptive::IFDD;
 
