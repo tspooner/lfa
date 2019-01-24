@@ -18,22 +18,21 @@ fn hash_state<H: Hasher>(
     memory_size: usize,
 ) -> Vec<usize>
 {
-    let state_len = state.len();
+    (0..n_tilings).map(|t| {
+        let t = t as isize;
+        let tx2 = t * 2;
 
-    (0..n_tilings)
-        .map(|t| {
-            hasher.write_usize(t);
+        hasher.write_isize(t);
 
-            let t = t as isize;
-            for i in 0..state_len {
-                let offset = t + i as isize * t * 2;
+        for (i, s) in state.iter().enumerate() {
+            let offset = t + i as isize * tx2;
 
-                hasher.write_isize((state[i] + offset) / n_tilings as isize)
-            }
+            hasher.write_isize((s + offset) / n_tilings as isize)
+        }
 
-            hasher.finish() as usize % memory_size
-        })
-        .collect()
+        hasher.finish() as usize % memory_size
+    })
+    .collect()
 }
 
 /// Generalised tile coding scheme with hashing.
