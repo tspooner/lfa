@@ -71,6 +71,8 @@ impl Approximator<Projection> for PairFunction {
 
 impl Parameterised for PairFunction {
     fn weights(&self) -> Matrix<f64> { self.weights.clone() }
+
+    fn n_weights(&self) -> usize { self.weights.len() }
 }
 
 #[cfg(test)]

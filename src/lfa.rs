@@ -1,7 +1,9 @@
-use crate::approximators::*;
-use crate::basis::{AdaptiveProjector, CandidateFeature, Projection, Projector};
-use crate::core::*;
-use crate::geometry::{Card, Matrix, Space};
+use crate::{
+    approximators::*,
+    basis::{Projection, Projector},
+    core::*,
+    geometry::{Matrix, Space}
+};
 use std::collections::HashMap;
 
 macro_rules! impl_concrete_builder {
@@ -91,4 +93,6 @@ where
 
 impl<P, A: Parameterised> Parameterised for LFA<P, A> {
     fn weights(&self) -> Matrix<f64> { self.approximator.weights() }
+
+    fn n_weights(&self) -> usize { self.approximator.n_weights() }
 }

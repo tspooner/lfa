@@ -78,6 +78,8 @@ impl Parameterised for ScalarFunction {
 
         self.weights.clone().into_shape((n_rows, 1)).unwrap()
     }
+
+    fn n_weights(&self) -> usize { self.weights.len() }
 }
 
 #[cfg(test)]
