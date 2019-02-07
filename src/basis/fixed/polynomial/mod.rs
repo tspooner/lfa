@@ -87,6 +87,7 @@ impl Projector<[f64]> for Polynomial {
             .iter()
             .enumerate()
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
+            .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
         Projection::Dense(
