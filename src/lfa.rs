@@ -1,7 +1,10 @@
-use crate::approximators::*;
-use crate::basis::{AdaptiveProjector, CandidateFeature, Projection, Projector};
-use crate::core::*;
-use crate::geometry::{Card, Matrix, Space};
+use crate::{
+    basis::{Projection, Projector},
+    core::*,
+    eval::*,
+    geometry::{Matrix, Space},
+    transforms::{Transform, Identity},
+};
 use std::collections::HashMap;
 
 macro_rules! impl_concrete_builder {
