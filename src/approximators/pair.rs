@@ -1,8 +1,8 @@
-use crate::approximators::{Approximator, adapt_matrix};
 use crate::basis::Projection;
 use crate::core::*;
 use crate::geometry::{norms::l1, Matrix};
 use std::collections::HashMap;
+use super::adapt_matrix;
 
 /// Weight-`Projection` evaluator with pair `(f64, f64)` output.
 #[derive(Clone, Serialize, Deserialize)]
@@ -77,13 +77,16 @@ impl Parameterised for PairFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::{Approximator, PairFunction};
-    use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::LFA;
+    use crate::{
+        core::Approximator,
+        basis::fixed::{Fourier, TileCoding},
+        LFA,
+    };
     use std::{
         collections::{BTreeSet, HashMap},
         hash::BuildHasherDefault,
     };
+    use super::PairFunction;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 

@@ -1,8 +1,10 @@
-use crate::approximators::{Approximator, adapt_matrix};
-use crate::basis::Projection;
-use crate::core::*;
-use crate::geometry::{norms::l1, Matrix, Vector};
+use crate::{
+    basis::Projection,
+    core::*,
+    geometry::{norms::l1, Matrix, Vector},
+};
 use std::collections::HashMap;
+use super::adapt_matrix;
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
 #[derive(Clone, Serialize, Deserialize)]
@@ -68,14 +70,17 @@ impl Parameterised for VectorFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::{Approximator, VectorFunction};
-    use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::geometry::Vector;
-    use crate::LFA;
+    use crate::{
+        core::Approximator,
+        basis::fixed::{Fourier, TileCoding},
+        geometry::Vector,
+        LFA,
+    };
     use std::{
         collections::{BTreeSet, HashMap},
         hash::BuildHasherDefault,
     };
+    use super::VectorFunction;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 

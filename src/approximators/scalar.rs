@@ -1,4 +1,3 @@
-use crate::approximators::Approximator;
 use crate::basis::Projection;
 use crate::core::*;
 use crate::geometry::{norms::l1, Matrix, Vector};
@@ -84,13 +83,16 @@ impl Parameterised for ScalarFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::{Approximator, ScalarFunction};
-    use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::LFA;
+    use crate::{
+        core::Approximator,
+        basis::fixed::{Fourier, TileCoding},
+        LFA,
+    };
     use std::{
         collections::{BTreeSet, HashMap},
         hash::BuildHasherDefault,
     };
+    use super::ScalarFunction;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
