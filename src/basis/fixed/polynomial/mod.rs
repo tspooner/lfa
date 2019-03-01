@@ -19,11 +19,11 @@ mod cpfk;
 ///
 /// let p = Polynomial::new(1, vec![(0.0, 1.0)]);
 ///
-/// assert_eq!(p.project(&vec![0.00]), vec![-1.0, 1.0].into());
-/// assert_eq!(p.project(&vec![0.25]), vec![-0.5, 1.0].into());
-/// assert_eq!(p.project(&vec![0.50]), vec![0.0, 1.0].into());
-/// assert_eq!(p.project(&vec![0.75]), vec![0.5, 1.0].into());
-/// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.00]), vec![-1.0].into());
+/// assert_eq!(p.project(&vec![0.25]), vec![-0.5].into());
+/// assert_eq!(p.project(&vec![0.50]), vec![0.0].into());
+/// assert_eq!(p.project(&vec![0.75]), vec![0.5].into());
+/// assert_eq!(p.project(&vec![1.00]), vec![1.0].into());
 /// ```
 ///
 /// ## Quadratic regression on the interval [0, 1]
@@ -32,11 +32,11 @@ mod cpfk;
 ///
 /// let p = Polynomial::new(2, vec![(0.0, 1.0)]);
 ///
-/// assert_eq!(p.project(&vec![0.00]), vec![1.0, -1.0, 1.0].into());
-/// assert_eq!(p.project(&vec![0.25]), vec![0.25, -0.5, 1.0].into());
-/// assert_eq!(p.project(&vec![0.50]), vec![0.0, 0.0, 1.0].into());
-/// assert_eq!(p.project(&vec![0.75]), vec![0.25, 0.5, 1.0].into());
-/// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.00]), vec![-1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.25]), vec![-0.5, 0.25].into());
+/// assert_eq!(p.project(&vec![0.50]), vec![0.0, 0.0].into());
+/// assert_eq!(p.project(&vec![0.75]), vec![0.5, 0.25].into());
+/// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0].into());
 /// ```
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Polynomial {
@@ -72,6 +72,8 @@ impl Polynomial {
 
         exponents.sort_by(|a, b| b.partial_cmp(a).unwrap());
         exponents.dedup();
+        exponents.pop();
+        exponents.reverse();
 
         exponents
     }
@@ -150,11 +152,12 @@ impl Chebyshev {
         let dcs = vec![(0..(order + 1)).collect::<Vec<u8>>(); dim];
         let mut coefficients = cartesian_product(&dcs);
 
-        coefficients.sort_by(|a, b| b.partial_cmp(a).unwrap());
+        coefficients.sort_by(|a, b| a.partial_cmp(b).unwrap());
         coefficients.dedup();
 
         coefficients
             .iter()
+            .skip(1)
             .map(|vals| {
                 vals.iter()
                     .map(|i| match *i {
