@@ -11,10 +11,12 @@ pub struct PairFunction {
 }
 
 impl PairFunction {
-    pub fn new(n_features: usize) -> Self {
-        PairFunction {
-            weights: Matrix::zeros((n_features, 2)),
-        }
+    pub fn new(weights: Matrix<f64>) -> Self {
+        PairFunction { weights, }
+    }
+
+    pub fn zeros(n_features: usize) -> Self {
+        PairFunction::new(Matrix::zeros((n_features, 2)))
     }
 }
 
@@ -93,7 +95,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::pair_output(p);
+        let mut f = LFA::pair(p);
         let input = vec![5.0];
 
         let _ = f.update(input.as_slice(), (20.0, 50.0));
@@ -106,7 +108,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::pair_output(p);
+        let mut f = LFA::pair(p);
 
         let input = vec![5.0];
 
@@ -119,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_adapt() {
-        let mut f = PairFunction::new(100);
+        let mut f = PairFunction::zeros(100);
 
         let mut new_features = HashMap::new();
         new_features.insert(100, {

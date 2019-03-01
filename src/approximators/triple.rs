@@ -11,10 +11,12 @@ pub struct TripleFunction {
 }
 
 impl TripleFunction {
-    pub fn new(n_features: usize) -> Self {
-        TripleFunction {
-            weights: Matrix::zeros((n_features, 3)),
-        }
+    pub fn new(weights: Matrix<f64>) -> Self {
+        TripleFunction { weights, }
+    }
+
+    pub fn zeros(n_features: usize) -> Self {
+        TripleFunction::new(Matrix::zeros((n_features, 3)))
     }
 }
 
@@ -97,7 +99,7 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::triple_output(p);
+        let mut f = LFA::triple(p);
         let input = vec![5.0];
 
         let _ = f.update(input.as_slice(), (20.0, 50.0, 100.0));
@@ -111,7 +113,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::triple_output(p);
+        let mut f = LFA::triple(p);
 
         let input = vec![5.0];
 
@@ -125,7 +127,7 @@ mod tests {
 
     #[test]
     fn test_adapt() {
-        let mut f = TripleFunction::new(100);
+        let mut f = TripleFunction::zeros(100);
 
         let mut new_features = HashMap::new();
         new_features.insert(100, {
