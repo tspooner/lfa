@@ -75,6 +75,8 @@ impl Approximator<Projection> for TripleFunction {
 
 impl Parameterised for TripleFunction {
     fn weights(&self) -> Matrix<f64> { self.weights.clone() }
+
+    fn n_weights(&self) -> usize { self.weights.len() }
 }
 
 #[cfg(test)]

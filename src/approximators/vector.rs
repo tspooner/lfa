@@ -62,6 +62,8 @@ impl Approximator<Projection> for VectorFunction {
 
 impl Parameterised for VectorFunction {
     fn weights(&self) -> Matrix<f64> { self.weights.clone() }
+
+    fn n_weights(&self) -> usize { self.weights.len() }
 }
 
 #[cfg(test)]
