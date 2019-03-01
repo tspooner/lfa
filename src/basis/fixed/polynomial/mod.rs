@@ -19,9 +19,11 @@ mod cpfk;
 ///
 /// let p = Polynomial::new(1, vec![(0.0, 1.0)]);
 ///
-/// assert_eq!(p.project(&vec![0.0]), vec![0.0, 1.0].into());
-/// assert_eq!(p.project(&vec![0.5]), vec![0.5, 1.0].into());
-/// assert_eq!(p.project(&vec![1.0]), vec![1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.00]), vec![-1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.25]), vec![-0.5, 1.0].into());
+/// assert_eq!(p.project(&vec![0.50]), vec![0.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.75]), vec![0.5, 1.0].into());
+/// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0].into());
 /// ```
 ///
 /// ## Quadratic regression on the interval [0, 1]
@@ -30,9 +32,11 @@ mod cpfk;
 ///
 /// let p = Polynomial::new(2, vec![(0.0, 1.0)]);
 ///
-/// assert_eq!(p.project(&vec![0.0]), vec![0.0, 0.0, 1.0].into());
-/// assert_eq!(p.project(&vec![0.5]), vec![0.25, 0.5, 1.0].into());
-/// assert_eq!(p.project(&vec![1.0]), vec![1.0, 1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.00]), vec![1.0, -1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.25]), vec![0.25, -0.5, 1.0].into());
+/// assert_eq!(p.project(&vec![0.50]), vec![0.0, 0.0, 1.0].into());
+/// assert_eq!(p.project(&vec![0.75]), vec![0.25, 0.5, 1.0].into());
+/// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0, 1.0].into());
 /// ```
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Polynomial {

@@ -97,4 +97,6 @@ where
 
 impl<P, E: Parameterised, T> Parameterised for LFA<P, E, T> {
     fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
+
+    fn n_weights(&self) -> usize { self.evaluator.n_weights() }
 }
