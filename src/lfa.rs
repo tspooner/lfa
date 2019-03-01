@@ -11,9 +11,9 @@ macro_rules! impl_concrete_builder {
     ($ftype:ty => $fname:ident) => {
         impl<P: Space> LFA<P, $ftype> {
             pub fn $fname(projector: P) -> Self {
-                let approximator = <$ftype>::new(projector.dim());
+                let evaluator = <$ftype>::zeros(projector.dim());
 
-                Self::new(projector, approximator)
+                Self::new(projector, evaluator)
             }
         }
 
@@ -25,73 +25,76 @@ macro_rules! impl_concrete_builder {
 
 /// Linear function approximator.
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct LFA<P, A> {
+pub struct LFA<P, E, T = Identity> {
     pub projector: P,
-    pub approximator: A,
+    pub evaluator: E,
+    pub transform: T,
 }
 
-impl<P, A> LFA<P, A> {
-    pub fn new(projector: P, approximator: A) -> Self {
-        LFA {
-            projector: projector,
-            approximator: approximator,
-        }
+impl<P, E> LFA<P, E> {
+    pub fn new(projector: P, evaluator: E) -> Self {
+        LFA { projector, evaluator, transform: Identity, }
     }
 }
 
-impl_concrete_builder!(ScalarFunction => scalar_output);
-impl_concrete_builder!(PairFunction => pair_output);
-impl_concrete_builder!(TripleFunction => triple_output);
+impl_concrete_builder!(ScalarFunction => scalar);
+impl_concrete_builder!(PairFunction => pair);
+impl_concrete_builder!(TripleFunction => triple);
 
 impl<P: Space> LFA<P, VectorFunction> {
-    pub fn vector_output(projector: P, n_outputs: usize) -> Self {
-        let approximator = VectorFunction::new(projector.dim(), n_outputs);
+    pub fn vector(projector: P, n_outputs: usize) -> Self {
+        let evaluator = VectorFunction::zeros(projector.dim(), n_outputs);
 
-        Self::new(projector, approximator)
+        Self::new(projector, evaluator)
     }
 }
 
-impl<P, A: Approximator<Projection>> LFA<P, A> {
-    #[allow(dead_code)]
-    pub fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<A::Value> {
-        self.approximator.evaluate(primal)
-    }
-
-    #[allow(dead_code)]
-    pub fn update_primal(&mut self, primal: &Projection, update: A::Value) -> UpdateResult<()> {
-        self.approximator.update(primal, update)
-    }
-}
-
-impl<I, P, A> Approximator<I> for LFA<P, A>
+impl<P, E, T> LFA<P, E, T>
 where
-    I: ?Sized,
-    P: Projector<I>,
-    A: Approximator<Projection>,
+    E: Approximator<Projection>,
+    T: Transform<E::Value>,
 {
-    type Value = A::Value;
+    #[allow(dead_code)]
+    pub fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<E::Value> {
+        self.evaluator.evaluate(primal).map(|v| self.transform.transform(v))
+    }
+
+    #[allow(dead_code)]
+    pub fn update_primal(&mut self, primal: &Projection, update: E::Value) -> UpdateResult<()>
+        where E::Value: Gradient
+    {
+        let value = self.evaluate_primal(primal).unwrap();
+
+        self.evaluator.update(primal, self.transform.grad(value).chain(update))
+    }
+}
+
+impl<I: ?Sized, P, E, T> Approximator<I> for LFA<P, E, T>
+where
+    P: Projector<I>,
+    E: Approximator<Projection>,
+    T: Transform<E::Value>,
+    E::Value: Gradient,
+{
+    type Value = E::Value;
 
     fn n_outputs(&self) -> usize {
-        self.approximator.n_outputs()
+        self.evaluator.n_outputs()
     }
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
-        let primal = self.projector.project(input);
-
-        self.approximator.evaluate(&primal)
+        self.evaluate_primal(&self.projector.project(input))
     }
 
     fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
-        let primal = self.projector.project(input);
-
-        self.approximator.update(&primal, update)
+        self.update_primal(&self.projector.project(input), update)
     }
 
     fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
-        self.approximator.adapt(new_features)
+        self.evaluator.adapt(new_features)
     }
 }
 
-impl<P, A: Parameterised> Parameterised for LFA<P, A> {
-    fn weights(&self) -> Matrix<f64> { self.approximator.weights() }
+impl<P, E: Parameterised, T> Parameterised for LFA<P, E, T> {
+    fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
 }
