@@ -8,7 +8,7 @@ use crate::geometry::{
     Vector,
 };
 use crate::utils::cartesian_product;
-use std::{f64::consts::PI, iter};
+use std::{f64::consts::PI};
 
 // TODO: Add support for i-th term alphas scale factors.
 /// Fourier basis projector.
@@ -47,10 +47,7 @@ impl Fourier {
 
     fn compute_coefficients(order: u8, dim: usize) -> Vec<Vec<f64>> {
         let mut coefficients = cartesian_product(&vec![
-            (0..(order + 1))
-                .map(|v| v as f64)
-                .collect::<Vec<f64>>();
-            dim
+            (0..(order + 1)).map(|v| v as f64).collect::<Vec<f64>>(); dim
         ])
         .split_off(1);
 
@@ -64,7 +61,7 @@ impl Fourier {
 impl Space for Fourier {
     type Value = Projection;
 
-    fn dim(&self) -> usize { self.coefficients.len() + 1 }
+    fn dim(&self) -> usize { self.coefficients.len() }
 
     fn card(&self) -> Card { Card::Infinite }
 }
@@ -75,6 +72,7 @@ impl Projector<[f64]> for Fourier {
             .iter()
             .enumerate()
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
+            .map(|v| v.max(0.0).min(1.0))
             .collect::<Vec<f64>>();
 
         Projection::Dense(
@@ -88,7 +86,6 @@ impl Projector<[f64]> for Fourier {
 
                     (PI * cx).cos()
                 })
-                .chain(iter::once(1.0))
                 .collect(),
         )
     }
@@ -105,24 +102,32 @@ mod tests {
 
     #[test]
     fn test_dim() {
-        assert_eq!(Fourier::new(1, vec![(0.0, 1.0)]).dim(), 2);
-        assert_eq!(Fourier::new(2, vec![(0.0, 1.0)]).dim(), 3);
-        assert_eq!(Fourier::new(3, vec![(0.0, 1.0)]).dim(), 4);
-        assert_eq!(Fourier::new(4, vec![(0.0, 1.0)]).dim(), 5);
-        assert_eq!(Fourier::new(5, vec![(0.0, 1.0)]).dim(), 6);
+        assert_eq!(Fourier::new(1, vec![(0.0, 1.0)]).dim(), 1);
+        assert_eq!(Fourier::new(2, vec![(0.0, 1.0)]).dim(), 2);
+        assert_eq!(Fourier::new(3, vec![(0.0, 1.0)]).dim(), 3);
+        assert_eq!(Fourier::new(4, vec![(0.0, 1.0)]).dim(), 4);
+        assert_eq!(Fourier::new(5, vec![(0.0, 1.0)]).dim(), 5);
     }
 
     #[test]
-    fn test_symmetry() {
+    fn test_bounds() {
         let f = Fourier::new(1, vec![(0.0, 1.0)]);
 
         assert_eq!(
             f.project_expanded(&vec![-1.0]),
-            f.project_expanded(&vec![1.0])
+            f.project_expanded(&vec![0.0]),
         );
         assert_eq!(
             f.project_expanded(&vec![-0.5]),
-            f.project_expanded(&vec![0.5])
+            f.project_expanded(&vec![0.0]),
+        );
+        assert_eq!(
+            f.project_expanded(&vec![1.5]),
+            f.project_expanded(&vec![1.0]),
+        );
+        assert_eq!(
+            f.project_expanded(&vec![2.0]),
+            f.project_expanded(&vec![1.0]),
         );
     }
 
@@ -130,134 +135,108 @@ mod tests {
     fn test_order1_1d() {
         let f = Fourier::new(1, vec![(0.0, 1.0)]);
 
-        assert_eq!(f.dim(), 2);
+        assert_eq!(f.dim(), 1);
         assert_eq!(f.card(), Card::Infinite);
 
         assert!(f
-            .project_expanded(&vec![-1.0])
-            .all_close(&arr1(&vec![-1.0, 1.0]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![-0.5])
-            .all_close(&arr1(&vec![0.0, 1.0]), 1e-6));
-        assert!(f
             .project_expanded(&vec![0.0])
-            .all_close(&arr1(&vec![1.0, 1.0]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![0.5])
-            .all_close(&arr1(&vec![0.0, 1.0]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![1.0])
-            .all_close(&arr1(&vec![-1.0, 1.0]), 1e-6));
-
-        assert!(f
-            .project_expanded(&vec![-2.0 / 3.0])
-            .all_close(&arr1(&vec![-0.5, 1.0]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![-1.0 / 3.0])
-            .all_close(&arr1(&vec![0.5, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![1.0]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0 / 3.0])
-            .all_close(&arr1(&vec![0.5, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![0.5]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![0.5])
+            .all_close(&arr1(&vec![0.0]), 1e-6));
         assert!(f
             .project_expanded(&vec![2.0 / 3.0])
-            .all_close(&arr1(&vec![-0.5, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![-0.5]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![1.0])
+            .all_close(&arr1(&vec![-1.0]), 1e-6));
     }
 
     #[test]
     fn test_order2_1d() {
         let f = Fourier::new(2, vec![(0.0, 1.0)]);
 
-        assert_eq!(f.dim(), 3);
+        assert_eq!(f.dim(), 2);
         assert_eq!(f.card(), Card::Infinite);
 
         assert!(f
-            .project_expanded(&vec![-1.0])
-            .all_close(&arr1(&vec![1.0, -1.0, 1.0]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![-0.5])
-            .all_close(&arr1(&vec![-1.0, 0.0, 1.0]), 1e-6));
-        assert!(f
             .project_expanded(&vec![0.0])
-            .all_close(&arr1(&vec![1.0; 3]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![0.5])
-            .all_close(&arr1(&vec![-1.0, 0.0, 1.0]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![1.0])
-            .all_close(&arr1(&vec![1.0, -1.0, 1.0]), 1e-6));
-
-        assert!(f
-            .project_expanded(&vec![-2.0 / 3.0])
-            .all_close(&arr1(&vec![-0.5, -0.5, 1.0]), 1e-6));
-        assert!(f
-            .project_expanded(&vec![-1.0 / 3.0])
-            .all_close(&arr1(&vec![-0.5, 0.5, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![1.0, 1.0]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0 / 3.0])
-            .all_close(&arr1(&vec![-0.5, 0.5, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![-0.5, 0.5]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![0.5])
+            .all_close(&arr1(&vec![-1.0, 0.0]), 1e-6));
         assert!(f
             .project_expanded(&vec![2.0 / 3.0])
-            .all_close(&arr1(&vec![-0.5, -0.5, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![-0.5, -0.5]), 1e-6));
+        assert!(f
+            .project_expanded(&vec![1.0])
+            .all_close(&arr1(&vec![1.0, -1.0]), 1e-6));
     }
 
     #[test]
     fn test_order1_2d() {
         let f = Fourier::new(1, vec![(0.0, 1.0), (5.0, 6.0)]);
 
-        assert_eq!(f.dim(), 4);
+        assert_eq!(f.dim(), 3);
         assert_eq!(f.card(), Card::Infinite);
 
         assert!(f
             .project_expanded(&vec![0.0, 5.0])
-            .all_close(&arr1(&vec![1.0; 4]), 1e-6));
+            .all_close(&arr1(&vec![1.0; 3]), 1e-6));
         assert!(f
             .project_expanded(&vec![0.5, 5.0])
-            .all_close(&arr1(&vec![0.0, 0.0, 1.0, 1.0]), 1e-6,));
+            .all_close(&arr1(&vec![0.0, 0.0, 1.0]), 1e-6,));
         assert!(f
             .project_expanded(&vec![0.0, 5.5])
-            .all_close(&arr1(&vec![0.0, 1.0, 0.0, 1.0]), 1e-6,));
+            .all_close(&arr1(&vec![0.0, 1.0, 0.0]), 1e-6,));
         assert!(f
             .project_expanded(&vec![0.5, 5.5])
-            .all_close(&arr1(&vec![-1.0, 0.0, 0.0, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![-1.0, 0.0, 0.0]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0, 5.5])
-            .all_close(&arr1(&vec![0.0, -1.0, 0.0, 1.0]), 1e-6,));
+            .all_close(&arr1(&vec![0.0, -1.0, 0.0]), 1e-6,));
         assert!(f
             .project_expanded(&vec![0.5, 6.0])
-            .all_close(&arr1(&vec![0.0, 0.0, -1.0, 1.0]), 1e-6,));
+            .all_close(&arr1(&vec![0.0, 0.0, -1.0]), 1e-6,));
         assert!(f
             .project_expanded(&vec![1.0, 6.0])
-            .all_close(&arr1(&vec![1.0, -1.0, -1.0, 1.0]), 1e-6));
+            .all_close(&arr1(&vec![1.0, -1.0, -1.0]), 1e-6));
     }
 
     #[test]
     fn test_order2_2d() {
         let f = Fourier::new(2, vec![(0.0, 1.0), (5.0, 6.0)]);
 
-        assert_eq!(f.dim(), 9);
+        assert_eq!(f.dim(), 8);
         assert_eq!(f.card(), Card::Infinite);
 
         assert!(f
             .project_expanded(&vec![0.0, 5.0])
-            .all_close(&arr1(&vec![1.0; 9]), 1e-6));
+            .all_close(&arr1(&vec![1.0; 8]), 1e-6));
         assert!(f.project_expanded(&vec![0.5, 5.0],).all_close(
-            &arr1(&vec![-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0]),
+            &arr1(&vec![-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 1.0]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![0.0, 5.5],).all_close(
-            &arr1(&vec![-1.0, 0.0, 1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+            &arr1(&vec![-1.0, 0.0, 1.0, -1.0, 0.0, 1.0, -1.0, 0.0]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![0.5, 5.5],).all_close(
-            &arr1(&vec![1.0, 0.0, -1.0, 0.0, -1.0, 0.0, -1.0, 0.0, 1.0]),
+            &arr1(&vec![1.0, 0.0, -1.0, 0.0, -1.0, 0.0, -1.0, 0.0]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![0.5, 6.0],).all_close(
-            &arr1(&vec![-1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 1.0, -1.0, 1.0]),
+            &arr1(&vec![-1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 1.0, -1.0]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![1.0, 6.0],).all_close(
-            &arr1(&vec![1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0]),
+            &arr1(&vec![1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0]),
             1e-6,
         ));
     }
