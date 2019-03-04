@@ -17,7 +17,6 @@ impl Transform<f64> for Softplus {
 mod tests {
     use crate::transforms::Logistic;
     use quickcheck::quickcheck;
-    use std::f64::consts::E;
     use super::{Softplus, Transform};
 
     #[test]

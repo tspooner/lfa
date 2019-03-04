@@ -1,7 +1,13 @@
-use crate::LFA;
-use crate::basis::{Projection, composition::*};
-use crate::core::Approximator;
-use crate::geometry::Space;
+use crate::{
+    basis::{
+        Projection,
+        composition::*,
+        fixed::Constant,
+    },
+    core::Approximator,
+    geometry::Space,
+    LFA,
+};
 
 /// Trait for projector composition.
 ///
@@ -58,6 +64,11 @@ pub trait Composable: Sized {
 
     /// Return the original `Projector` with all activations normalised in _L∞_.
     fn normalise_linf(self) -> LinfNormalise<Self> { LinfNormalise::new(self) }
+
+    /// Return the a `Stack` of this `Projector` with a single constant feature term.
+    fn with_constant(self) -> Stack<Self, Constant> {
+        self.stack(Constant::ones(1))
+    }
 }
 
 #[cfg(test)]
