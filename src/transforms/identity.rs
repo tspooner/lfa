@@ -26,3 +26,19 @@ impl Transform<Vector<f64>> for Identity {
         x
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Identity, Transform};
+
+    #[test]
+    fn test_f64() {
+        assert_eq!(Identity.transform(0.0), 0.0);
+        assert_eq!(Identity.transform(1.0), 1.0);
+        assert_eq!(Identity.transform(2.0), 2.0);
+
+        assert_eq!(Identity.grad(0.0), 1.0);
+        assert_eq!(Identity.grad(1.0), 1.0);
+        assert_eq!(Identity.grad(2.0), 1.0);
+    }
+}
