@@ -1,4 +1,3 @@
-use crate::approximators::Approximator;
 use crate::basis::Projection;
 use crate::core::*;
 use crate::geometry::{norms::l1, Matrix, Vector};
@@ -11,10 +10,12 @@ pub struct ScalarFunction {
 }
 
 impl ScalarFunction {
-    pub fn new(n_features: usize) -> Self {
-        ScalarFunction {
-            weights: Vector::zeros((n_features,)),
-        }
+    pub fn new(weights: Vector<f64>) -> Self {
+        ScalarFunction { weights, }
+    }
+
+    pub fn zeros(n_features: usize) -> Self {
+        ScalarFunction::new(Vector::zeros((n_features,)))
     }
 
     fn extend_weights(&mut self, new_weights: Vec<f64>) {
@@ -86,20 +87,23 @@ impl Parameterised for ScalarFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::{Approximator, ScalarFunction};
-    use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::LFA;
+    use crate::{
+        core::Approximator,
+        basis::fixed::{Fourier, TileCoding},
+        LFA,
+    };
     use std::{
         collections::{BTreeSet, HashMap},
         hash::BuildHasherDefault,
     };
+    use super::ScalarFunction;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::scalar_output(p);
+        let mut f = LFA::scalar(p);
         let input = vec![5.0];
 
         let _ = f.update(&input, 50.0);
@@ -111,7 +115,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::scalar_output(p);
+        let mut f = LFA::scalar(p);
 
         let input = vec![5.0];
 
@@ -123,7 +127,7 @@ mod tests {
 
     #[test]
     fn test_adapt() {
-        let mut f = ScalarFunction::new(100);
+        let mut f = ScalarFunction::zeros(100);
 
         let mut new_features = HashMap::new();
         new_features.insert(100, {

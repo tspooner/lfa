@@ -1,8 +1,10 @@
-use crate::approximators::{Approximator, adapt_matrix};
-use crate::basis::Projection;
-use crate::core::*;
-use crate::geometry::{norms::l1, Matrix, Vector};
+use crate::{
+    basis::Projection,
+    core::*,
+    geometry::{norms::l1, Matrix, Vector},
+};
 use std::collections::HashMap;
+use super::adapt_matrix;
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
 #[derive(Clone, Serialize, Deserialize)]
@@ -11,7 +13,11 @@ pub struct VectorFunction {
 }
 
 impl VectorFunction {
-    pub fn new(n_features: usize, n_outputs: usize) -> Self {
+    pub fn new(weights: Matrix<f64>) -> Self {
+        VectorFunction { weights, }
+    }
+
+    pub fn zeros(n_features: usize, n_outputs: usize) -> Self {
         VectorFunction {
             weights: Matrix::zeros((n_features, n_outputs)),
         }
@@ -70,21 +76,24 @@ impl Parameterised for VectorFunction {
 mod tests {
     extern crate seahash;
 
-    use crate::approximators::{Approximator, VectorFunction};
-    use crate::basis::fixed::{Fourier, TileCoding};
-    use crate::geometry::Vector;
-    use crate::LFA;
+    use crate::{
+        core::Approximator,
+        basis::fixed::{Fourier, TileCoding},
+        geometry::Vector,
+        LFA,
+    };
     use std::{
         collections::{BTreeSet, HashMap},
         hash::BuildHasherDefault,
     };
+    use super::VectorFunction;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;
 
     #[test]
     fn test_sparse_update_eval() {
         let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::vector_output(p, 2);
+        let mut f = LFA::vector(p, 2);
         let input = vec![5.0];
 
         let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
@@ -97,7 +106,7 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let p = Fourier::new(3, vec![(0.0, 10.0)]);
-        let mut f = LFA::vector_output(p, 2);
+        let mut f = LFA::vector(p, 2);
 
         let input = vec![5.0];
 
@@ -110,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_adapt() {
-        let mut f = VectorFunction::new(100, 2);
+        let mut f = VectorFunction::zeros(100, 2);
 
         let mut new_features = HashMap::new();
         new_features.insert(100, {

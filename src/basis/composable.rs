@@ -1,6 +1,6 @@
 use crate::LFA;
-use crate::approximators::Approximator;
 use crate::basis::{Projection, composition::*};
+use crate::core::Approximator;
 use crate::geometry::Space;
 
 /// Trait for projector composition.
