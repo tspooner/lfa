@@ -77,7 +77,10 @@ mod tests {
 
     use crate::{
         core::Approximator,
-        basis::fixed::{Fourier, TileCoding},
+        basis::{
+            Composable,
+            fixed::{Fourier, TileCoding},
+        },
         geometry::Vector,
         LFA,
     };
@@ -104,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_dense_update_eval() {
-        let p = Fourier::new(3, vec![(0.0, 10.0)]);
+        let p = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
         let mut f = LFA::vector(p, 2);
 
         let input = vec![5.0];

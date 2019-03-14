@@ -85,7 +85,10 @@ mod tests {
 
     use crate::{
         core::Approximator,
-        basis::fixed::{Fourier, TileCoding},
+        basis::{
+            Composable,
+            fixed::{Fourier, TileCoding},
+        },
         LFA,
     };
     use std::{
@@ -110,13 +113,15 @@ mod tests {
 
     #[test]
     fn test_dense_update_eval() {
-        let p = Fourier::new(3, vec![(0.0, 10.0)]);
+        let p = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
         let mut f = LFA::scalar(p);
 
         let input = vec![5.0];
 
         let _ = f.update(input.as_slice(), 50.0);
         let out = f.evaluate(input.as_slice()).unwrap();
+
+        println!("{}", out);
 
         assert!((out - 50.0).abs() < 1e-6);
     }
