@@ -1,7 +1,7 @@
 use crate::{
     basis::Projection,
     core::*,
-    geometry::{norms::l1, Matrix, Vector},
+    geometry::{Matrix, Vector},
 };
 use std::collections::HashMap;
 use super::adapt_matrix;
@@ -36,12 +36,11 @@ impl Approximator<Projection> for VectorFunction {
     fn update(&mut self, p: &Projection, errors: Vector<f64>) -> UpdateResult<()> {
         Ok(match p {
             &Projection::Dense(ref activations) => {
-                let scaled_errors = errors / l1(activations.as_slice().unwrap());
                 let phi_matrix = activations
                     .view()
                     .into_shape((activations.len(), 1))
                     .unwrap();
-                let error_matrix = scaled_errors
+                let error_matrix = errors
                     .view()
                     .into_shape((1, self.weights.cols()))
                     .unwrap();

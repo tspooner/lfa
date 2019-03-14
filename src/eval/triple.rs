@@ -1,6 +1,6 @@
 use crate::basis::Projection;
 use crate::core::*;
-use crate::geometry::{norms::l1, Matrix};
+use crate::geometry::Matrix;
 use std::collections::HashMap;
 use super::adapt_matrix;
 
@@ -45,14 +45,12 @@ impl Approximator<Projection> for TripleFunction {
     fn update(&mut self, p: &Projection, errors: (f64, f64, f64)) -> UpdateResult<()> {
         Ok(match p {
             &Projection::Dense(ref activations) => {
-                let z = l1(activations.as_slice().unwrap());
-
                 let phi_matrix = activations
                     .view()
                     .into_shape((activations.len(), 1))
                     .unwrap();
                 let error_matrix =
-                    Matrix::from_shape_vec((1, 3), vec![errors.0 / z, errors.1 / z, errors.2 / z])
+                    Matrix::from_shape_vec((1, 3), vec![errors.0, errors.1, errors.2])
                         .unwrap();
 
                 self.weights += &phi_matrix.dot(&error_matrix)

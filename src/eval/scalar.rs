@@ -1,6 +1,6 @@
 use crate::basis::Projection;
 use crate::core::*;
-use crate::geometry::{norms::l1, Matrix, Vector};
+use crate::geometry::{Matrix, Vector};
 use std::{collections::HashMap, mem::replace};
 
 /// Weight-`Projection` evaluator with scalar `f64` output.
@@ -37,11 +37,7 @@ impl Approximator<Projection> for ScalarFunction {
 
     fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {
         Ok(match p {
-            &Projection::Dense(ref activations) => {
-                let scaled_error = error / l1(activations.as_slice().unwrap());
-
-                self.weights.scaled_add(scaled_error, activations)
-            },
+            &Projection::Dense(ref activations) => self.weights.scaled_add(error, activations),
             &Projection::Sparse(ref indices) => {
                 let scaled_error = error / indices.len() as f64;
 
