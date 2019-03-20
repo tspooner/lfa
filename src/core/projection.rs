@@ -1,6 +1,7 @@
-use crate::core::IndexSet;
-use crate::core::*;
-use crate::geometry::{Matrix, Vector};
+use crate::{
+    core::*,
+    geometry::{Matrix, Vector},
+};
 use ndarray::{stack, Axis};
 use std::{
     iter::FromIterator,

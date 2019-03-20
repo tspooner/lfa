@@ -1,13 +1,16 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{
-    continuous::Interval,
-    product::LinearSpace,
-    BoundedSpace,
-    Card,
-    Space,
-    Vector,
+use crate::{
+    basis::Composable,
+    core::{Projection, Projector},
+    geometry::{
+        continuous::Interval,
+        product::LinearSpace,
+        BoundedSpace,
+        Card,
+        Space,
+        Vector,
+    },
+    utils::cartesian_product,
 };
-use crate::utils::cartesian_product;
 
 mod cpfk;
 

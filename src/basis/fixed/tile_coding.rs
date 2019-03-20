@@ -1,5 +1,8 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{Card, Space, Vector};
+use crate::{
+    basis::Composable,
+    core::{Projection, Projector},
+    geometry::{Card, Space, Vector},
+};
 use std::hash::{BuildHasher, Hasher};
 
 #[inline]

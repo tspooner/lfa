@@ -1,6 +1,7 @@
-use crate::basis::{CandidateFeature, Projection};
-use crate::core::{DenseT, IndexSet};
-use crate::geometry::Space;
+use crate::{
+    core::{DenseT, IndexSet, CandidateFeature, Projection},
+    geometry::Space,
+};
 use std::collections::HashMap;
 
 /// Trait for basis projectors.

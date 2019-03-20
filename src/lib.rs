@@ -15,6 +15,7 @@ mod utils;
 
 import_all!(lfa);
 
+#[macro_use]
 pub mod core;
 pub mod eval;
 pub mod basis;

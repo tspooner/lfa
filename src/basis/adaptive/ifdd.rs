@@ -1,13 +1,8 @@
-use crate::basis::{
-    AdaptiveProjector,
-    CandidateFeature,
-    Composable,
-    Feature,
-    Projection,
-    Projector,
+use crate::{
+    basis::Composable,
+    core::*,
+    geometry::{Card, Space, Vector},
 };
-use crate::core::*;
-use crate::geometry::{Card, Space, Vector};
 use itertools::Itertools;
 use std::collections::HashMap;
 

@@ -1,6 +1,8 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::core::DenseT;
-use crate::geometry::{Card, Space};
+use crate::{
+    basis::Composable,
+    core::{DenseT, Projection, Projector},
+    geometry::{Card, Space},
+};
 
 fn stack_projections(p1: Projection, n1: usize, p2: Projection, n2: usize) -> Projection {
     match (p1, p2) {

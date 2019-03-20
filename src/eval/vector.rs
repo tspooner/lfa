@@ -1,5 +1,4 @@
 use crate::{
-    basis::Projection,
     core::*,
     geometry::{Matrix, Vector},
 };

@@ -1,14 +1,17 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{
-    continuous::Interval,
-    product::LinearSpace,
-    BoundedSpace,
-    Card,
-    Space,
-    Vector,
+use crate::{
+    basis::Composable,
+    core::{Projection, Projector},
+    geometry::{
+        continuous::Interval,
+        product::LinearSpace,
+        BoundedSpace,
+        Card,
+        Space,
+        Vector,
+    },
+    utils::cartesian_product,
 };
-use crate::utils::cartesian_product;
-use std::{f64::consts::PI};
+use std::f64::consts::PI;
 
 // TODO: Add support for i-th term alphas scale factors.
 /// Fourier basis projector.

@@ -1,6 +1,7 @@
-use crate::basis::Projection;
-use crate::core::*;
-use crate::geometry::Matrix;
+use crate::{
+    core::*,
+    geometry::Matrix,
+};
 use std::collections::HashMap;
 use super::adapt_matrix;
 

@@ -1,5 +1,12 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{Card, Space, norms::{l1, l2, lp, linf}};
+use crate::{
+    basis::Composable,
+    core::{Projection, Projector},
+    geometry::{
+        norms::{l1, l2, lp, linf},
+        Card,
+        Space,
+    },
+};
 
 /// Apply _L₁_ normalisation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]

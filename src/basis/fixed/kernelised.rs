@@ -1,6 +1,18 @@
-use crate::basis::{Composable, Projection, Projector, kernels::{self, Kernel}};
-use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Vector};
-use crate::utils::cartesian_product;
+use crate::{
+    basis::{
+        kernels::{self, Kernel},
+        Composable,
+    },
+    core::{Projection, Projector},
+    geometry::{
+        discrete::Partition,
+        product::LinearSpace,
+        Card,
+        Space,
+        Vector
+    },
+    utils::cartesian_product,
+};
 
 /// Feature prototype used by the `KernelProjector` basis.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]

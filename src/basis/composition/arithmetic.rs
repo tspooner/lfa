@@ -1,5 +1,11 @@
-use crate::basis::{fixed::Constant, Composable, Projection, Projector};
-use crate::geometry::{Card, Space};
+use crate::{
+    basis::{
+        fixed::Constant,
+        Composable,
+    },
+    core::{Projection, Projector},
+    geometry::{Card, Space},
+};
 
 /// Apply negation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]

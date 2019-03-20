@@ -1,5 +1,4 @@
 use crate::{
-    basis::{Projection, Projector},
     core::*,
     eval::*,
     geometry::{Matrix, Space},

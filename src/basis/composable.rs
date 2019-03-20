@@ -1,10 +1,9 @@
 use crate::{
     basis::{
-        Projection,
         composition::*,
         fixed::Constant,
     },
-    core::Approximator,
+    core::{Approximator, Projection},
     geometry::Space,
     LFA,
 };

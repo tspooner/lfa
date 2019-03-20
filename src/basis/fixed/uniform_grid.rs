@@ -1,5 +1,15 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Surjection, Vector};
+use crate::{
+    basis::Composable,
+    core::{Projection, Projector},
+    geometry::{
+        discrete::Partition,
+        product::LinearSpace,
+        Card,
+        Space,
+        Surjection,
+        Vector
+    },
+};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize, Debug)]

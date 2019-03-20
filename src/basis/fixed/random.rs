@@ -1,5 +1,8 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{Card, Space};
+use crate::{
+    basis::Composable,
+    core::{Projection, Projector},
+    geometry::{Card, Space},
+};
 use rand::{
     distributions::{self as dists, Distribution},
     thread_rng,
