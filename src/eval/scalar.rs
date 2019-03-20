@@ -4,7 +4,7 @@ use crate::geometry::{Matrix, Vector};
 use std::{collections::HashMap, mem::replace};
 
 /// Weight-`Projection` evaluator with scalar `f64` output.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScalarFunction {
     pub weights: Vector<f64>,
 }

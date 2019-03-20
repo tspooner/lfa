@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use super::adapt_matrix;
 
 /// Weight-`Projection` evaluator with pair `(f64, f64)` output.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PairFunction {
     pub weights: Matrix<f64>,
 }

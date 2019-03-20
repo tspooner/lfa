@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use super::adapt_matrix;
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorFunction {
     pub weights: Matrix<f64>,
 }
