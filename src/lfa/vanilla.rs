@@ -51,17 +51,17 @@ where
     P: Projector<I>,
     E: Approximator<Projection>,
 {
-    type Value = E::Value;
+    type Output = E::Output;
 
     fn n_outputs(&self) -> usize {
         self.evaluator.n_outputs()
     }
 
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
+    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Output> {
         self.evaluator.evaluate(&self.projector.project(input))
     }
 
-    fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
+    fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
         self.evaluator.update(&self.projector.project(input), update)
     }
 

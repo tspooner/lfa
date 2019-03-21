@@ -24,7 +24,7 @@ impl VectorFunction {
 }
 
 impl Approximator<Projection> for VectorFunction {
-    type Value = Vector<f64>;
+    type Output = Vector<f64>;
 
     fn n_outputs(&self) -> usize { self.weights.cols() }
 

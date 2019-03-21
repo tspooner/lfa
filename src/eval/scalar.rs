@@ -30,7 +30,7 @@ impl ScalarFunction {
 }
 
 impl Approximator<Projection> for ScalarFunction {
-    type Value = f64;
+    type Output = f64;
 
     fn n_outputs(&self) -> usize { 1 }
 

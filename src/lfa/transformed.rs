@@ -47,9 +47,9 @@ impl<P: Space, T> TransformedLFA<P, VectorFunction, T> {
 impl<P, E, T> TransformedLFA<P, E, T>
 where
     E: Approximator<Projection>,
-    T: Transform<E::Value>,
+    T: Transform<E::Output>,
 {
-    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<E::Value> {
+    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<E::Output> {
         self.evaluator.evaluate(primal).map(|v| self.transform.transform(v))
     }
 }
@@ -58,20 +58,20 @@ impl<I: ?Sized, P, E, T> Approximator<I> for TransformedLFA<P, E, T>
 where
     P: Projector<I>,
     E: Approximator<Projection>,
-    T: Transform<E::Value>,
-    E::Value: Gradient,
+    T: Transform<E::Output>,
+    E::Output: Gradient,
 {
-    type Value = E::Value;
+    type Output = E::Output;
 
     fn n_outputs(&self) -> usize {
         self.evaluator.n_outputs()
     }
 
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Value> {
+    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Output> {
         self.evaluate_primal(&self.projector.project(input))
     }
 
-    fn update(&mut self, input: &I, update: Self::Value) -> UpdateResult<()> {
+    fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
         let primal = self.projector.project(input);
         let value = self.evaluate_primal(&primal).unwrap();
 

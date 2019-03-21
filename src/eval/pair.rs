@@ -22,7 +22,7 @@ impl PairFunction {
 }
 
 impl Approximator<Projection> for PairFunction {
-    type Value = (f64, f64);
+    type Output = (f64, f64);
 
     fn n_outputs(&self) -> usize { 2 }
 
