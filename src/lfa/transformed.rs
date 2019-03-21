@@ -77,10 +77,6 @@ where
 
         self.evaluator.update(&primal, self.transform.grad(value).chain(update))
     }
-
-    fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
-        self.evaluator.adapt(new_features)
-    }
 }
 
 impl<P, E: Parameterised, T> Parameterised for TransformedLFA<P, E, T> {

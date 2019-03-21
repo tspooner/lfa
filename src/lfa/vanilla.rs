@@ -64,10 +64,6 @@ where
     fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
         self.evaluator.update(&self.projector.project(input), update)
     }
-
-    fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
-        self.evaluator.adapt(new_features)
-    }
 }
 
 impl<P, E: Parameterised> Parameterised for LFA<P, E> {

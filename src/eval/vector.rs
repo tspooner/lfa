@@ -3,7 +3,6 @@ use crate::{
     geometry::{Matrix, Vector},
 };
 use std::collections::HashMap;
-use super::adapt_matrix;
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,10 +56,6 @@ impl Approximator<Projection> for VectorFunction {
                 }
             },
         })
-    }
-
-    fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
-        adapt_matrix(&mut self.weights, new_features)
     }
 }
 
@@ -116,34 +111,5 @@ mod tests {
 
         assert!((out[0] - 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn test_adapt() {
-        let mut f = VectorFunction::zeros(100, 2);
-
-        let mut new_features = HashMap::new();
-        new_features.insert(100, {
-            let mut idx = BTreeSet::new();
-
-            idx.insert(10);
-            idx.insert(90);
-
-            idx
-        });
-
-        match f.adapt(&new_features) {
-            Ok(n) => {
-                assert_eq!(n, 1);
-                assert_eq!(f.weights.rows(), 101);
-
-                let c0 = f.weights.column(0);
-                let c1 = f.weights.column(1);
-
-                assert_eq!(c0[100], c0[10] / 2.0 + c0[90] / 2.0);
-                assert_eq!(c1[100], c1[10] / 2.0 + c1[90] / 2.0);
-            },
-            Err(err) => panic!("VectorFunction::adapt failed with AdaptError::{:?}", err),
-        }
     }
 }
