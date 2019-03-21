@@ -1,8 +1,7 @@
 use crate::{
-    core::{DenseT, IndexSet, CandidateFeature, Projection},
+    core::{DenseT, Projection},
     geometry::Space,
 };
-use std::collections::HashMap;
 
 /// Trait for basis projectors.
 pub trait Projector<I: ?Sized>: Space<Value = Projection> {
@@ -40,13 +39,6 @@ pub trait Projector<I: ?Sized>: Space<Value = Projection> {
     /// );
     /// ```
     fn project_expanded(&self, input: &I) -> DenseT { self.project(input).expanded(self.dim()) }
-}
-
-/// Trait for projectors with adaptive bases.
-pub trait AdaptiveProjector<I: ?Sized>: Projector<I> {
-    fn discover(&mut self, input: &I, error: f64) -> Option<HashMap<usize, IndexSet>>;
-
-    fn add_feature(&mut self, feature: CandidateFeature) -> Option<(usize, IndexSet)>;
 }
 
 // #[macro_export]

@@ -1,5 +1,4 @@
-use crate::core::*;
-use std::collections::HashMap;
+use crate::core::error::*;
 
 /// An interface for function approximators.
 pub trait Approximator<I: ?Sized> {
