@@ -4,7 +4,6 @@ use crate::{
     geometry::{Matrix, Space},
     transforms::{Transform, Identity},
 };
-use std::collections::HashMap;
 
 macro_rules! impl_builder {
     ($ftype:ty => $fname:ident) => {
@@ -44,16 +43,6 @@ impl<P: Space, T> TransformedLFA<P, VectorFunction, T> {
     }
 }
 
-impl<P, E, T> TransformedLFA<P, E, T>
-where
-    E: Approximator<Projection>,
-    T: Transform<E::Output>,
-{
-    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<E::Output> {
-        self.evaluator.evaluate(primal).map(|v| self.transform.transform(v))
-    }
-}
-
 impl<I: ?Sized, P, E, T> Approximator<I> for TransformedLFA<P, E, T>
 where
     P: Projector<I>,
@@ -72,10 +61,30 @@ where
     }
 
     fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
-        let primal = self.projector.project(input);
-        let value = self.evaluate_primal(&primal).unwrap();
+        self.update_primal(&self.projector.project(input), update)
+    }
+}
 
-        self.evaluator.update(&primal, self.transform.grad(value).chain(update))
+impl<I: ?Sized, P, E, T> LinearApproximator<I> for TransformedLFA<P, E, T>
+where
+    P: Projector<I>,
+    E: Approximator<Projection>,
+    T: Transform<E::Output>,
+    E::Output: Gradient,
+{
+    fn to_primal(&self, input: &I) -> Projection {
+        self.projector.project(input)
+    }
+
+    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<Self::Output> {
+        self.evaluator.evaluate(primal).map(|v| self.transform.transform(v))
+    }
+
+    fn update_primal(&mut self, primal: &Projection, update: Self::Output) -> UpdateResult<()> {
+        match self.evaluate_primal(primal).ok() {
+            Some(v) => self.evaluator.update(primal, self.transform.grad(v).chain(update)),
+            None => Err(UpdateError::Failed),
+        }
     }
 }
 

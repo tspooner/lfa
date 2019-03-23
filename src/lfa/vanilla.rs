@@ -58,11 +58,29 @@ where
     }
 
     fn evaluate(&self, input: &I) -> EvaluationResult<Self::Output> {
-        self.evaluator.evaluate(&self.projector.project(input))
+        self.evaluate_primal(&self.projector.project(input))
     }
 
     fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
-        self.evaluator.update(&self.projector.project(input), update)
+        self.update_primal(&self.projector.project(input), update)
+    }
+}
+
+impl<I: ?Sized, P, E> LinearApproximator<I> for LFA<P, E>
+where
+    P: Projector<I>,
+    E: Approximator<Projection>,
+{
+    fn to_primal(&self, input: &I) -> Projection {
+        self.projector.project(input)
+    }
+
+    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<Self::Output> {
+        self.evaluator.evaluate(primal)
+    }
+
+    fn update_primal(&mut self, primal: &Projection, update: Self::Output) -> UpdateResult<()> {
+        self.evaluator.update(primal, update)
     }
 }
 
