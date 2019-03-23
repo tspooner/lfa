@@ -2,7 +2,6 @@ use crate::{
     core::*,
     geometry::{Matrix, Vector},
 };
-use std::collections::HashMap;
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
