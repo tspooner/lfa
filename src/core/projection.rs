@@ -1,12 +1,74 @@
+#![macro_use]
 use crate::{
     core::*,
-    geometry::{Matrix, Vector},
+    geometry::{MatrixView, Vector, VectorView},
 };
 use ndarray::{stack, Axis};
 use std::{
     iter::FromIterator,
     ops::{Add, Index},
 };
+
+macro_rules! apply_to_projection {
+    ($projection:expr => $dense:expr; $sparse:expr) => {
+        match $projection {
+            Projection::Dense(_) => $dense,
+            Projection::Sparse(_) => $sparse,
+        }
+    };
+
+    ($projection:expr => $dense:ident, $dbody:block; $sparse:ident, $sbody:block) => {
+        match $projection {
+            Projection::Dense($dense) => $dbody,
+            Projection::Sparse($sparse) => $sbody,
+        }
+    };
+    ($projection:expr => mut $dense:ident, $dbody:block; $sparse:ident, $sbody:block) => {
+        match $projection {
+            Projection::Dense(ref mut $dense) => $dbody,
+            Projection::Sparse(ref $sparse) => $sbody,
+        }
+    };
+    ($projection:expr => $dense:ident, $dbody:block; mut $sparse:ident, $sbody:block) => {
+        match $projection {
+            Projection::Dense(ref $dense) => $dbody,
+            Projection::Sparse(ref mut $sparse) => $sbody,
+        }
+    };
+    ($projection:expr => mut $dense:ident, $dbody:block; mut $sparse:ident, $sbody:block) => {
+        match $projection {
+            Projection::Dense(ref mut $dense) => $dbody,
+            Projection::Sparse(ref mut $sparse) => $sbody,
+        }
+    };
+}
+
+macro_rules! apply_to_dense_or_sparse {
+    ($call:ident => $projection:expr) => {
+        match $projection {
+            Projection::Dense(ref activations) => $call(activations),
+            Projection::Sparse(ref indices) => $call(indices),
+        }
+    };
+    ($call:ident => $projection:expr, $($arg:expr),*) => {
+        match $projection {
+            Projection::Dense(ref activations) => $call(activations, $($arg),*),
+            Projection::Sparse(ref indices) => $call(activations, $($arg),*),
+        }
+    };
+    ($self:ident.$call:ident => $projection:expr) => {
+        match $projection {
+            Projection::Dense(ref activations) => $self.$call(activations),
+            Projection::Sparse(ref indices) => $self.$call(indices),
+        }
+    };
+    ($self:ident.$call:ident => $projection:expr, $($arg:expr),*) => {
+        match $projection {
+            Projection::Dense(ref activations) => $self.$call(activations, $($arg),*),
+            Projection::Sparse(ref indices) => $self.$call(indices, $($arg),*),
+        }
+    };
+}
 
 /// Projected feature vector representation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,28 +87,21 @@ pub use self::Projection::{Dense as DenseProjection, Sparse as SparseProjection}
 impl Projection {
     /// Return true if the projection is the `Dense` variant.
     pub fn is_dense(&self) -> bool {
-        match *self {
-            DenseProjection(_) => true,
-            SparseProjection(_) => false,
-        }
+        apply_to_projection!(self => true; false)
     }
 
     /// Return true if the projection is the `Sparse` variant.
     pub fn is_sparse(&self) -> bool {
-        match *self {
-            DenseProjection(_) => false,
-            SparseProjection(_) => true,
-        }
+        apply_to_projection!(self => false; true)
     }
 
     /// Return the number of active features in the projection.
     pub fn activity(&self) -> usize {
-        match self {
-            &DenseProjection(ref activations) => activations.len(),
-            &SparseProjection(ref active_indices) => {
-                active_indices.iter().max().cloned().unwrap_or(0)
-            },
-        }
+        apply_to_projection!(self => activations, {
+            activations.len()
+        }; indices, {
+            indices.iter().max().cloned().unwrap_or(0)
+        })
     }
 
     /// Remove one feature entry from the projection, if present.
@@ -68,12 +123,11 @@ impl Projection {
     /// assert_eq!(sparse, vec![0, 15].into());
     /// ```
     pub fn remove(&mut self, idx: usize) {
-        match *self {
-            DenseProjection(ref mut activations) => activations[idx] = 0.0,
-            SparseProjection(ref mut active_indices) => {
-                active_indices.remove(&idx);
-            },
-        }
+        apply_to_projection!(self => mut activations, {
+            activations[idx] = 0.0;
+        }; mut indices, {
+            indices.remove(&idx);
+        })
     }
 
     /// Apply the dot product operation between the `Projection` and some other
@@ -85,17 +139,25 @@ impl Projection {
     ///
     /// let weights = Vector::from_vec(vec![2.0, 5.0, 1.0]);
     ///
-    /// assert_eq!(Projection::dot(&vec![0.0, 0.2, 0.8].into(), &weights), 1.8);
-    /// assert_eq!(Projection::dot(&vec![0, 1].into(), &weights), 7.0);
+    /// assert_eq!(Projection::dot(&vec![0.0, 0.2, 0.8].into(), &weights.view()), 1.8);
+    /// assert_eq!(Projection::dot(&vec![0, 1].into(), &weights.view()), 7.0);
     /// ```
-    pub fn dot(&self, weights: &Vector<f64>) -> f64 {
-        match self {
-            DenseProjection(ref activations) => activations.dot(weights),
-            SparseProjection(ref indices) => indices
-                .iter()
-                .rev()
-                .fold(0.0, |acc, idx| acc + weights[*idx]),
-        }
+    pub fn dot(&self, weights: &VectorView<f64>) -> f64 {
+        apply_to_projection!(self => activations, {
+            Projection::dot_dense(activations, weights)
+        }; indices, {
+            Projection::dot_sparse(indices, weights)
+        })
+    }
+
+    pub(crate) fn dot_dense(activations: &DenseT, weights: &VectorView<f64>) -> f64 {
+        activations.dot(weights)
+    }
+
+    pub(crate) fn dot_sparse(indices: &SparseT, weights: &VectorView<f64>) -> f64 {
+        indices
+            .iter()
+            .fold(0.0, |acc, idx| acc + weights[*idx])
     }
 
     /// Apply the dot product operation between the `Projection` and some other
@@ -108,32 +170,22 @@ impl Projection {
     /// let weights = Matrix::from_shape_vec((3, 2), vec![2.0, 5.0, 1.0, 3.0, 1.0, 3.0]).unwrap();
     ///
     /// assert!(
-    ///     Projection::matmul(&vec![0.1, 0.2, 0.7].into(), &weights).all_close(
+    ///     Projection::matmul(&vec![0.1, 0.2, 0.7].into(), &weights.view()).all_close(
     ///         &Vector::from_vec(vec![1.1, 3.2]),
     ///         1e-7 // eps
     ///     )
     /// );
     /// assert_eq!(
-    ///     Projection::matmul(&vec![0, 1].into(), &weights),
+    ///     Projection::matmul(&vec![0, 1].into(), &weights.view()),
     ///     Vector::from_vec(vec![3.0, 8.0])
     /// );
     /// ```
-    pub fn matmul(&self, weights: &Matrix<f64>) -> Vector<f64> {
-        match self {
-            DenseProjection(ref activations) => activations
-                .view()
-                .insert_axis(Axis(0))
-                .dot(weights)
-                .index_axis_move(Axis(0), 0),
-            SparseProjection(ref indices) => (0..weights.cols())
-                .map(|col| {
-                    indices
-                        .iter()
-                        .rev()
-                        .fold(0.0, |acc, idx| acc + weights[(*idx, col)])
-                })
-                .collect(),
-        }
+    pub fn matmul(&self, weights: &MatrixView<f64>) -> Vector<f64> {
+        weights
+            .gencolumns()
+            .into_iter()
+            .map(|col| self.dot(&col))
+            .collect()
     }
 
     /// Expand the projection and convert it into a raw, dense vector.
@@ -147,40 +199,43 @@ impl Projection {
     /// );
     /// ```
     pub fn expanded(self, dim: usize) -> DenseT {
-        match self {
-            DenseProjection(phi) => {
-                let mut phi = phi.to_vec();
-                phi.resize(dim, 0.0);
+        apply_to_projection!(self => activations, {
+            if activations.len() != dim {
+                let mut activations = activations.to_vec();
+                activations.resize(dim, 0.0);
 
-                DenseT::from_vec(phi)
-            },
-            SparseProjection(active_indices) => {
-                let mut phi = Vector::zeros((dim,));
-                for idx in active_indices.iter() {
-                    phi[*idx] = 1.0;
-                }
+                DenseT::from_vec(activations)
+            } else {
+                activations.to_owned()
+            }
+        }; indices, {
+            let mut phi = Vector::zeros((dim,));
+            for idx in indices.iter() {
+                phi[*idx] = 1.0;
+            }
 
-                phi
-            },
-        }
+            phi
+        })
     }
 
     /// Apply the function `f` to the projection if the `Dense` variant or
     /// return `None`.
     pub fn map_dense<F, T>(self, f: impl FnOnce(DenseT) -> T) -> Option<T> {
-        match self {
-            DenseProjection(activations) => Some(f(activations)),
-            SparseProjection(_) => None,
-        }
+        apply_to_projection!(self => activations, {
+            Some(f(activations))
+        }; indices, {
+            None
+        })
     }
 
     /// Apply the function `f` to the projection if the `Sparse` variant or
     /// return `None`.
     pub fn map_sparse<F, T>(self, f: impl FnOnce(SparseT) -> T) -> Option<T> {
-        match self {
-            DenseProjection(_) => None,
-            SparseProjection(indices) => Some(f(indices)),
-        }
+        apply_to_projection!(self => activations, {
+            None
+        }; indices, {
+            Some(f(indices))
+        })
     }
 
     /// Apply the function `f` or `g` depending on the contents of the
@@ -191,10 +246,11 @@ impl Projection {
         f_sparse: impl FnOnce(SparseT) -> T,
     ) -> T
     {
-        match self {
-            DenseProjection(activations) => f_dense(activations),
-            SparseProjection(indices) => f_sparse(indices),
-        }
+        apply_to_projection!(self => activations, {
+            f_dense(activations)
+        }; indices, {
+            f_sparse(indices)
+        })
     }
 }
 
@@ -221,16 +277,15 @@ impl Index<usize> for Projection {
     type Output = f64;
 
     fn index(&self, idx: usize) -> &f64 {
-        match *self {
-            DenseProjection(ref activations) => activations.index(idx),
-            SparseProjection(ref active_indices) => {
-                if idx < active_indices.len() {
-                    &1.0
-                } else {
-                    &0.0
-                }
-            },
-        }
+        apply_to_projection!(self => activations, {
+            activations.index(idx)
+        }; indices, {
+            if idx < indices.len() {
+                &1.0
+            } else {
+                &0.0
+            }
+        })
     }
 }
 
