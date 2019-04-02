@@ -16,7 +16,7 @@ mod cpfk;
 
 /// Polynomial basis projector.
 ///
-/// ## Linear regression on the interval [0, 1]
+/// ## Linear regression on the interval [-1, 1]
 /// ```
 /// use lfa::basis::{Projector, fixed::Polynomial};
 ///
@@ -29,7 +29,7 @@ mod cpfk;
 /// assert_eq!(p.project(&vec![1.00]), vec![1.0].into());
 /// ```
 ///
-/// ## Quadratic regression on the interval [0, 1]
+/// ## Quadratic regression on the interval [-1, 1]
 /// ```
 /// use lfa::basis::{Projector, fixed::Polynomial};
 ///
@@ -198,6 +198,7 @@ impl Projector<[f64]> for Chebyshev {
             .iter()
             .enumerate()
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
+            .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
         Projection::Dense(

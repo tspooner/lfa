@@ -1,6 +1,6 @@
 use crate::{
     core::*,
-    geometry::{Matrix, Vector},
+    geometry::{Matrix, MatrixView, MatrixViewMut, Vector},
 };
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
@@ -21,47 +21,43 @@ impl VectorFunction {
     }
 }
 
-impl Approximator<Projection> for VectorFunction {
+impl Parameterised for VectorFunction {
+    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
+    fn weights_view(&self) -> MatrixView<f64> { self.weights.view() }
+    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.weights.view_mut() }
+}
+
+impl Approximator for VectorFunction {
     type Output = Vector<f64>;
 
     fn n_outputs(&self) -> usize { self.weights.cols() }
 
-    fn evaluate(&self, p: &Projection) -> EvaluationResult<Vector<f64>> {
-        Ok(p.matmul(&self.weights))
-    }
-
-    fn update(&mut self, p: &Projection, errors: Vector<f64>) -> UpdateResult<()> {
-        Ok(match p {
-            &Projection::Dense(ref activations) => {
-                let phi_matrix = activations
-                    .view()
-                    .into_shape((activations.len(), 1))
-                    .unwrap();
-                let error_matrix = errors
-                    .view()
-                    .into_shape((1, self.weights.cols()))
-                    .unwrap();
-
-                self.weights += &phi_matrix.dot(&error_matrix)
-            },
-            &Projection::Sparse(ref indices) => {
-                for c in 0..self.weights.cols() {
-                    let mut col = self.weights.column_mut(c);
-                    let scaled_error = errors[c] / indices.len() as f64;
-
-                    for idx in indices {
-                        col[*idx] += scaled_error
-                    }
-                }
-            },
+    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
+        apply_to_projection!(features => activations, {
+            Ok(activations.dot(&self.weights))
+        }; indices, {
+            Ok(self.weights.gencolumns().into_iter().map(|col| {
+                Projection::dot_sparse(indices, &col)
+            }).collect())
         })
     }
-}
 
-impl Parameterised for VectorFunction {
-    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
+    fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
+        apply_to_projection!(features => activations, {
+            Ok(for (c, &e) in errors.into_iter().enumerate() {
+                self.weights.column_mut(c).scaled_add(e, activations);
+            })
+        }; indices, {
+            Ok(for (c, &e) in errors.into_iter().enumerate() {
+                let scaled_error = e / indices.len() as f64;
+                let mut col = self.weights.column_mut(c);
 
-    fn n_weights(&self) -> usize { self.weights.len() }
+                for idx in indices {
+                    col[*idx] += scaled_error
+                }
+            })
+        })
+    }
 }
 
 #[cfg(test)]
@@ -69,12 +65,12 @@ mod tests {
     extern crate seahash;
 
     use crate::{
-        core::Approximator,
+        core::*,
         basis::{
             Composable,
             fixed::{Fourier, TileCoding},
         },
-        geometry::Vector,
+        geometry::{Space, Vector},
         LFA,
     };
     use std::{
@@ -87,12 +83,13 @@ mod tests {
 
     #[test]
     fn test_sparse_update_eval() {
-        let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::vector(p, 2);
-        let input = vec![5.0];
+        let projector = TileCoding::new(SHBuilder::default(), 4, 100);
+        let mut evaluator = VectorFunction::zeros(projector.dim(), 2);
 
-        let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
-        let out = f.evaluate(input.as_slice()).unwrap();
+        let features = projector.project(&vec![5.0]);
+
+        let _ = evaluator.update(&features, Vector::from_vec(vec![20.0, 50.0]));
+        let out = evaluator.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);
@@ -100,13 +97,13 @@ mod tests {
 
     #[test]
     fn test_dense_update_eval() {
-        let p = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
-        let mut f = LFA::vector(p, 2);
+        let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
+        let mut evaluator = VectorFunction::zeros(projector.dim(), 2);
 
-        let input = vec![5.0];
+        let features = projector.project(&vec![5.0]);
 
-        let _ = f.update(input.as_slice(), Vector::from_vec(vec![20.0, 50.0]));
-        let out = f.evaluate(input.as_slice()).unwrap();
+        let _ = evaluator.update(&features, Vector::from_vec(vec![20.0, 50.0]));
+        let out = evaluator.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);

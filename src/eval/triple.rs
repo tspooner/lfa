@@ -1,6 +1,6 @@
 use crate::{
     core::*,
-    geometry::Matrix,
+    geometry::{Matrix, MatrixView, MatrixViewMut},
 };
 
 /// Weight-`Projection` evaluator with triple `(f64, f64, f64)` output.
@@ -19,42 +19,42 @@ impl TripleFunction {
     }
 }
 
-impl Approximator<Projection> for TripleFunction {
+impl Parameterised for TripleFunction {
+    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
+    fn weights_view(&self) -> MatrixView<f64> { self.weights.view() }
+    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.weights.view_mut() }
+}
+
+impl Approximator for TripleFunction {
     type Output = (f64, f64, f64);
 
     fn n_outputs(&self) -> usize { 3 }
 
-    fn evaluate(&self, p: &Projection) -> EvaluationResult<(f64, f64, f64)> {
-        Ok(match p {
-            &Projection::Dense(ref activations) => (
+    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
+        apply_to_projection!(features => activations, {
+            Ok((
                 self.weights.column(0).dot(activations),
                 self.weights.column(1).dot(activations),
                 self.weights.column(2).dot(activations),
-            ),
-            &Projection::Sparse(ref indices) => indices.iter().fold((0.0, 0.0, 0.0), |acc, idx| {
-                (
-                    acc.0 + self.weights[(*idx, 0)],
-                    acc.1 + self.weights[(*idx, 1)],
-                    acc.2 + self.weights[(*idx, 2)],
-                )
-            }),
+            ))
+        }; indices, {
+            Ok(indices.iter().fold((0.0, 0.0, 0.0), |acc, idx| (
+                acc.0 + self.weights[(*idx, 0)],
+                acc.1 + self.weights[(*idx, 1)],
+                acc.2 + self.weights[(*idx, 2)],
+            )))
         })
     }
 
-    fn update(&mut self, p: &Projection, errors: (f64, f64, f64)) -> UpdateResult<()> {
-        Ok(match p {
-            &Projection::Dense(ref activations) => {
-                let phi_matrix = activations
-                    .view()
-                    .into_shape((activations.len(), 1))
-                    .unwrap();
-                let error_matrix =
-                    Matrix::from_shape_vec((1, 3), vec![errors.0, errors.1, errors.2])
-                        .unwrap();
-
-                self.weights += &phi_matrix.dot(&error_matrix)
-            },
-            &Projection::Sparse(ref indices) => {
+    fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
+        apply_to_projection!(features => activations, {
+            Ok({
+                self.weights.column_mut(0).scaled_add(errors.0, activations);
+                self.weights.column_mut(1).scaled_add(errors.1, activations);
+                self.weights.column_mut(2).scaled_add(errors.2, activations);
+            })
+        }; indices, {
+            Ok({
                 let z = indices.len() as f64;
                 let scaled_errors = (errors.0 / z, errors.1 / z, errors.2 / z);
 
@@ -63,15 +63,9 @@ impl Approximator<Projection> for TripleFunction {
                     self.weights[(*idx, 1)] += scaled_errors.1;
                     self.weights[(*idx, 2)] += scaled_errors.2;
                 });
-            },
+            })
         })
     }
-}
-
-impl Parameterised for TripleFunction {
-    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
-
-    fn n_weights(&self) -> usize { self.weights.len() }
 }
 
 #[cfg(test)]
@@ -79,11 +73,12 @@ mod tests {
     extern crate seahash;
 
     use crate::{
-        core::Approximator,
+        core::*,
         basis::{
             Composable,
             fixed::{Fourier, TileCoding},
         },
+        geometry::Space,
         LFA,
     };
     use std::{
@@ -96,12 +91,13 @@ mod tests {
 
     #[test]
     fn test_sparse_update_eval() {
-        let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::triple(p);
-        let input = vec![5.0];
+        let projector = TileCoding::new(SHBuilder::default(), 4, 100);
+        let mut evaluator = TripleFunction::zeros(projector.dim());
 
-        let _ = f.update(input.as_slice(), (20.0, 50.0, 100.0));
-        let out = f.evaluate(input.as_slice()).unwrap();
+        let features = projector.project(&vec![5.0]);
+
+        let _ = evaluator.update(&features, (20.0, 50.0, 100.0));
+        let out = evaluator.evaluate(&features).unwrap();
 
         assert!((out.0 - 20.0).abs() < 1e-6);
         assert!((out.1 - 50.0).abs() < 1e-6);
@@ -110,13 +106,13 @@ mod tests {
 
     #[test]
     fn test_dense_update_eval() {
-        let p = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
-        let mut f = LFA::triple(p);
+        let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
+        let mut evaluator = TripleFunction::zeros(projector.dim());
 
-        let input = vec![5.0];
+        let features = projector.project(&vec![5.0]);
 
-        let _ = f.update(input.as_slice(), (20.0, 50.0, 100.0));
-        let out = f.evaluate(input.as_slice()).unwrap();
+        let _ = evaluator.update(&features, (20.0, 50.0, 100.0));
+        let out = evaluator.evaluate(&features).unwrap();
 
         assert!((out.0 - 20.0).abs() < 1e-6);
         assert!((out.1 - 50.0).abs() < 1e-6);

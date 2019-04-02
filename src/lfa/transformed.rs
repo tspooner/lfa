@@ -1,7 +1,7 @@
 use crate::{
     core::*,
     eval::*,
-    geometry::{Matrix, Space},
+    geometry::{Matrix, MatrixView, MatrixViewMut, Space},
     transforms::{Transform, Identity},
 };
 
@@ -43,10 +43,23 @@ impl<P: Space, T> TransformedLFA<P, VectorFunction, T> {
     }
 }
 
-impl<I: ?Sized, P, E, T> Approximator<I> for TransformedLFA<P, E, T>
+impl<P, E, T> TransformedLFA<P, E, T> {
+    fn chain_update<V: Gradient>(&self, v: V, update: V) -> V where T: Transform<V> {
+        self.transform.grad(v).chain(update)
+    }
+}
+
+impl<P, E: Parameterised, T> Parameterised for TransformedLFA<P, E, T> {
+    fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
+
+    fn weights_view(&self) -> MatrixView<f64> { self.evaluator.weights_view() }
+
+    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.evaluator.weights_view_mut() }
+}
+
+impl<P, E, T> Approximator for TransformedLFA<P, E, T>
 where
-    P: Projector<I>,
-    E: Approximator<Projection>,
+    E: Approximator,
     T: Transform<E::Output>,
     E::Output: Gradient,
 {
@@ -56,40 +69,24 @@ where
         self.evaluator.n_outputs()
     }
 
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Output> {
-        self.evaluate_primal(&self.projector.project(input))
+    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
+        self.evaluator.evaluate(features)
     }
 
-    fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
-        self.update_primal(&self.projector.project(input), update)
-    }
-}
-
-impl<I: ?Sized, P, E, T> LinearApproximator<I> for TransformedLFA<P, E, T>
-where
-    P: Projector<I>,
-    E: Approximator<Projection>,
-    T: Transform<E::Output>,
-    E::Output: Gradient,
-{
-    fn to_primal(&self, input: &I) -> Projection {
-        self.projector.project(input)
-    }
-
-    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<Self::Output> {
-        self.evaluator.evaluate(primal).map(|v| self.transform.transform(v))
-    }
-
-    fn update_primal(&mut self, primal: &Projection, update: Self::Output) -> UpdateResult<()> {
-        match self.evaluate_primal(primal).ok() {
-            Some(v) => self.evaluator.update(primal, self.transform.grad(v).chain(update)),
+    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
+        match self.evaluator.evaluate(features).ok() {
+            Some(v) => self.evaluator.update(features, self.chain_update(v, update)),
             None => Err(UpdateError::Failed),
         }
     }
 }
 
-impl<P, E: Parameterised, T> Parameterised for TransformedLFA<P, E, T> {
-    fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
+impl<I: ?Sized, P: Projector<I>, E, T> Embedded<I> for TransformedLFA<P, E, T> {
+    fn n_features(&self) -> usize {
+        self.projector.dim()
+    }
 
-    fn n_weights(&self) -> usize { self.evaluator.n_weights() }
+    fn to_features(&self, input: &I) -> Features {
+        self.projector.project(input)
+    }
 }

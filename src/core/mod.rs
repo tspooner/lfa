@@ -9,5 +9,3 @@ import_all!(approximator);
 
 import_all!(projection);
 import_all!(projector with macros);
-
-import_all!(parameterised);

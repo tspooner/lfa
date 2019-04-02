@@ -1,49 +1,101 @@
-use crate::core::*;
+use crate::{
+    core::*,
+    geometry::{Vector, Matrix, MatrixView, MatrixViewMut},
+};
+
+pub type Features = Projection;
+
+/// An interface for types parameterised by a matrix of weights.
+pub trait Parameterised {
+    /// Return a clone of the weights.
+    fn weights(&self) -> Matrix<f64> { self.weights_view().to_owned() }
+
+    /// Return a read-only view of the weights.
+    fn weights_view(&self) -> MatrixView<f64>;
+
+    /// Return a mutable view of the weights.
+    fn weights_view_mut(&mut self) -> MatrixViewMut<f64>;
+
+    /// Return the dimensions of the weight matrix.
+    fn weights_dim(&self) -> (usize, usize) {
+        self.weights_view().dim()
+    }
+
+    /// Return the total number of weights.
+    fn weights_count(&self) -> usize {
+        self.weights_view().len()
+    }
+}
+
+/// An interface for types with an embedded feature representation.
+pub trait Embedded<I: ?Sized> {
+    /// Return the number of features in the representation.
+    fn n_features(&self) -> usize;
+
+    /// Convert some input `I` into a `Features` vector.
+    fn to_features(&self, input: &I) -> Features;
+}
 
 /// An interface for function approximators.
-pub trait Approximator<I: ?Sized> {
+pub trait Approximator {
+    /// The value being approximated.
     type Output;
 
     /// Return the dimensionality of the output value `Approximator::Output`.
     fn n_outputs(&self) -> usize;
 
-    /// Evaluate the function and return its value.
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Output>;
+    /// Evaluate the approximator and return its value.
+    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output>;
 
     /// Update the approximator's estimate for the given input.
-    fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()>;
+    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()>;
 }
 
-impl<I: ?Sized, T: Approximator<I>> Approximator<I> for Box<T> {
-    type Output = T::Output;
+// TODO: Implement more efficient variants for LFA types when impl specialisation is released on
+// stable.
+pub trait ScalarApproximator: Approximator<Output = f64> {}
 
-    fn n_outputs(&self) -> usize { (**self).n_outputs() }
+impl<T: Approximator<Output = f64>> ScalarApproximator for T {}
 
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Output> { (**self).evaluate(input) }
+pub trait PairApproximator: Approximator<Output = (f64, f64)> {
+    fn evaluate_first(&self, features: &Features) -> EvaluationResult<f64> {
+        self.evaluate(features).map(|v| v.0)
+    }
 
-    fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
-        (**self).update(input, update)
+    fn evaluate_second(&self, features: &Features) -> EvaluationResult<f64> {
+        self.evaluate(features).map(|v| v.1)
     }
 }
 
-pub trait LinearApproximator<I: ?Sized>: Approximator<I> {
-    fn to_primal(&self, input: &I) -> Projection;
+impl<T: Approximator<Output = (f64, f64)>> PairApproximator for T {}
 
-    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<Self::Output>;
-
-    fn update_primal(&mut self, primal: &Projection, update: Self::Output) -> UpdateResult<()>;
-}
-
-impl<I: ?Sized, T: LinearApproximator<I>> LinearApproximator<I> for Box<T> {
-    fn to_primal(&self, input: &I) -> Projection {
-        (**self).to_primal(input)
+pub trait TripleApproximator: Approximator<Output = (f64, f64, f64)> {
+    fn evaluate_first(&self, features: &Features) -> EvaluationResult<f64> {
+        self.evaluate(features).map(|v| v.0)
     }
 
-    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<Self::Output> {
-        (**self).evaluate_primal(primal)
+    fn evaluate_second(&self, features: &Features) -> EvaluationResult<f64> {
+        self.evaluate(features).map(|v| v.1)
     }
 
-    fn update_primal(&mut self, primal: &Projection, update: Self::Output) -> UpdateResult<()> {
-        (**self).update_primal(primal, update)
+    fn evaluate_third(&self, features: &Features) -> EvaluationResult<f64> {
+        self.evaluate(features).map(|v| v.2)
     }
 }
+
+impl<T: Approximator<Output = (f64, f64, f64)>> TripleApproximator for T {}
+
+pub trait VectorApproximator: Approximator<Output = Vector<f64>> {
+    fn evaluate_index(&self, features: &Features, index: usize) -> EvaluationResult<f64> {
+        self.evaluate(features).map(|v| v[index])
+    }
+
+    fn update_index(&mut self, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
+        let mut update_vec = vec![0.0; self.n_outputs()];
+        update_vec[index] = update;
+
+        self.update(features, Vector::from_vec(update_vec))
+    }
+}
+
+impl<T: Approximator<Output = Vector<f64>>> VectorApproximator for T {}

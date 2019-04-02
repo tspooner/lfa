@@ -1,9 +1,8 @@
 use crate::{
     core::*,
     eval::*,
-    geometry::{Matrix, Space},
+    geometry::{Matrix, MatrixView, MatrixViewMut, Space},
 };
-use std::collections::HashMap;
 
 macro_rules! impl_builder {
     ($ftype:ty => $fname:ident) => {
@@ -46,10 +45,17 @@ impl<P: Space> LFA<P, VectorFunction> {
     }
 }
 
-impl<I: ?Sized, P, E> Approximator<I> for LFA<P, E>
+impl<P, E: Parameterised> Parameterised for LFA<P, E> {
+    fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
+
+    fn weights_view(&self) -> MatrixView<f64> { self.evaluator.weights_view() }
+
+    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.evaluator.weights_view_mut() }
+}
+
+impl<P, E> Approximator for LFA<P, E>
 where
-    P: Projector<I>,
-    E: Approximator<Projection>,
+    E: Approximator,
 {
     type Output = E::Output;
 
@@ -57,35 +63,24 @@ where
         self.evaluator.n_outputs()
     }
 
-    fn evaluate(&self, input: &I) -> EvaluationResult<Self::Output> {
-        self.evaluate_primal(&self.projector.project(input))
+    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
+        self.evaluator.evaluate(features)
     }
 
-    fn update(&mut self, input: &I, update: Self::Output) -> UpdateResult<()> {
-        self.update_primal(&self.projector.project(input), update)
+    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
+        self.evaluator.update(features, update)
     }
 }
-
-impl<I: ?Sized, P, E> LinearApproximator<I> for LFA<P, E>
+impl<I: ?Sized, P, E> Embedded<I> for LFA<P, E>
 where
     P: Projector<I>,
-    E: Approximator<Projection>,
+    E: Approximator,
 {
-    fn to_primal(&self, input: &I) -> Projection {
+    fn n_features(&self) -> usize {
+        self.projector.dim()
+    }
+
+    fn to_features(&self, input: &I) -> Features {
         self.projector.project(input)
     }
-
-    fn evaluate_primal(&self, primal: &Projection) -> EvaluationResult<Self::Output> {
-        self.evaluator.evaluate(primal)
-    }
-
-    fn update_primal(&mut self, primal: &Projection, update: Self::Output) -> UpdateResult<()> {
-        self.evaluator.update(primal, update)
-    }
-}
-
-impl<P, E: Parameterised> Parameterised for LFA<P, E> {
-    fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
-
-    fn n_weights(&self) -> usize { self.evaluator.n_weights() }
 }
