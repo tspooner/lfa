@@ -3,7 +3,7 @@ use crate::{
         kernels::{self, Kernel},
         Composable,
     },
-    core::{Projection, Projector},
+    core::{Features, Projector},
     geometry::{
         discrete::Partition,
         product::LinearSpace,
@@ -78,7 +78,7 @@ impl KernelProjector<Vector<f64>, kernels::Matern52> {
 }
 
 impl<I, K: Kernel<I>> Space for KernelProjector<I, K> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.prototypes.len() }
 
@@ -86,8 +86,8 @@ impl<I, K: Kernel<I>> Space for KernelProjector<I, K> {
 }
 
 impl<I, K: Kernel<I>> Projector<I> for KernelProjector<I, K> {
-    fn project(&self, input: &I) -> Projection {
-        Projection::Dense(self.prototypes.iter().map(|p| p.kernel(input)).collect())
+    fn project(&self, input: &I) -> Features {
+        Features::Dense(self.prototypes.iter().map(|p| p.kernel(input)).collect())
     }
 }
 

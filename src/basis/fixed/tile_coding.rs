@@ -1,6 +1,6 @@
 use crate::{
     basis::Composable,
-    core::{Projection, Projector},
+    core::{Features, Projector},
     geometry::{Card, Space, Vector},
 };
 use std::hash::{BuildHasher, Hasher};
@@ -57,7 +57,7 @@ impl<H: BuildHasher> TileCoding<H> {
 }
 
 impl<H> Space for TileCoding<H> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.memory_size }
 
@@ -65,7 +65,7 @@ impl<H> Space for TileCoding<H> {
 }
 
 impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
-    fn project(&self, input: &[f64]) -> Projection {
+    fn project(&self, input: &[f64]) -> Features {
         let state = bin_state(input, self.n_tilings);
         let hasher = self.hasher_builder.build_hasher();
 
@@ -74,11 +74,11 @@ impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
 }
 
 impl<H: BuildHasher> Projector<Vec<f64>> for TileCoding<H> {
-    fn project(&self, input: &Vec<f64>) -> Projection { Projector::<[f64]>::project(self, &input) }
+    fn project(&self, input: &Vec<f64>) -> Features { Projector::<[f64]>::project(self, &input) }
 }
 
 impl<H: BuildHasher> Projector<Vector<f64>> for TileCoding<H> {
-    fn project(&self, input: &Vector<f64>) -> Projection {
+    fn project(&self, input: &Vector<f64>) -> Features {
         Projector::<[f64]>::project(self, input.as_slice().unwrap())
     }
 }

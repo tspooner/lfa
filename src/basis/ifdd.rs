@@ -163,8 +163,8 @@ impl<P> IFDD<P> {
         P: Projector<I>
     {
         let new_features = match self.base.project(input) {
-            Projection::Sparse(active_indices) => self.discover_sparse(active_indices, error),
-            Projection::Dense(activations) => self.discover_dense(activations, error),
+            Features::Sparse(active_indices) => self.discover_sparse(active_indices, error),
+            Features::Dense(activations) => self.discover_dense(activations, error),
         };
 
         self.features.reserve_exact(new_features.len());
@@ -183,7 +183,7 @@ impl<P> IFDD<P> {
 }
 
 impl<P: Space> Space for IFDD<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.features.len() }
 
@@ -191,7 +191,7 @@ impl<P: Space> Space for IFDD<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let mut p = self.base.project(input);
         let np: Vec<usize> = (self.base.dim()..self.dim())
             .filter_map(|i| {
@@ -226,7 +226,7 @@ mod tests {
     struct BaseProjector;
 
     impl Space for BaseProjector {
-        type Value = Projection;
+        type Value = Features;
 
         fn dim(&self) -> usize { 5 }
 
@@ -234,7 +234,7 @@ mod tests {
     }
 
     impl Projector<[f64]> for BaseProjector {
-        fn project(&self, input: &[f64]) -> Projection {
+        fn project(&self, input: &[f64]) -> Features {
             input
                 .iter()
                 .map(|v| v.round().min(4.0).max(0.0) as usize)

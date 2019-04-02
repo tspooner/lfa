@@ -33,17 +33,17 @@ impl Approximator for VectorFunction {
     fn n_outputs(&self) -> usize { self.weights.cols() }
 
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
-        apply_to_projection!(features => activations, {
+        apply_to_features!(features => activations, {
             Ok(activations.dot(&self.weights))
         }; indices, {
             Ok(self.weights.gencolumns().into_iter().map(|col| {
-                Projection::dot_sparse(indices, &col)
+                Features::dot_sparse(indices, &col)
             }).collect())
         })
     }
 
     fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
-        apply_to_projection!(features => activations, {
+        apply_to_features!(features => activations, {
             Ok(for (c, &e) in errors.into_iter().enumerate() {
                 self.weights.column_mut(c).scaled_add(e, activations);
             })

@@ -1,37 +1,37 @@
 use crate::{
-    core::{DenseT, Projection},
+    core::{DenseT, Features},
     geometry::Space,
 };
 
 /// Trait for basis projectors.
-pub trait Projector<I: ?Sized>: Space<Value = Projection> {
+pub trait Projector<I: ?Sized>: Space<Value = Features> {
     /// Project data from an input space onto the basis.
     ///
     /// ```
-    /// use lfa::basis::{Projector, Projection, fixed::Constant};
+    /// use lfa::basis::{Projector, Features, fixed::Constant};
     ///
     /// let projector = Constant::ones(2);
     ///
     /// assert!(projector.project(&[0.0]).is_dense());
     /// assert_eq!(
     ///     projector.project(&[0.0]),
-    ///     Projection::from(vec![1.0, 1.0])
+    ///     Features::from(vec![1.0, 1.0])
     /// );
     /// ```
-    fn project(&self, input: &I) -> Projection;
+    fn project(&self, input: &I) -> Features;
 
     /// Project data from an input space onto the basis and expand into a dense
-    /// vector form using `Projection::expanded(self.dim())`.
+    /// vector form using `Features::expanded(self.dim())`.
     ///
     /// ```
-    /// use lfa::basis::{Projector, Projection, fixed::Indices};
+    /// use lfa::basis::{Projector, Features, fixed::Indices};
     ///
     /// let projector = Indices::new(2, vec![0, 1]);
     ///
     /// assert!(projector.project(&[0.0]).is_sparse());
     /// assert_eq!(
     ///     projector.project(&[0.0]),
-    ///     Projection::from(vec![0, 1]),
+    ///     Features::from(vec![0, 1]),
     /// );
     /// assert_eq!(
     ///     projector.project_expanded(&[0.0]),
@@ -46,7 +46,7 @@ macro_rules! impl_array_proxy {
     ([$itype:ty; $($n:expr),*] for $type:ty) => {
         $(
             impl Projector<[$itype; $n]> for $type where $type: Projector<[$itype]> {
-                fn project(&self, input: &[$itype; $n]) -> Projection {
+                fn project(&self, input: &[$itype; $n]) -> Features {
                     Projector::<[$itype]>::project(self, input)
                 }
             }
@@ -59,14 +59,14 @@ macro_rules! impl_array_proxy {
     };
     (Vec<$itype:ty> for $type:ty) => {
         impl Projector<Vec<$itype>> for $type where $type: Projector<[$itype]> {
-            fn project(&self, input: &Vec<$itype>) -> Projection {
+            fn project(&self, input: &Vec<$itype>) -> Features {
                 Projector::<[$itype]>::project(self, &input)
             }
         }
     };
     (Vector<$itype:ty> for $type:ty) => {
         impl Projector<Vector<$itype>> for $type where $type: Projector<[$itype]> {
-            fn project(&self, input: &Vector<$itype>) -> Projection {
+            fn project(&self, input: &Vector<$itype>) -> Features {
                 Projector::<[$itype]>::project(self, input.as_slice().unwrap())
             }
         }

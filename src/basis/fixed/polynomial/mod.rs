@@ -1,6 +1,6 @@
 use crate::{
     basis::Composable,
-    core::{Projection, Projector},
+    core::{Features, Projector},
     geometry::{
         continuous::Interval,
         product::LinearSpace,
@@ -83,7 +83,7 @@ impl Polynomial {
 }
 
 impl Space for Polynomial {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.exponents.len() }
 
@@ -91,7 +91,7 @@ impl Space for Polynomial {
 }
 
 impl Projector<[f64]> for Polynomial {
-    fn project(&self, input: &[f64]) -> Projection {
+    fn project(&self, input: &[f64]) -> Features {
         let scaled_state = input
             .iter()
             .enumerate()
@@ -99,7 +99,7 @@ impl Projector<[f64]> for Polynomial {
             .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        Projection::Dense(
+        Features::Dense(
             self.exponents
                 .iter()
                 .map(|exps| {
@@ -185,7 +185,7 @@ impl Chebyshev {
 }
 
 impl Space for Chebyshev {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.polynomials.len() }
 
@@ -193,7 +193,7 @@ impl Space for Chebyshev {
 }
 
 impl Projector<[f64]> for Chebyshev {
-    fn project(&self, input: &[f64]) -> Projection {
+    fn project(&self, input: &[f64]) -> Features {
         let scaled_state = input
             .iter()
             .enumerate()
@@ -201,7 +201,7 @@ impl Projector<[f64]> for Chebyshev {
             .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        Projection::Dense(
+        Features::Dense(
             self.polynomials
                 .iter()
                 .map(|ps| scaled_state.iter().zip(ps).map(|(v, f)| f(*v)).product())

@@ -1,23 +1,23 @@
 use crate::{
     basis::Composable,
-    core::{DenseT, Projection, Projector},
+    core::{DenseT, Features, Projector},
     geometry::{Card, Space},
 };
 
-fn stack_projections(p1: Projection, n1: usize, p2: Projection, n2: usize) -> Projection {
+fn stack_projections(p1: Features, n1: usize, p2: Features, n2: usize) -> Features {
     match (p1, p2) {
-        (Projection::Sparse(mut p1_indices), Projection::Sparse(p2_indices)) => {
+        (Features::Sparse(mut p1_indices), Features::Sparse(p2_indices)) => {
             p2_indices.iter().for_each(|&i| {
                 p1_indices.insert(i + n1);
             });
 
-            Projection::Sparse(p1_indices)
+            Features::Sparse(p1_indices)
         },
         (p1, p2) => {
             let mut all_activations = p1.expanded(n1).to_vec();
             all_activations.extend_from_slice(p2.expanded(n2).as_slice().unwrap());
 
-            Projection::Dense(DenseT::from_vec(all_activations))
+            Features::Dense(DenseT::from_vec(all_activations))
         },
     }
 }
@@ -34,7 +34,7 @@ impl<P1, P2> Stack<P1, P2> {
 }
 
 impl<P1: Space, P2: Space> Space for Stack<P1, P2> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.p1.dim() + self.p2.dim() }
 
@@ -42,7 +42,7 @@ impl<P1: Space, P2: Space> Space for Stack<P1, P2> {
 }
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Stack<P1, P2> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         stack_projections(
             self.p1.project(input),
             self.p1.dim(),
@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn test_stack_constant() {
         let p = Stack::new(Constant::zeros(10), Constant::ones(10));
-        let output: Projection =
+        let output: Features =
             Vector::from_iter(iter::repeat(0.0).take(10).chain(iter::repeat(1.0).take(10))).into();
 
         assert_eq!(p.dim(), 20);
@@ -79,7 +79,7 @@ mod tests {
     #[test]
     fn test_stack_indices() {
         let p = Stack::new(Indices::new(10, vec![5]), Indices::new(10, vec![0]));
-        let output: Projection = vec![5, 10].into();
+        let output: Features = vec![5, 10].into();
 
         assert_eq!(p.dim(), 20);
         assert_eq!(p.project(&[0.0]), output);
@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn test_stack_mixed() {
         let p = Stack::new(Constant::ones(10), Indices::new(10, vec![0]));
-        let output: Projection =
+        let output: Features =
             Vector::from_iter(iter::repeat(1.0).take(11).chain(iter::repeat(0.0).take(9))).into();
 
         assert_eq!(p.dim(), 20);

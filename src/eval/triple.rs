@@ -31,7 +31,7 @@ impl Approximator for TripleFunction {
     fn n_outputs(&self) -> usize { 3 }
 
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
-        apply_to_projection!(features => activations, {
+        apply_to_features!(features => activations, {
             Ok((
                 self.weights.column(0).dot(activations),
                 self.weights.column(1).dot(activations),
@@ -47,7 +47,7 @@ impl Approximator for TripleFunction {
     }
 
     fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
-        apply_to_projection!(features => activations, {
+        apply_to_features!(features => activations, {
             Ok({
                 self.weights.column_mut(0).scaled_add(errors.0, activations);
                 self.weights.column_mut(1).scaled_add(errors.1, activations);

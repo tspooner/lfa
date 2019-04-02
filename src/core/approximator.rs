@@ -3,8 +3,6 @@ use crate::{
     geometry::{Vector, Matrix, MatrixView, MatrixViewMut},
 };
 
-pub type Features = Projection;
-
 /// An interface for types parameterised by a matrix of weights.
 pub trait Parameterised {
     /// Return a clone of the weights.

@@ -6,6 +6,6 @@ pub mod fixed;
 pub mod ifdd;
 
 pub use crate::{
-    core::{Projector, Projection},
+    core::{Projector, Features},
     geometry::kernels,
 };

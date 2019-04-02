@@ -49,7 +49,7 @@ impl Approximator for ScalarFunction {
     fn n_outputs(&self) -> usize { 1 }
 
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
-        apply_to_projection!(features => activations, {
+        apply_to_features!(features => activations, {
             Ok(activations.dot(&self.weights))
         }; indices, {
             Ok(Features::dot_sparse(indices, &self.weights.view()))
@@ -57,7 +57,7 @@ impl Approximator for ScalarFunction {
     }
 
     fn update(&mut self, features: &Features, error: Self::Output) -> UpdateResult<()> {
-        apply_to_projection!(features => activations, {
+        apply_to_features!(features => activations, {
             Ok(self.weights.scaled_add(error, activations))
         }; indices, {
             Ok({
