@@ -1,58 +1,57 @@
 extern crate lfa;
 extern crate rand;
 
-// use rand::{distributions::Uniform, Rng, thread_rng};
-// use self::lfa::{
-    // basis::{fixed::Polynomial, Composable},
-    // core::{Approximator, LinearApproximator, Parameterised},
-    // transforms::Exp,
-    // LFA, TransformedLFA,
-// };
-// use std::ops::AddAssign;
+use rand::{distributions::Uniform, Rng, thread_rng};
+use self::lfa::{
+    basis::{fixed::Polynomial, Composable},
+    core::{Parameterised, Approximator, Embedded},
+    transforms::Exp,
+    LFA, TransformedLFA,
+};
+use std::ops::AddAssign;
 
-// #[test]
-// fn scalar() {
-    // const M: f64 = 0.1;
-    // const C: f64 = -0.05;
+#[test]
+fn scalar() {
+    const M: f64 = 0.1;
+    const C: f64 = -0.05;
 
-    // let mut fa = LFA::scalar(Polynomial::new(1, vec![(0.0, 1.0)]).with_constant());
-    // let mut rng = thread_rng();
+    let mut fa = LFA::scalar(Polynomial::new(1, vec![(-1.0, 1.0)]).with_constant());
+    let mut rng = thread_rng();
 
-    // for x in rng.sample_iter(&Uniform::new_inclusive(-1.0, 1.0)).take(1000) {
-        // let y_exp = M*x + C;
-        // let y_apx = fa.evaluate(&vec![x]).unwrap();
+    for x in rng.sample_iter(&Uniform::new_inclusive(-1.0, 1.0)).take(1000) {
+        let y_exp = M*x + C;
 
-        // fa.update(&vec![x], (y_exp - y_apx) * 0.1);
-    // }
+        let x = fa.to_features(&vec![x]);
+        let y_apx = fa.evaluate(&x).unwrap();
 
-    // let weights = fa.weights();
-    // let weights = weights.column(0);
+        fa.update(&x, (y_exp - y_apx) * 0.1);
+    }
 
-    // println!("{:?}", weights);
-    // println!("{:?}", fa.evaluate(&vec![0.0]));
-    // println!("{:?}", fa.evaluate(&vec![0.5]));
-    // println!("{:?}", fa.evaluate(&vec![1.0]));
-    // assert!(weights.all_close(&vec![M, C].into(), 1e-3))
-// }
+    let weights = fa.weights();
+    let weights = weights.column(0);
 
-// #[test]
-// fn scalar_manual() {
-    // const M: f64 = 0.1;
-    // const C: f64 = -0.05;
+    assert!(weights.all_close(&vec![M, C].into(), 1e-3))
+}
 
-    // let mut fa = LFA::scalar(Polynomial::new(1, vec![(0.0, 1.0)]).with_constant());
-    // let mut rng = thread_rng();
+#[test]
+fn scalar_manual() {
+    const M: f64 = 0.1;
+    const C: f64 = -0.05;
 
-    // for x in rng.sample_iter(&Uniform::new_inclusive(0.0, 1.0)).take(1000) {
-        // let y_exp = M*x + C;
-        // let y_apx = fa.evaluate(&vec![x]).unwrap();
-        // let update = fa.compute_update_col(&vec![x], (y_exp - y_apx) * 0.1, 0);
+    let mut fa = LFA::scalar(Polynomial::new(1, vec![(-1.0, 1.0)]).with_constant());
+    let mut rng = thread_rng();
 
-        // fa.weights_view_mut().column_mut(0).add_assign(&update);
-    // }
+    for x in rng.sample_iter(&Uniform::new_inclusive(-1.0, 1.0)).take(1000) {
+        let y_exp = M*x + C;
 
-    // let weights = fa.weights();
-    // let weights = weights.column(0);
+        let x = fa.to_features(&vec![x]);
+        let y_apx = fa.evaluate(&x).unwrap();
 
-    // assert!(weights.all_close(&vec![M, C].into(), 1e-3))
-// }
+        fa.weights_view_mut().column_mut(0).scaled_add((y_exp - y_apx) * 0.1, &x.expanded(2));
+    }
+
+    let weights = fa.weights();
+    let weights = weights.column(0);
+
+    assert!(weights.all_close(&vec![M, C].into(), 1e-3))
+}
