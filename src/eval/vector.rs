@@ -71,12 +71,8 @@ mod tests {
             fixed::{Fourier, TileCoding},
         },
         geometry::{Space, Vector},
-        LFA,
     };
-    use std::{
-        collections::{BTreeSet, HashMap},
-        hash::BuildHasherDefault,
-    };
+    use std::hash::BuildHasherDefault;
     use super::VectorFunction;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;

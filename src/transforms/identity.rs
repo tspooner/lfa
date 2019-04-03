@@ -29,16 +29,74 @@ impl Transform<Vector<f64>> for Identity {
 
 #[cfg(test)]
 mod tests {
-    use super::{Identity, Transform};
+    use quickcheck::quickcheck;
+    use super::{Identity, Transform, Vector};
 
     #[test]
-    fn test_f64() {
-        assert_eq!(Identity.transform(0.0), 0.0);
-        assert_eq!(Identity.transform(1.0), 1.0);
-        assert_eq!(Identity.transform(2.0), 2.0);
+    fn test_scalar() {
+        fn prop_transform(val: f64) -> bool {
+            (Identity.transform(val) - val).abs() < 1e-7
+        }
 
-        assert_eq!(Identity.grad(0.0), 1.0);
-        assert_eq!(Identity.grad(1.0), 1.0);
-        assert_eq!(Identity.grad(2.0), 1.0);
+        fn prop_grad(val: f64) -> bool {
+            (Identity.grad(val) - 1.0).abs() < 1e-7
+        }
+
+        quickcheck(prop_transform as fn(f64) -> bool);
+        quickcheck(prop_grad as fn(f64) -> bool);
+    }
+
+    #[test]
+    fn test_pair() {
+        fn prop_transform(val: (f64, f64)) -> bool {
+            let t = Identity.transform(val);
+
+            (t.0 - val.0).abs() < 1e-7 && (t.1 - val.1).abs() < 1e-7
+        }
+
+        fn prop_grad(val: (f64, f64)) -> bool {
+            let g = Identity.grad(val);
+
+            (g.0 - 1.0).abs() < 1e-7 && (g.1 - 1.0).abs() < 1e-7
+        }
+
+        quickcheck(prop_transform as fn((f64, f64)) -> bool);
+        quickcheck(prop_grad as fn((f64, f64)) -> bool);
+    }
+
+    #[test]
+    fn test_triple() {
+        fn prop_transform(val: (f64, f64, f64)) -> bool {
+            let t = Identity.transform(val);
+
+            (t.0 - val.0).abs() < 1e-7 && (t.1 - val.1).abs() < 1e-7 && (t.2 - val.2).abs() < 1e-7
+        }
+
+        fn prop_grad(val: (f64, f64, f64)) -> bool {
+            let g = Identity.grad(val);
+
+            (g.0 - 1.0).abs() < 1e-7 && (g.1 - 1.0).abs() < 1e-7 && (g.2 - 1.0).abs() < 1e-7
+        }
+
+        quickcheck(prop_transform as fn((f64, f64, f64)) -> bool);
+        quickcheck(prop_grad as fn((f64, f64, f64)) -> bool);
+    }
+
+    #[test]
+    fn test_vector() {
+        fn prop_transform(val: Vec<f64>) -> bool {
+            let t = Identity.transform(Vector::from_vec(val.clone()));
+
+            t.into_iter().zip(val.into_iter()).all(|(v1, v2)| (v1 - v2).abs() < 1e-7)
+        }
+
+        fn prop_grad(val: Vec<f64>) -> bool {
+            let g = Identity.grad(Vector::from_vec(val));
+
+            g.into_iter().all(|v| (v - 1.0).abs() < 1e-7)
+        }
+
+        quickcheck(prop_transform as fn(Vec<f64>) -> bool);
+        quickcheck(prop_grad as fn(Vec<f64>) -> bool);
     }
 }

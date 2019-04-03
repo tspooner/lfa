@@ -2,7 +2,6 @@ use crate::{
     core::*,
     geometry::{MatrixView, MatrixViewMut, Vector},
 };
-// use std::mem::replace;
 
 /// Weight-`Features` evaluator with scalar `f64` output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,15 +17,6 @@ impl ScalarFunction {
     pub fn zeros(n_features: usize) -> Self {
         ScalarFunction::new(Vector::zeros((n_features,)))
     }
-
-    // fn extend_weights(&mut self, new_weights: Vec<f64>) {
-        // let mut weights =
-            // unsafe { replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec() };
-
-        // weights.extend(new_weights);
-
-        // self.weights = Vector::from_vec(weights);
-    // }
 }
 
 impl Parameterised for ScalarFunction {
@@ -82,12 +72,8 @@ mod tests {
             fixed::{Fourier, TileCoding},
         },
         geometry::Space,
-        LFA,
     };
-    use std::{
-        collections::{BTreeSet, HashMap},
-        hash::BuildHasherDefault,
-    };
+    use std::hash::BuildHasherDefault;
     use super::ScalarFunction;
 
     type SHBuilder = BuildHasherDefault<seahash::SeaHasher>;

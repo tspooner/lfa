@@ -5,10 +5,8 @@ use rand::{distributions::Uniform, Rng, thread_rng};
 use self::lfa::{
     basis::{fixed::Polynomial, Composable},
     core::{Parameterised, Approximator, Embedded},
-    transforms::Exp,
-    LFA, TransformedLFA,
+    LFA,
 };
-use std::ops::AddAssign;
 
 #[test]
 fn scalar() {
@@ -24,7 +22,7 @@ fn scalar() {
         let x = fa.to_features(&vec![x]);
         let y_apx = fa.evaluate(&x).unwrap();
 
-        fa.update(&x, (y_exp - y_apx) * 0.1);
+        fa.update(&x, (y_exp - y_apx) * 0.1).ok();
     }
 
     let weights = fa.weights();
