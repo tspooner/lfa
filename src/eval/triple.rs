@@ -90,6 +90,9 @@ mod tests {
         let projector = TileCoding::new(SHBuilder::default(), 4, 100);
         let mut evaluator = TripleFunction::zeros(projector.dim());
 
+        assert_eq!(evaluator.n_outputs(), 3);
+        assert_eq!(evaluator.weights.len(), 300);
+
         let features = projector.project(&vec![5.0]);
 
         let _ = evaluator.update(&features, (20.0, 50.0, 100.0));
@@ -104,6 +107,9 @@ mod tests {
     fn test_dense_update_eval() {
         let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
         let mut evaluator = TripleFunction::zeros(projector.dim());
+
+        assert_eq!(evaluator.n_outputs(), 3);
+        assert_eq!(evaluator.weights.len(), 9);
 
         let features = projector.project(&vec![5.0]);
 

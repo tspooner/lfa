@@ -95,12 +95,12 @@ impl Features {
         apply_to_features!(self => false; true)
     }
 
-    /// Return the number of active features in the features.
+    /// Return the number of active features.
     pub fn activity(&self) -> usize {
         apply_to_features!(self => activations, {
-            activations.len()
+            activations.iter().filter(|v| v.abs() > 1e-7).count()
         }; indices, {
-            indices.iter().max().cloned().unwrap_or(0)
+            indices.len()
         })
     }
 
@@ -124,7 +124,9 @@ impl Features {
     /// ```
     pub fn remove(&mut self, idx: usize) {
         apply_to_features!(self => mut activations, {
-            activations[idx] = 0.0;
+            if let Some(a) = activations.get_mut(idx) {
+                *a = 0.0;
+            }
         }; mut indices, {
             indices.remove(&idx);
         })
@@ -280,7 +282,7 @@ impl Index<usize> for Features {
         apply_to_features!(self => activations, {
             activations.index(idx)
         }; indices, {
-            if idx < indices.len() {
+            if indices.contains(&idx) {
                 &1.0
             } else {
                 &0.0
@@ -337,5 +339,64 @@ impl FromIterator<IndexT> for Features {
 
             is
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Features, Vector};
+
+    #[test]
+    fn test_sparse() {
+        let mut f = Features::from(vec![0usize, 5usize, 10usize]);
+
+        assert!(f.is_sparse());
+        assert!(!f.is_dense());
+        assert_eq!(f.activity(), 3);
+
+        f.remove(1);
+        assert_eq!(f, Features::from(vec![0usize, 5usize, 10usize]));
+
+        assert_eq!(f.dot(&Vector::ones(11).view()), 3.0);
+        assert_eq!(f.dot(&Vector::zeros(11).view()), 0.0);
+
+        f.remove(5);
+        assert_eq!(f, Features::from(vec![0usize, 10usize]));
+
+        assert_eq!(f.dot(&Vector::ones(11).view()), 2.0);
+        assert_eq!(f.dot(&Vector::zeros(11).view()), 0.0);
+
+        assert_eq!(f[0], 1.0);
+        assert_eq!(f[1], 0.0);
+        assert_eq!(f[5], 0.0);
+        assert_eq!(f[10], 1.0);
+    }
+
+    #[test]
+    fn test_dense() {
+        let mut f = Features::from(vec![0.0, 0.1, 0.2, 0.1, 0.0, 0.6]);
+
+        assert!(f.is_dense());
+        assert!(!f.is_sparse());
+        assert_eq!(f.activity(), 4);
+
+        f.remove(10);
+        assert_eq!(f, Features::from(vec![0.0, 0.1, 0.2, 0.1, 0.0, 0.6]));
+
+        assert_eq!(f.dot(&Vector::ones(6).view()), 1.0);
+        assert_eq!(f.dot(&Vector::zeros(6).view()), 0.0);
+
+        f.remove(1);
+        assert_eq!(f, Features::from(vec![0.0, 0.0, 0.2, 0.1, 0.0, 0.6]));
+
+        assert_eq!(f.dot(&Vector::ones(6).view()), 0.9);
+        assert_eq!(f.dot(&Vector::zeros(6).view()), 0.0);
+
+        assert_eq!(f[0], 0.0);
+        assert_eq!(f[1], 0.0);
+        assert_eq!(f[2], 0.2);
+        assert_eq!(f[3], 0.1);
+        assert_eq!(f[4], 0.0);
+        assert_eq!(f[5], 0.6);
     }
 }
