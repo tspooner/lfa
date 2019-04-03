@@ -1,5 +1,8 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{Card, Space};
+use crate::{
+    basis::Composable,
+    core::{Features, Projector},
+    geometry::{Card, Space},
+};
 
 /// Shift the output of a `Projector` instance by some fixed amount.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -18,7 +21,7 @@ impl<P> Shift<P> {
 }
 
 impl<P: Space> Space for Shift<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.projector.dim() }
 
@@ -26,8 +29,8 @@ impl<P: Space> Space for Shift<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for Shift<P> {
-    fn project(&self, input: &I) -> Projection {
-        Projection::Dense(self.offset + self.projector.project_expanded(input))
+    fn project(&self, input: &I) -> Features {
+        Features::Dense(self.offset + self.projector.project_expanded(input))
     }
 }
 

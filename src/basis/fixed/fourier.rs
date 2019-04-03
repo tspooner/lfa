@@ -1,14 +1,17 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{
-    continuous::Interval,
-    product::LinearSpace,
-    BoundedSpace,
-    Card,
-    Space,
-    Vector,
+use crate::{
+    basis::Composable,
+    core::{Features, Projector},
+    geometry::{
+        continuous::Interval,
+        product::LinearSpace,
+        BoundedSpace,
+        Card,
+        Space,
+        Vector,
+    },
+    utils::cartesian_product,
 };
-use crate::utils::cartesian_product;
-use std::{f64::consts::PI};
+use std::f64::consts::PI;
 
 // TODO: Add support for i-th term alphas scale factors.
 /// Fourier basis projector.
@@ -59,7 +62,7 @@ impl Fourier {
 }
 
 impl Space for Fourier {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.coefficients.len() }
 
@@ -67,14 +70,14 @@ impl Space for Fourier {
 }
 
 impl Projector<[f64]> for Fourier {
-    fn project(&self, input: &[f64]) -> Projection {
+    fn project(&self, input: &[f64]) -> Features {
         let scaled_state = input
             .iter()
             .enumerate()
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
             .collect::<Vec<f64>>();
 
-        Projection::Dense(
+        Features::Dense(
             self.coefficients
                 .iter()
                 .map(|cfs| {

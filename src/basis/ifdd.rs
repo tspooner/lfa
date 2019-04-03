@@ -1,15 +1,75 @@
-use crate::basis::{
-    AdaptiveProjector,
-    CandidateFeature,
-    Composable,
-    Feature,
-    Projection,
-    Projector,
+use crate::{
+    basis::Composable,
+    core::*,
+    geometry::{Card, Space, Vector},
 };
-use crate::core::*;
-use crate::geometry::{Card, Space, Vector};
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::{
+    cmp::Ordering,
+    collections::HashMap,
+    hash::{Hash, Hasher},
+};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Feature {
+    pub index: usize,
+    pub parent_indices: IndexSet,
+}
+
+impl Feature {
+    pub fn union(&self, other: &Self) -> IndexSet {
+        let g = &self.parent_indices;
+        let h = &other.parent_indices;
+
+        g.union(h).cloned().collect()
+    }
+}
+
+impl Hash for Feature {
+    fn hash<H: Hasher>(&self, state: &mut H) { self.index.hash(state); }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CandidateFeature {
+    pub relevance: f64,
+    pub parent_indices: IndexSet,
+}
+
+impl CandidateFeature {
+    pub fn new<T: Into<IndexSet>>(parent_indices: T) -> Self {
+        CandidateFeature {
+            relevance: 0.0,
+            parent_indices: parent_indices.into(),
+        }
+    }
+
+    pub fn from_vec(index_vec: Vec<usize>) -> Self {
+        let mut parent_indices = IndexSet::new();
+
+        for i in index_vec {
+            parent_indices.insert(i);
+        }
+
+        CandidateFeature::new(parent_indices)
+    }
+
+    pub fn into_feature(self, index: usize) -> Feature {
+        Feature {
+            index: index,
+            parent_indices: self.parent_indices,
+        }
+    }
+}
+
+impl Hash for CandidateFeature {
+    fn hash<H: Hasher>(&self, state: &mut H) { self.parent_indices.hash(state); }
+}
+
+impl PartialOrd for CandidateFeature {
+    fn partial_cmp(&self, other: &CandidateFeature) -> Option<Ordering> {
+        self.relevance.partial_cmp(&other.relevance)
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct IFDD<P> {
@@ -84,10 +144,46 @@ impl<P: Space> IFDD<P> {
             .filter_map(|(&g, &h)| self.inspect_candidate(g, h, error))
             .collect()
     }
+
+    fn add_feature(&mut self, candidate: CandidateFeature) -> Option<(usize, IndexSet)> {
+        let idx = self.features.len();
+        let feature = candidate.into_feature(idx);
+        let mapping = (idx, feature.parent_indices.clone());
+
+        self.features.push(feature);
+
+        Some(mapping)
+    }
+}
+
+impl<P> IFDD<P> {
+    fn discover<I>(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>>
+    where
+        I: ?Sized,
+        P: Projector<I>
+    {
+        let new_features = match self.base.project(input) {
+            Features::Sparse(active_indices) => self.discover_sparse(active_indices, error),
+            Features::Dense(activations) => self.discover_dense(activations, error),
+        };
+
+        self.features.reserve_exact(new_features.len());
+
+        new_features.into_iter().fold(None, |mut acc, f| {
+            match self.add_feature(f) {
+                Some(nf) => {
+                    acc.get_or_insert_with(HashMap::new).insert(nf.0, nf.1);
+                },
+                None => (),
+            };
+
+            acc
+        })
+    }
 }
 
 impl<P: Space> Space for IFDD<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.features.len() }
 
@@ -95,7 +191,7 @@ impl<P: Space> Space for IFDD<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let mut p = self.base.project(input);
         let np: Vec<usize> = (self.base.dim()..self.dim())
             .filter_map(|i| {
@@ -119,50 +215,18 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> AdaptiveProjector<I> for IFDD<P> {
-    fn discover(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>> {
-        let new_features = match self.base.project(input) {
-            Projection::Sparse(active_indices) => self.discover_sparse(active_indices, error),
-            Projection::Dense(activations) => self.discover_dense(activations, error),
-        };
-
-        self.features.reserve_exact(new_features.len());
-
-        new_features.into_iter().fold(None, |mut acc, f| {
-            match self.add_feature(f) {
-                Some(nf) => {
-                    acc.get_or_insert_with(HashMap::new).insert(nf.0, nf.1);
-                },
-                None => (),
-            };
-
-            acc
-        })
-    }
-
-    fn add_feature(&mut self, candidate: CandidateFeature) -> Option<(usize, IndexSet)> {
-        let idx = self.features.len();
-        let feature = candidate.into_feature(idx);
-        let mapping = (idx, feature.parent_indices.clone());
-
-        self.features.push(feature);
-
-        Some(mapping)
-    }
-}
-
 impl<P> Composable for IFDD<P> {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::basis::adaptive::IFDD;
+    use crate::basis::ifdd::IFDD;
 
     #[derive(Clone)]
     struct BaseProjector;
 
     impl Space for BaseProjector {
-        type Value = Projection;
+        type Value = Features;
 
         fn dim(&self) -> usize { 5 }
 
@@ -170,7 +234,7 @@ mod tests {
     }
 
     impl Projector<[f64]> for BaseProjector {
-        fn project(&self, input: &[f64]) -> Projection {
+        fn project(&self, input: &[f64]) -> Features {
             input
                 .iter()
                 .map(|v| v.round().min(4.0).max(0.0) as usize)

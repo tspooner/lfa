@@ -1,5 +1,15 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Surjection, Vector};
+use crate::{
+    basis::Composable,
+    core::{Features, Projector},
+    geometry::{
+        discrete::Partition,
+        product::LinearSpace,
+        Card,
+        Space,
+        Surjection,
+        Vector
+    },
+};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -30,7 +40,7 @@ impl UniformGrid {
 }
 
 impl Space for UniformGrid {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.n_features }
 
@@ -38,7 +48,7 @@ impl Space for UniformGrid {
 }
 
 impl Projector<[f64]> for UniformGrid {
-    fn project(&self, input: &[f64]) -> Projection { vec![self.hash(input)].into() }
+    fn project(&self, input: &[f64]) -> Features { vec![self.hash(input)].into() }
 }
 
 impl_array_proxies!(UniformGrid; f64);
@@ -57,8 +67,8 @@ mod tests {
         let out = t.project(&vec![0.0]);
 
         match out {
-            Projection::Sparse(_) => assert!(true),
-            Projection::Dense(_) => assert!(false),
+            Features::Sparse(_) => assert!(true),
+            Features::Dense(_) => assert!(false),
         }
     }
 
@@ -74,7 +84,7 @@ mod tests {
             let expected_bin = i;
 
             match out {
-                Projection::Sparse(ref idx) => {
+                Features::Sparse(ref idx) => {
                     assert_eq!(idx.len(), 1);
                     assert!(idx.contains(&expected_bin));
                 },
@@ -101,7 +111,7 @@ mod tests {
                 let expected_bin = j * 10 + i;
 
                 match out {
-                    Projection::Sparse(ref idx) => {
+                    Features::Sparse(ref idx) => {
                         assert_eq!(idx.len(), 1);
                         assert!(idx.contains(&expected_bin));
                     },
@@ -130,7 +140,7 @@ mod tests {
                     let expected_bin = k * 100 + j * 10 + i;
 
                     match out {
-                        Projection::Sparse(ref idx) => {
+                        Features::Sparse(ref idx) => {
                             assert_eq!(idx.len(), 1);
                             assert!(idx.contains(&expected_bin));
                         },

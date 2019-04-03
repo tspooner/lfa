@@ -1,5 +1,8 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{Card, Space};
+use crate::{
+    basis::Composable,
+    core::{Features, Projector},
+    geometry::{Card, Space},
+};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -22,7 +25,7 @@ impl Constant {
 }
 
 impl Space for Constant {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.n_features }
 
@@ -30,7 +33,7 @@ impl Space for Constant {
 }
 
 impl<I: ?Sized> Projector<I> for Constant {
-    fn project(&self, _: &I) -> Projection { vec![self.value; self.n_features].into() }
+    fn project(&self, _: &I) -> Features { vec![self.value; self.n_features].into() }
 }
 
 impl Composable for Constant {}
@@ -52,7 +55,7 @@ impl Indices {
 }
 
 impl Space for Indices {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.n_features }
 
@@ -60,7 +63,7 @@ impl Space for Indices {
 }
 
 impl<I: ?Sized> Projector<I> for Indices {
-    fn project(&self, _: &I) -> Projection { self.active_features.iter().cloned().collect() }
+    fn project(&self, _: &I) -> Features { self.active_features.iter().cloned().collect() }
 }
 
 impl Composable for Indices {}
@@ -74,8 +77,8 @@ mod tests {
     fn test_project_zeros() {
         fn prop_output(length: usize, input: Vec<f64>) -> bool {
             match Constant::zeros(length).project(&input) {
-                Projection::Sparse(_) => false,
-                Projection::Dense(activations) => {
+                Features::Sparse(_) => false,
+                Features::Dense(activations) => {
                     activations.len() == length && activations.into_iter().all(|&v| v == 0.0)
                 },
             }
@@ -88,8 +91,8 @@ mod tests {
     fn test_project_ones() {
         fn prop_output(length: usize, input: Vec<f64>) -> bool {
             match Constant::ones(length).project(&input) {
-                Projection::Sparse(_) => false,
-                Projection::Dense(activations) => {
+                Features::Sparse(_) => false,
+                Features::Dense(activations) => {
                     activations.len() == length && activations.into_iter().all(|&v| v == 1.0)
                 },
             }
@@ -102,8 +105,8 @@ mod tests {
     fn test_project_general() {
         fn prop_output(length: usize, value: f64, input: Vec<f64>) -> bool {
             match Constant::new(length, value).project(&input) {
-                Projection::Sparse(_) => false,
-                Projection::Dense(activations) => {
+                Features::Sparse(_) => false,
+                Features::Dense(activations) => {
                     activations.len() == length && activations.into_iter().all(|&v| v == value)
                 },
             }

@@ -1,5 +1,11 @@
-use crate::basis::{fixed::Constant, Composable, Projection, Projector};
-use crate::geometry::{Card, Space};
+use crate::{
+    basis::{
+        fixed::Constant,
+        Composable,
+    },
+    core::{Features, Projector},
+    geometry::{Card, Space},
+};
 
 /// Apply negation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -12,7 +18,7 @@ impl<P> Negate<P> {
 }
 
 impl<P: Space> Space for Negate<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.0.dim() }
 
@@ -20,8 +26,8 @@ impl<P: Space> Space for Negate<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
-    fn project(&self, input: &I) -> Projection {
-        Projection::Dense(-self.0.project_expanded(input))
+    fn project(&self, input: &I) -> Features {
+        Features::Dense(-self.0.project_expanded(input))
     }
 }
 
@@ -56,7 +62,7 @@ impl<P: Space> Sum<P, Constant> {
 }
 
 impl<P1: Space, P2: Space> Space for Sum<P1, P2> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.p1.dim().max(self.p2.dim()) }
 
@@ -64,19 +70,19 @@ impl<P1: Space, P2: Space> Space for Sum<P1, P2> {
 }
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<P1, P2> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let p1 = self.p1.project(input);
         let p2 = self.p2.project(input);
 
         match (p1, p2) {
-            (Projection::Sparse(p1_indices), Projection::Sparse(p2_indices)) => {
-                Projection::Sparse(p1_indices.union(&p2_indices).cloned().collect())
+            (Features::Sparse(p1_indices), Features::Sparse(p2_indices)) => {
+                Features::Sparse(p1_indices.union(&p2_indices).cloned().collect())
             },
             (p1, p2) => {
                 let p1_activations = p1.expanded(self.p1.dim());
                 let p2_activations = p2.expanded(self.p2.dim());
 
-                Projection::Dense(p1_activations + p2_activations)
+                Features::Dense(p1_activations + p2_activations)
             },
         }
     }
@@ -95,7 +101,7 @@ impl<P: Space> Reciprocal<P> {
 }
 
 impl<P: Space> Space for Reciprocal<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.0.dim() }
 
@@ -103,12 +109,12 @@ impl<P: Space> Space for Reciprocal<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for Reciprocal<P> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let p = self.0.project(input);
 
         match p {
-            Projection::Sparse(_) => p,
-            Projection::Dense(activations) => Projection::Dense(1.0 / activations),
+            Features::Sparse(_) => p,
+            Features::Dense(activations) => Features::Dense(1.0 / activations),
         }
     }
 }
@@ -144,7 +150,7 @@ impl<P: Space> Product<P, Constant> {
 }
 
 impl<P1: Space, P2: Space> Space for Product<P1, P2> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.p1.dim() }
 
@@ -152,19 +158,19 @@ impl<P1: Space, P2: Space> Space for Product<P1, P2> {
 }
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<P1, P2> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let p1 = self.p1.project(input);
         let p2 = self.p2.project(input);
 
         match (p1, p2) {
-            (Projection::Sparse(p1_indices), Projection::Sparse(p2_indices)) => {
-                Projection::Sparse(p1_indices.intersection(&p2_indices).cloned().collect())
+            (Features::Sparse(p1_indices), Features::Sparse(p2_indices)) => {
+                Features::Sparse(p1_indices.intersection(&p2_indices).cloned().collect())
             },
             (p1, p2) => {
                 let p1_activations = p1.expanded(self.p1.dim());
                 let p2_activations = p2.expanded(self.p2.dim());
 
-                Projection::Dense(p1_activations * p2_activations)
+                Features::Dense(p1_activations * p2_activations)
             },
         }
     }

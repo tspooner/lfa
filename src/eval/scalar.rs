@@ -1,10 +1,11 @@
-use crate::basis::Projection;
-use crate::core::*;
-use crate::geometry::{Matrix, Vector};
-use std::{collections::HashMap, mem::replace};
+use crate::{
+    core::*,
+    geometry::{MatrixView, MatrixViewMut, Vector},
+};
+// use std::mem::replace;
 
-/// Weight-`Projection` evaluator with scalar `f64` output.
-#[derive(Clone, Serialize, Deserialize)]
+/// Weight-`Features` evaluator with scalar `f64` output.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScalarFunction {
     pub weights: Vector<f64>,
 }
@@ -18,65 +19,56 @@ impl ScalarFunction {
         ScalarFunction::new(Vector::zeros((n_features,)))
     }
 
-    fn extend_weights(&mut self, new_weights: Vec<f64>) {
-        let mut weights =
-            unsafe { replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec() };
+    // fn extend_weights(&mut self, new_weights: Vec<f64>) {
+        // let mut weights =
+            // unsafe { replace(&mut self.weights, Vector::uninitialized((0,))).into_raw_vec() };
 
-        weights.extend(new_weights);
+        // weights.extend(new_weights);
 
-        self.weights = Vector::from_vec(weights);
+        // self.weights = Vector::from_vec(weights);
+    // }
+}
+
+impl Parameterised for ScalarFunction {
+    fn weights_view(&self) -> MatrixView<f64> {
+        let n_rows = self.weights.len();
+
+        self.weights.view().into_shape((n_rows, 1)).unwrap()
+    }
+
+    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> {
+        let n_rows = self.weights.len();
+
+        self.weights.view_mut().into_shape((n_rows, 1)).unwrap()
     }
 }
 
-impl Approximator<Projection> for ScalarFunction {
-    type Value = f64;
+impl Approximator for ScalarFunction {
+    type Output = f64;
 
     fn n_outputs(&self) -> usize { 1 }
 
-    fn evaluate(&self, p: &Projection) -> EvaluationResult<f64> { Ok(p.dot(&self.weights)) }
+    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
+        apply_to_features!(features => activations, {
+            Ok(activations.dot(&self.weights))
+        }; indices, {
+            Ok(Features::dot_sparse(indices, &self.weights.view()))
+        })
+    }
 
-    fn update(&mut self, p: &Projection, error: f64) -> UpdateResult<()> {
-        Ok(match p {
-            &Projection::Dense(ref activations) => self.weights.scaled_add(error, activations),
-            &Projection::Sparse(ref indices) => {
+    fn update(&mut self, features: &Features, error: Self::Output) -> UpdateResult<()> {
+        apply_to_features!(features => activations, {
+            Ok(self.weights.scaled_add(error, activations))
+        }; indices, {
+            Ok({
                 let scaled_error = error / indices.len() as f64;
 
                 for idx in indices {
                     self.weights[*idx] += scaled_error;
                 }
-            },
+            })
         })
     }
-
-    fn adapt(&mut self, new_features: &HashMap<IndexT, IndexSet>) -> AdaptResult<usize> {
-        let n_nfs = new_features.len();
-        let max_index = self.weights.len() + n_nfs - 1;
-
-        let new_weights: Result<Vec<f64>, _> = new_features
-            .into_iter()
-            .map(|(&i, idx)| {
-                if i > max_index {
-                    Err(AdaptError::Failed)
-                } else {
-                    Ok(idx.iter().fold(0.0, |acc, j| acc + self.weights[*j]) / (idx.len() as f64))
-                }
-            })
-            .collect();
-
-        self.extend_weights(new_weights?);
-
-        Ok(n_nfs)
-    }
-}
-
-impl Parameterised for ScalarFunction {
-    fn weights(&self) -> Matrix<f64> {
-        let n_rows = self.weights.len();
-
-        self.weights.clone().into_shape((n_rows, 1)).unwrap()
-    }
-
-    fn n_weights(&self) -> usize { self.weights.len() }
 }
 
 #[cfg(test)]
@@ -84,11 +76,12 @@ mod tests {
     extern crate seahash;
 
     use crate::{
-        core::Approximator,
+        core::*,
         basis::{
             Composable,
             fixed::{Fourier, TileCoding},
         },
+        geometry::Space,
         LFA,
     };
     use std::{
@@ -101,52 +94,27 @@ mod tests {
 
     #[test]
     fn test_sparse_update_eval() {
-        let p = TileCoding::new(SHBuilder::default(), 4, 100);
-        let mut f = LFA::scalar(p);
-        let input = vec![5.0];
+        let projector = TileCoding::new(SHBuilder::default(), 4, 100);
+        let mut evaluator = ScalarFunction::zeros(projector.dim());
 
-        let _ = f.update(&input, 50.0);
-        let out = f.evaluate(&input).unwrap();
+        let features = projector.project(&vec![5.0]);
+
+        let _ = evaluator.update(&features, 50.0);
+        let out = evaluator.evaluate(&features).unwrap();
 
         assert!((out - 50.0).abs() < 1e-6);
     }
 
     #[test]
     fn test_dense_update_eval() {
-        let p = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
-        let mut f = LFA::scalar(p);
+        let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
+        let mut evaluator = ScalarFunction::zeros(projector.dim());
 
-        let input = vec![5.0];
+        let features = projector.project(&vec![5.0]);
 
-        let _ = f.update(input.as_slice(), 50.0);
-        let out = f.evaluate(input.as_slice()).unwrap();
-
-        println!("{}", out);
+        let _ = evaluator.update(&features, 50.0);
+        let out = evaluator.evaluate(&features).unwrap();
 
         assert!((out - 50.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn test_adapt() {
-        let mut f = ScalarFunction::zeros(100);
-
-        let mut new_features = HashMap::new();
-        new_features.insert(100, {
-            let mut idx = BTreeSet::new();
-
-            idx.insert(10);
-            idx.insert(90);
-
-            idx
-        });
-
-        match f.adapt(&new_features) {
-            Ok(n) => {
-                assert_eq!(n, 1);
-                assert_eq!(f.weights.len(), 101);
-                assert_eq!(f.weights[100], f.weights[10] / 2.0 + f.weights[90] / 2.0);
-            },
-            Err(err) => panic!("ScalarFunction::adapt failed with AdaptError::{:?}", err),
-        }
     }
 }

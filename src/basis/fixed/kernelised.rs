@@ -1,6 +1,18 @@
-use crate::basis::{Composable, Projection, Projector, kernels::{self, Kernel}};
-use crate::geometry::{discrete::Partition, product::LinearSpace, Card, Space, Vector};
-use crate::utils::cartesian_product;
+use crate::{
+    basis::{
+        kernels::{self, Kernel},
+        Composable,
+    },
+    core::{Features, Projector},
+    geometry::{
+        discrete::Partition,
+        product::LinearSpace,
+        Card,
+        Space,
+        Vector
+    },
+    utils::cartesian_product,
+};
 
 /// Feature prototype used by the `KernelProjector` basis.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -66,7 +78,7 @@ impl KernelProjector<Vector<f64>, kernels::Matern52> {
 }
 
 impl<I, K: Kernel<I>> Space for KernelProjector<I, K> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.prototypes.len() }
 
@@ -74,8 +86,8 @@ impl<I, K: Kernel<I>> Space for KernelProjector<I, K> {
 }
 
 impl<I, K: Kernel<I>> Projector<I> for KernelProjector<I, K> {
-    fn project(&self, input: &I) -> Projection {
-        Projection::Dense(self.prototypes.iter().map(|p| p.kernel(input)).collect())
+    fn project(&self, input: &I) -> Features {
+        Features::Dense(self.prototypes.iter().map(|p| p.kernel(input)).collect())
     }
 }
 

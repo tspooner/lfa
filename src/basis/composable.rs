@@ -1,6 +1,5 @@
 use crate::{
     basis::{
-        Projection,
         composition::*,
         fixed::Constant,
     },
@@ -16,7 +15,7 @@ use crate::{
 /// used for rapid prototyping without explicit degradation in performance.
 pub trait Composable: Sized {
     /// Return an `LFA` using this `Projector` instance and a given `Approximator`.
-    fn lfa<A: Approximator<Projection>>(self, approximator: A) -> LFA<Self, A> {
+    fn lfa<A: Approximator>(self, approximator: A) -> LFA<Self, A> {
         LFA::new(self, approximator)
     }
 

@@ -1,5 +1,8 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{Card, Space};
+use crate::{
+    basis::Composable,
+    core::{Features, Projector},
+    geometry::{Card, Space},
+};
 
 /// Scale the output of a `Projector` instance by some fixed amount.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -18,7 +21,7 @@ impl<P> Scale<P> {
 }
 
 impl<P: Space> Space for Scale<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.projector.dim() }
 
@@ -26,8 +29,8 @@ impl<P: Space> Space for Scale<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for Scale<P> {
-    fn project(&self, input: &I) -> Projection {
-        Projection::Dense(self.scale * self.projector.project_expanded(input))
+    fn project(&self, input: &I) -> Features {
+        Features::Dense(self.scale * self.projector.project_expanded(input))
     }
 }
 

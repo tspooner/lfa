@@ -1,19 +1,22 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{
-    continuous::Interval,
-    product::LinearSpace,
-    BoundedSpace,
-    Card,
-    Space,
-    Vector,
+use crate::{
+    basis::Composable,
+    core::{Features, Projector},
+    geometry::{
+        continuous::Interval,
+        product::LinearSpace,
+        BoundedSpace,
+        Card,
+        Space,
+        Vector,
+    },
+    utils::cartesian_product,
 };
-use crate::utils::cartesian_product;
 
 mod cpfk;
 
 /// Polynomial basis projector.
 ///
-/// ## Linear regression on the interval [0, 1]
+/// ## Linear regression on the interval [-1, 1]
 /// ```
 /// use lfa::basis::{Projector, fixed::Polynomial};
 ///
@@ -26,7 +29,7 @@ mod cpfk;
 /// assert_eq!(p.project(&vec![1.00]), vec![1.0].into());
 /// ```
 ///
-/// ## Quadratic regression on the interval [0, 1]
+/// ## Quadratic regression on the interval [-1, 1]
 /// ```
 /// use lfa::basis::{Projector, fixed::Polynomial};
 ///
@@ -80,7 +83,7 @@ impl Polynomial {
 }
 
 impl Space for Polynomial {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.exponents.len() }
 
@@ -88,7 +91,7 @@ impl Space for Polynomial {
 }
 
 impl Projector<[f64]> for Polynomial {
-    fn project(&self, input: &[f64]) -> Projection {
+    fn project(&self, input: &[f64]) -> Features {
         let scaled_state = input
             .iter()
             .enumerate()
@@ -96,7 +99,7 @@ impl Projector<[f64]> for Polynomial {
             .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        Projection::Dense(
+        Features::Dense(
             self.exponents
                 .iter()
                 .map(|exps| {
@@ -182,7 +185,7 @@ impl Chebyshev {
 }
 
 impl Space for Chebyshev {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.polynomials.len() }
 
@@ -190,14 +193,15 @@ impl Space for Chebyshev {
 }
 
 impl Projector<[f64]> for Chebyshev {
-    fn project(&self, input: &[f64]) -> Projection {
+    fn project(&self, input: &[f64]) -> Features {
         let scaled_state = input
             .iter()
             .enumerate()
             .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
+            .map(|v| 2.0 * v - 1.0)
             .collect::<Vec<f64>>();
 
-        Projection::Dense(
+        Features::Dense(
             self.polynomials
                 .iter()
                 .map(|ps| scaled_state.iter().zip(ps).map(|(v, f)| f(*v)).product())

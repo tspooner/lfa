@@ -1,5 +1,12 @@
-use crate::basis::{Composable, Projection, Projector};
-use crate::geometry::{Card, Space, norms::{l1, l2, lp, linf}};
+use crate::{
+    basis::Composable,
+    core::{Features, Projector},
+    geometry::{
+        norms::{l1, l2, lp, linf},
+        Card,
+        Space,
+    },
+};
 
 /// Apply _L₁_ normalisation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -12,7 +19,7 @@ impl<P> L1Normalise<P> {
 }
 
 impl<P: Space> Space for L1Normalise<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.0.dim() }
 
@@ -20,11 +27,11 @@ impl<P: Space> Space for L1Normalise<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for L1Normalise<P> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let phi = self.0.project_expanded(input);
         let z = l1(phi.as_slice().unwrap());
 
-        Projection::Dense(phi / z)
+        Features::Dense(phi / z)
     }
 }
 
@@ -41,7 +48,7 @@ impl<P> L2Normalise<P> {
 }
 
 impl<P: Space> Space for L2Normalise<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.0.dim() }
 
@@ -49,11 +56,11 @@ impl<P: Space> Space for L2Normalise<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for L2Normalise<P> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let phi = self.0.project_expanded(input);
         let z = l2(phi.as_slice().unwrap());
 
-        Projection::Dense(phi / z)
+        Features::Dense(phi / z)
     }
 }
 
@@ -70,7 +77,7 @@ impl<P> LpNormalise<P> {
 }
 
 impl<P: Space> Space for LpNormalise<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.0.dim() }
 
@@ -78,11 +85,11 @@ impl<P: Space> Space for LpNormalise<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for LpNormalise<P> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let phi = self.0.project_expanded(input);
         let z = lp(phi.as_slice().unwrap(), self.1);
 
-        Projection::Dense(phi / z)
+        Features::Dense(phi / z)
     }
 }
 
@@ -99,7 +106,7 @@ impl<P> LinfNormalise<P> {
 }
 
 impl<P: Space> Space for LinfNormalise<P> {
-    type Value = Projection;
+    type Value = Features;
 
     fn dim(&self) -> usize { self.0.dim() }
 
@@ -107,11 +114,11 @@ impl<P: Space> Space for LinfNormalise<P> {
 }
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for LinfNormalise<P> {
-    fn project(&self, input: &I) -> Projection {
+    fn project(&self, input: &I) -> Features {
         let phi = self.0.project_expanded(input);
         let z = linf(phi.as_slice().unwrap());
 
-        Projection::Dense(phi / z)
+        Features::Dense(phi / z)
     }
 }
 
