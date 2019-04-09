@@ -70,7 +70,7 @@ where
     }
 
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
-        self.evaluator.evaluate(features)
+        self.evaluator.evaluate(features).map(|v| self.transform.transform(v))
     }
 
     fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
@@ -88,5 +88,36 @@ impl<I: ?Sized, P: Projector<I>, E, T> Embedded<I> for TransformedLFA<P, E, T> {
 
     fn to_features(&self, input: &I) -> Features {
         self.projector.project(input)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        basis::fixed::Polynomial,
+        core::{Approximator, Parameterised, Embedded},
+        transforms::Softplus,
+    };
+    use super::TransformedLFA;
+
+    #[test]
+    fn test_softplus_lfa() {
+        let mut fa = TransformedLFA::scalar(Polynomial::new(2, vec![(-1.0, 1.0)]), Softplus);
+
+        for _ in 0..10000 {
+            let x = fa.to_features(&vec![-1.0]);
+            let y_apx = fa.evaluate(&x).unwrap();
+
+            fa.update(&x, -1.0 - y_apx).ok();
+
+            let x = fa.to_features(&vec![1.0]);
+            let y_apx = fa.evaluate(&x).unwrap();
+
+            fa.update(&x, 1.0 - y_apx).ok();
+        }
+
+        for x in -10..10 {
+            assert!(fa.evaluate(&fa.to_features(&vec![x as f64 / 10.0])).unwrap() > 0.0);
+        }
     }
 }
