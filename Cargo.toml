@@ -3,7 +3,7 @@ name = "lfa"
 description = "Native rust implementations of linear function approximators."
 authors = ["Tom Spooner <t.spooner@liverpool.ac.uk>"]
 
-version = "0.10.1"
+version = "0.10.2"
 edition = "2018"
 
 license = "MIT"
