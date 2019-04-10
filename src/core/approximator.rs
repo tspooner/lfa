@@ -36,7 +36,7 @@ pub trait Embedded<I: ?Sized> {
 
 /// An interface for function approximators.
 pub trait Approximator {
-    /// The value being approximated.
+    /// The type of value being approximated.
     type Output;
 
     /// Return the dimensionality of the output value `Approximator::Output`.

@@ -220,6 +220,34 @@ impl Features {
         })
     }
 
+    /// Stack two feature vectors together, maintaining sparsity where possible.
+    ///
+    /// ```
+    /// use lfa::basis::Features;
+    ///
+    /// assert_eq!(
+    ///     Features::stack(vec![0.0, 1.0].into(), 2, vec![1.0, 0.0, 1.0].into(), 3),
+    ///     vec![0.0, 1.0, 1.0, 0.0, 1.0].into()
+    /// );
+    /// ```
+    pub fn stack(self, d1: usize, other: Features, d2: usize) -> Features {
+        match (self, other) {
+            (Features::Sparse(mut indices_1), Features::Sparse(indices_2)) => {
+                indices_2.iter().for_each(|&i| {
+                    indices_1.insert(i + d1);
+                });
+
+                Features::Sparse(indices_1)
+            },
+            (f1, f2) => {
+                let mut all_activations = f1.expanded(d1).to_vec();
+                all_activations.extend_from_slice(f2.expanded(d2).as_slice().unwrap());
+
+                Features::Dense(all_activations.into())
+            },
+        }
+    }
+
     /// Apply the function `f` to the features if the `Dense` variant or
     /// return `None`.
     pub fn map_dense<F, T>(self, f: impl FnOnce(DenseT) -> T) -> Option<T> {

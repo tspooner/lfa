@@ -1,26 +1,8 @@
 use crate::{
     basis::Composable,
-    core::{DenseT, Features, Projector},
+    core::{Features, Projector},
     geometry::{Card, Space},
 };
-
-fn stack_projections(p1: Features, n1: usize, p2: Features, n2: usize) -> Features {
-    match (p1, p2) {
-        (Features::Sparse(mut p1_indices), Features::Sparse(p2_indices)) => {
-            p2_indices.iter().for_each(|&i| {
-                p1_indices.insert(i + n1);
-            });
-
-            Features::Sparse(p1_indices)
-        },
-        (p1, p2) => {
-            let mut all_activations = p1.expanded(n1).to_vec();
-            all_activations.extend_from_slice(p2.expanded(n2).as_slice().unwrap());
-
-            Features::Dense(DenseT::from_vec(all_activations))
-        },
-    }
-}
 
 /// Stack the output of two `Projector` instances.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -43,12 +25,7 @@ impl<P1: Space, P2: Space> Space for Stack<P1, P2> {
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Stack<P1, P2> {
     fn project(&self, input: &I) -> Features {
-        stack_projections(
-            self.p1.project(input),
-            self.p1.dim(),
-            self.p2.project(input),
-            self.p2.dim(),
-        )
+        self.p1.project(input).stack(self.p1.dim(), self.p2.project(input), self.p2.dim())
     }
 }
 
