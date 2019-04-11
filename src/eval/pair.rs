@@ -3,7 +3,7 @@ use crate::{
     geometry::{Matrix, MatrixView, MatrixViewMut},
 };
 
-/// Weight-`Projection` evaluator with pair `(f64, f64)` output.
+/// Weight-`Projection` evaluator with pair `[f64; 2]` output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PairFunction {
     pub weights: Matrix<f64>,
@@ -26,40 +26,40 @@ impl Parameterised for PairFunction {
 }
 
 impl Approximator for PairFunction {
-    type Output = (f64, f64);
+    type Output = [f64; 2];
 
     fn n_outputs(&self) -> usize { 2 }
 
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
         apply_to_features!(features => activations, {
-            Ok((
+            Ok([
                 self.weights.column(0).dot(activations),
                 self.weights.column(1).dot(activations),
-            ))
+            ])
         }; indices, {
-            Ok(indices.iter().fold((0.0, 0.0), |acc, idx| (
-                acc.0 + self.weights[(*idx, 0)],
-                acc.1 + self.weights[(*idx, 1)],
-            )))
+            Ok(indices.iter().fold([0.0; 2], |acc, idx| [
+                acc[0] + self.weights[(*idx, 0)],
+                acc[1] + self.weights[(*idx, 1)],
+            ]))
         })
     }
 
     fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
         apply_to_features!(features => activations, {
             Ok({
-                self.weights.column_mut(0).scaled_add(errors.0, activations);
-                self.weights.column_mut(1).scaled_add(errors.1, activations);
+                self.weights.column_mut(0).scaled_add(errors[0], activations);
+                self.weights.column_mut(1).scaled_add(errors[1], activations);
             })
         }; indices, {
-            Ok({
-                let z = indices.len() as f64;
-                let scaled_errors = (errors.0 / z, errors.1 / z);
+            let z = indices.len() as f64;
 
-                indices.iter().for_each(|idx| {
-                    self.weights[(*idx, 0)] += scaled_errors.0;
-                    self.weights[(*idx, 1)] += scaled_errors.1;
-                });
-            })
+            let se1 = errors[0] / z;
+            let se2 = errors[1] / z;
+
+            Ok(indices.into_iter().for_each(|idx| {
+                self.weights[(*idx, 0)] += se1;
+                self.weights[(*idx, 1)] += se2;
+            }))
         })
     }
 }
@@ -91,11 +91,11 @@ mod tests {
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, (20.0, 50.0));
+        let _ = evaluator.update(&features, [20.0, 50.0]);
         let out = evaluator.evaluate(&features).unwrap();
 
-        assert!((out.0 - 20.0).abs() < 1e-6);
-        assert!((out.1 - 50.0).abs() < 1e-6);
+        assert!((out[0] - 20.0).abs() < 1e-6);
+        assert!((out[1] - 50.0).abs() < 1e-6);
     }
 
     #[test]
@@ -108,10 +108,10 @@ mod tests {
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, (20.0, 50.0));
+        let _ = evaluator.update(&features, [20.0, 50.0]);
         let out = evaluator.evaluate(&features).unwrap();
 
-        assert!((out.0 - 20.0).abs() < 1e-6);
-        assert!((out.1 - 50.0).abs() < 1e-6);
+        assert!((out[0] - 20.0).abs() < 1e-6);
+        assert!((out[1] - 50.0).abs() < 1e-6);
     }
 }

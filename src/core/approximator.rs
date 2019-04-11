@@ -55,33 +55,33 @@ pub trait ScalarApproximator: Approximator<Output = f64> {}
 
 impl<T: Approximator<Output = f64>> ScalarApproximator for T {}
 
-pub trait PairApproximator: Approximator<Output = (f64, f64)> {
+pub trait PairApproximator: Approximator<Output = [f64; 2]> {
     fn evaluate_first(&self, features: &Features) -> EvaluationResult<f64> {
-        self.evaluate(features).map(|v| v.0)
+        self.evaluate(features).map(|v| v[0])
     }
 
     fn evaluate_second(&self, features: &Features) -> EvaluationResult<f64> {
-        self.evaluate(features).map(|v| v.1)
+        self.evaluate(features).map(|v| v[1])
     }
 }
 
-impl<T: Approximator<Output = (f64, f64)>> PairApproximator for T {}
+impl<T: Approximator<Output = [f64; 2]>> PairApproximator for T {}
 
-pub trait TripleApproximator: Approximator<Output = (f64, f64, f64)> {
+pub trait TripleApproximator: Approximator<Output = [f64; 3]> {
     fn evaluate_first(&self, features: &Features) -> EvaluationResult<f64> {
-        self.evaluate(features).map(|v| v.0)
+        self.evaluate(features).map(|v| v[0])
     }
 
     fn evaluate_second(&self, features: &Features) -> EvaluationResult<f64> {
-        self.evaluate(features).map(|v| v.1)
+        self.evaluate(features).map(|v| v[1])
     }
 
     fn evaluate_third(&self, features: &Features) -> EvaluationResult<f64> {
-        self.evaluate(features).map(|v| v.2)
+        self.evaluate(features).map(|v| v[2])
     }
 }
 
-impl<T: Approximator<Output = (f64, f64, f64)>> TripleApproximator for T {}
+impl<T: Approximator<Output = [f64; 3]>> TripleApproximator for T {}
 
 pub trait VectorApproximator: Approximator<Output = Vector<f64>> {
     fn evaluate_index(&self, features: &Features, index: usize) -> EvaluationResult<f64> {
