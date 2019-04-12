@@ -17,60 +17,6 @@ macro_rules! impl_builder {
     };
 }
 
-pub trait IntoVector {
-    fn into_vector(self) -> Vector<f64>;
-}
-
-impl IntoVector for f64 {
-    fn into_vector(self) -> Vector<f64> {
-        Vector::from_elem(1, self)
-    }
-}
-
-impl IntoVector for [f64; 2] {
-    fn into_vector(self) -> Vector<f64> {
-        Vector::from_vec(vec![self[0], self[1]])
-    }
-}
-
-impl IntoVector for [f64; 3] {
-    fn into_vector(self) -> Vector<f64> {
-        Vector::from_vec(vec![self[0], self[1], self[2]])
-    }
-}
-
-impl IntoVector for Vector<f64> {
-    fn into_vector(self) -> Vector<f64> { self }
-}
-
-pub trait ElementwiseProduct {
-    fn elementwise_product(self, other: Self) -> Self;
-}
-
-impl ElementwiseProduct for f64 {
-    fn elementwise_product(self, other: f64) -> f64 {
-        self * other
-    }
-}
-
-impl ElementwiseProduct for [f64; 2] {
-    fn elementwise_product(self, other: [f64; 2]) -> [f64; 2] {
-        [self[0] * other[0], self[1] * other[1]]
-    }
-}
-
-impl ElementwiseProduct for [f64; 3] {
-    fn elementwise_product(self, other: [f64; 3]) -> [f64; 3] {
-        [self[0] * other[0], self[1] * other[1], self[2] * other[2]]
-    }
-}
-
-impl ElementwiseProduct for Vector<f64> {
-    fn elementwise_product(self, other: Self) -> Self {
-        self * other
-    }
-}
-
 /// Transformed linear function approximator.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct TransformedLFA<P, E, T = Identity> {
@@ -122,9 +68,11 @@ where
 impl<P, E, T> Approximator for TransformedLFA<P, E, T>
 where
     E: Approximator,
-    E::Output: Clone + IntoVector + ElementwiseProduct,
+    T: Transform<E::Output>,
+    E::Output: IntoVector + ElementwiseProduct<T::Output, Output = E::Output>,
+    T::Output: AsRepeated<E::Output>,
 {
-    type Output = E::Output;
+    type Output = T::Output;
 
     fn n_outputs(&self) -> usize {
         self.evaluator.n_outputs()
@@ -142,7 +90,7 @@ where
     }
 
     fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
-        self.evaluator.update_grad(grad, update)
+        self.evaluator.update_grad(grad, update.as_repeated())
     }
 
     fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
