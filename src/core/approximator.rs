@@ -18,11 +18,6 @@ pub trait Parameterised {
     fn weights_dim(&self) -> (usize, usize) {
         self.weights_view().dim()
     }
-
-    /// Return the total number of weights.
-    fn weights_count(&self) -> usize {
-        self.weights_view().len()
-    }
 }
 
 /// An interface for types with an embedded feature representation.
