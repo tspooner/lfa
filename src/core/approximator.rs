@@ -20,13 +20,12 @@ pub trait Parameterised {
     }
 }
 
-/// An interface for types with an embedded feature representation.
-pub trait Embedded<I: ?Sized> {
-    /// Return the number of features in the representation.
+pub trait Embedding<I: ?Sized> {
+    /// Return the number of features in the embedded representation.
     fn n_features(&self) -> usize;
 
-    /// Convert some input `I` into a `Features` vector.
-    fn to_features(&self, input: &I) -> Features;
+    /// Embed the input `I` in the form of a `Features` vector.
+    fn embed(&self, input: &I) -> Features;
 }
 
 /// An interface for function approximators.
