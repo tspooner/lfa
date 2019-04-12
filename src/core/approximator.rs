@@ -29,7 +29,7 @@ pub trait Embedding<I: ?Sized> {
 }
 
 /// An interface for function approximators.
-pub trait Approximator {
+pub trait Approximator: Parameterised {
     /// The type of value being approximated.
     type Output;
 
@@ -39,8 +39,19 @@ pub trait Approximator {
     /// Evaluate the approximator and return its value.
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output>;
 
+    /// Return the Jacobian matrix df/dw for a given features vector.
+    ///
+    /// Note: we use denominator layout such that rows and columns correspond to weights and
+    /// outputs, respectively.
+    fn jacobian(&self, features: &Features) -> Matrix<f64>;
+
+    /// Update the approximator's estimate for a given gradient matrix.
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()>;
+
     /// Update the approximator's estimate for the given input.
-    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()>;
+    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
+        self.update_grad(&self.jacobian(features), update)
+    }
 }
 
 // TODO: Implement more efficient variants for LFA types when impl specialisation is released on

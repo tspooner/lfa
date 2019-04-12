@@ -83,6 +83,14 @@ where
         self.evaluator.evaluate(features)
     }
 
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        self.evaluator.jacobian(features)
+    }
+
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        self.evaluator.update_grad(grad, update)
+    }
+
     fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
         self.evaluator.update(features, update)
     }

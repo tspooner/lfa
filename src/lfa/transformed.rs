@@ -1,7 +1,7 @@
 use crate::{
     core::*,
     eval::*,
-    geometry::{Matrix, MatrixView, MatrixViewMut, Space},
+    geometry::{Matrix, MatrixView, MatrixViewMut, Space, Vector},
     transforms::{Transform, Identity},
 };
 
@@ -132,6 +132,17 @@ where
 
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
         self.evaluator.evaluate(features).map(|v| self.transform.transform(v))
+    }
+
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        let v = self.evaluator.evaluate(features).unwrap();
+        let g = self.evaluator.jacobian(features);
+
+        g * self.transform.grad(v).into_vector()
+    }
+
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        self.evaluator.update_grad(grad, update)
     }
 
     fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {

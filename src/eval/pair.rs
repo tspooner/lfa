@@ -44,6 +44,25 @@ impl Approximator for PairFunction {
         })
     }
 
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        let dim = self.weights_dim();
+        let phi = features.expanded(dim.0);
+
+        let mut g = Matrix::zeros(dim);
+
+        g.column_mut(0).assign(&phi);
+        g.column_mut(1).assign(&phi);
+
+        g
+    }
+
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        Ok({
+            self.weights.column_mut(0).scaled_add(update[0], &grad.column(0));
+            self.weights.column_mut(1).scaled_add(update[1], &grad.column(1));
+        })
+    }
+
     fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
         apply_to_features!(features => activations, {
             Ok({
