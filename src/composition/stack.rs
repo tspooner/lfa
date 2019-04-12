@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{Card, Space},
 };
 
@@ -28,8 +28,6 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Stack<P1, P
         self.p1.project(input).stack(self.p1.dim(), self.p2.project(input), self.p2.dim())
     }
 }
-
-impl<P1, P2> Composable for Stack<P1, P2> {}
 
 #[cfg(test)]
 mod tests {

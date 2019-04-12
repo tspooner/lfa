@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{Card, Space, Vector},
 };
 use std::hash::{BuildHasher, Hasher};
@@ -82,8 +82,6 @@ impl<H: BuildHasher> Projector<Vector<f64>> for TileCoding<H> {
         Projector::<[f64]>::project(self, input.as_slice().unwrap())
     }
 }
-
-impl<H: BuildHasher> Composable for TileCoding<H> {}
 
 #[cfg(test)]
 mod tests {

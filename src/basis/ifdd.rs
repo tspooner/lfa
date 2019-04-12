@@ -1,5 +1,5 @@
 use crate::{
-    basis::Composable,
+    basis::Projector,
     core::*,
     geometry::{Card, Space, Vector},
 };
@@ -214,8 +214,6 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
         p + np.into()
     }
 }
-
-impl<P> Composable for IFDD<P> {}
 
 #[cfg(test)]
 mod tests {

@@ -1,18 +1,18 @@
+//! Module for _composition_ of basis representations.
 use crate::{
-    basis::{
-        composition::*,
-        fixed::Constant,
-    },
+    basis::fixed::Constant,
     core::Approximator,
     geometry::Space,
     LFA,
 };
 
-/// Trait for projector composition.
-///
-/// This trait works very much like the Rust `Iterator`; only without any required methods. By
-/// implementing this on your `Projector` you gain access to a suite of constructors that can be
-/// used for rapid prototyping without explicit degradation in performance.
+import_all!(stack);
+import_all!(arithmetic);
+import_all!(scaling);
+import_all!(shifting);
+import_all!(normalisation);
+
+/// Trait for composition of any support LFA types.
 pub trait Composable: Sized {
     /// Return an `LFA` using this `Projector` instance and a given `Approximator`.
     fn lfa<A: Approximator>(self, approximator: A) -> LFA<Self, A> {
@@ -70,11 +70,16 @@ pub trait Composable: Sized {
     }
 }
 
+impl<T> Composable for T {}
+
 #[cfg(test)]
 mod tests {
-    use super::Composable;
-    use crate::basis::{composition::Stack, fixed::Constant, Projector};
+    use crate::{
+        basis::{fixed::Constant, Projector},
+        composition::Stack,
+    };
     use quickcheck::quickcheck;
+    use super::Composable;
 
     #[test]
     fn test_stack_constant() {

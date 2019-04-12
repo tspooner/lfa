@@ -1,4 +1,5 @@
 use crate::{
+    basis::Projector,
     core::*,
     eval::*,
     geometry::{Matrix, MatrixView, MatrixViewMut, Space, Vector},
@@ -108,14 +109,17 @@ where
 mod tests {
     use crate::{
         basis::fixed::Polynomial,
-        transforms::Softplus,
         core::{Approximator, Parameterised, Embedding},
+        transforms::Logistic,
     };
     use super::TransformedLFA;
 
     #[test]
-    fn test_softplus_lfa() {
-        let mut fa = TransformedLFA::scalar(Polynomial::new(2, vec![(-1.0, 1.0)]), Softplus);
+    fn test_logistic_lfa() {
+        let mut fa = TransformedLFA::scalar(
+            Polynomial::new(2, vec![(-1.0, 1.0)]),
+            Logistic::default()
+        );
 
         for _ in 0..10000 {
             let x = fa.embed(&vec![-1.0]);

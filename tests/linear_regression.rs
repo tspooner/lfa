@@ -3,7 +3,8 @@ extern crate rand;
 
 use rand::{distributions::Uniform, Rng, thread_rng};
 use self::lfa::{
-    basis::{fixed::Polynomial, Composable},
+    basis::fixed::Polynomial,
+    composition::Composable,
     core::{Parameterised, Approximator, Embedding},
     LFA,
 };

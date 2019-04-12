@@ -196,11 +196,11 @@ impl Features {
     /// use lfa::basis::Features;
     ///
     /// assert_eq!(
-    ///     Features::expanded(vec![0, 2, 1, 4].into(), 5),
+    ///     Features::expanded(&vec![0, 2, 1, 4].into(), 5),
     ///     vec![1.0, 1.0, 1.0, 0.0, 1.0].into()
     /// );
     /// ```
-    pub fn expanded(self, dim: usize) -> DenseT {
+    pub fn expanded(&self, dim: usize) -> DenseT {
         apply_to_features!(self => activations, {
             if activations.len() != dim {
                 let mut activations = activations.to_vec();

@@ -1,4 +1,5 @@
 use crate::{
+    composition::Composable,
     core::{DenseT, Features},
     geometry::Space,
 };

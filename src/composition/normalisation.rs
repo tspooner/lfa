@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{
         norms::{l1, l2, lp, linf},
         Card,
@@ -35,8 +35,6 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for L1Normalise<P> {
     }
 }
 
-impl<P> Composable for L1Normalise<P> {}
-
 /// Apply _L₂_ normalisation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct L2Normalise<P>(P);
@@ -63,8 +61,6 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for L2Normalise<P> {
         Features::Dense(phi / z)
     }
 }
-
-impl<P> Composable for L2Normalise<P> {}
 
 /// Apply _Lp_ normalisation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -93,8 +89,6 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for LpNormalise<P> {
     }
 }
 
-impl<P> Composable for LpNormalise<P> {}
-
 /// Apply _L∞_ normalisation to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct LinfNormalise<P>(P);
@@ -121,8 +115,6 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for LinfNormalise<P> {
         Features::Dense(phi / z)
     }
 }
-
-impl<P> Composable for LinfNormalise<P> {}
 
 #[cfg(test)]
 mod tests {

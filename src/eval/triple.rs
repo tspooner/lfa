@@ -95,11 +95,9 @@ mod tests {
     extern crate seahash;
 
     use crate::{
+        composition::Composable,
         core::*,
-        basis::{
-            Composable,
-            fixed::{Fourier, TileCoding},
-        },
+        basis::{Projector, fixed::{Fourier, TileCoding}},
         geometry::Space,
     };
     use std::hash::BuildHasherDefault;

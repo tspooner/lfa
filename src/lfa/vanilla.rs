@@ -1,4 +1,5 @@
 use crate::{
+    basis::Projector,
     core::*,
     eval::*,
     geometry::{Matrix, MatrixView, MatrixViewMut, Space},

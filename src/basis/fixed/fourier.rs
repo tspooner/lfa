@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{
         continuous::Interval,
         product::LinearSpace,
@@ -94,8 +94,6 @@ impl Projector<[f64]> for Fourier {
 }
 
 impl_array_proxies!(Fourier; f64);
-
-impl Composable for Fourier {}
 
 #[cfg(test)]
 mod tests {

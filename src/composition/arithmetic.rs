@@ -1,24 +1,19 @@
 use crate::{
-    basis::{
-        fixed::Constant,
-        Composable,
-    },
-    core::{Features, Projector},
+    basis::{Projector, fixed::Constant},
+    core::Features,
     geometry::{Card, Space},
 };
 
-/// Apply negation to the output of a `Projector` instance.
+/// Apply negation to the output.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
-pub struct Negate<P>(P);
+pub struct Negate<T>(T);
 
-impl<P> Negate<P> {
-    pub fn new(projector: P) -> Self {
-        Negate(projector)
-    }
+impl<T> Negate<T> {
+    pub fn new(x: T) -> Self { Negate(x) }
 }
 
-impl<P: Space> Space for Negate<P> {
-    type Value = Features;
+impl<T: Space> Space for Negate<T> {
+    type Value = T::Value;
 
     fn dim(&self) -> usize { self.0.dim() }
 
@@ -31,64 +26,48 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
     }
 }
 
-impl<P> Composable for Negate<P> {}
-
 /// Sum the output of two `Projector` instances.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
-pub struct Sum<P1, P2> {
-    p1: P1,
-    p2: P2,
+pub struct Sum<T1, T2>(T1, T2);
+
+impl<T1, T2> Sum<T1, T2> {
+    pub fn new(x: T1, y: T2) -> Self { Sum(x, y) }
 }
 
-impl<P1: Space, P2: Space> Sum<P1, P2> {
-    pub fn new(p1: P1, p2: P2) -> Self {
-        if p1.dim() != p2.dim() {
-            panic!("Projectors p1 and p2 must have the same dimensionality.");
-        }
+impl<T: Space> Sum<T, Constant> {
+    pub fn with_constant(x: T, offset: f64) -> Self {
+        let y = Constant::new(x.dim(), offset);
 
-        Sum { p1, p2 }
-    }
-}
-
-impl<P: Space> Sum<P, Constant> {
-    pub fn with_constant(projector: P, offset: f64) -> Self {
-        let p2 = Constant::new(projector.dim(), offset);
-
-        Sum {
-            p1: projector,
-            p2: p2,
-        }
+        Sum(x, y)
     }
 }
 
 impl<P1: Space, P2: Space> Space for Sum<P1, P2> {
     type Value = Features;
 
-    fn dim(&self) -> usize { self.p1.dim().max(self.p2.dim()) }
+    fn dim(&self) -> usize { self.0.dim().max(self.1.dim()) }
 
-    fn card(&self) -> Card { self.p1.card() * self.p2.card() }
+    fn card(&self) -> Card { self.0.card() * self.1.card() }
 }
 
 impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<P1, P2> {
     fn project(&self, input: &I) -> Features {
-        let p1 = self.p1.project(input);
-        let p2 = self.p2.project(input);
+        let p1 = self.0.project(input);
+        let p2 = self.1.project(input);
 
         match (p1, p2) {
             (Features::Sparse(p1_indices), Features::Sparse(p2_indices)) => {
                 Features::Sparse(p1_indices.union(&p2_indices).cloned().collect())
             },
             (p1, p2) => {
-                let p1_activations = p1.expanded(self.p1.dim());
-                let p2_activations = p2.expanded(self.p2.dim());
+                let p1_activations = p1.expanded(self.0.dim());
+                let p2_activations = p2.expanded(self.1.dim());
 
                 Features::Dense(p1_activations + p2_activations)
             },
         }
     }
 }
-
-impl<P1, P2> Composable for Sum<P1, P2> {}
 
 /// Apply inversion to the output of a `Projector` instance.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -118,8 +97,6 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for Reciprocal<P> {
         }
     }
 }
-
-impl<P> Composable for Reciprocal<P> {}
 
 /// Multiply the output of two `Projector` instances.
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -175,8 +152,6 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Product<P1,
         }
     }
 }
-
-impl<P1, P2> Composable for Product<P1, P2> {}
 
 #[cfg(test)]
 mod tests {
