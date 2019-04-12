@@ -3,7 +3,7 @@ use crate::{
     geometry::{Matrix, MatrixView, MatrixViewMut},
 };
 
-/// Weight-`Projection` evaluator with triple `(f64, f64, f64)` output.
+/// Weight-`Projection` evaluator with triple `[f64; 3]` output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TripleFunction {
     pub weights: Matrix<f64>,
@@ -26,44 +26,66 @@ impl Parameterised for TripleFunction {
 }
 
 impl Approximator for TripleFunction {
-    type Output = (f64, f64, f64);
+    type Output = [f64; 3];
 
     fn n_outputs(&self) -> usize { 3 }
 
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
         apply_to_features!(features => activations, {
-            Ok((
+            Ok([
                 self.weights.column(0).dot(activations),
                 self.weights.column(1).dot(activations),
                 self.weights.column(2).dot(activations),
-            ))
+            ])
         }; indices, {
-            Ok(indices.iter().fold((0.0, 0.0, 0.0), |acc, idx| (
-                acc.0 + self.weights[(*idx, 0)],
-                acc.1 + self.weights[(*idx, 1)],
-                acc.2 + self.weights[(*idx, 2)],
-            )))
+            Ok(indices.iter().fold([0.0; 3], |acc, idx| [
+                acc[0] + self.weights[(*idx, 0)],
+                acc[1] + self.weights[(*idx, 1)],
+                acc[2] + self.weights[(*idx, 2)],
+            ]))
+        })
+    }
+
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        let dim = self.weights_dim();
+        let phi = features.expanded(dim.0);
+
+        let mut g = Matrix::zeros(dim);
+
+        g.column_mut(0).assign(&phi);
+        g.column_mut(1).assign(&phi);
+        g.column_mut(2).assign(&phi);
+
+        g
+    }
+
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        Ok({
+            self.weights.column_mut(0).scaled_add(update[0], &grad.column(0));
+            self.weights.column_mut(1).scaled_add(update[1], &grad.column(1));
+            self.weights.column_mut(2).scaled_add(update[2], &grad.column(2));
         })
     }
 
     fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
         apply_to_features!(features => activations, {
             Ok({
-                self.weights.column_mut(0).scaled_add(errors.0, activations);
-                self.weights.column_mut(1).scaled_add(errors.1, activations);
-                self.weights.column_mut(2).scaled_add(errors.2, activations);
+                self.weights.column_mut(0).scaled_add(errors[0], activations);
+                self.weights.column_mut(1).scaled_add(errors[1], activations);
+                self.weights.column_mut(2).scaled_add(errors[2], activations);
             })
         }; indices, {
-            Ok({
-                let z = indices.len() as f64;
-                let scaled_errors = (errors.0 / z, errors.1 / z, errors.2 / z);
+            let z = indices.len() as f64;
 
-                indices.iter().for_each(|idx| {
-                    self.weights[(*idx, 0)] += scaled_errors.0;
-                    self.weights[(*idx, 1)] += scaled_errors.1;
-                    self.weights[(*idx, 2)] += scaled_errors.2;
-                });
-            })
+            let se1 = errors[0] / z;
+            let se2 = errors[1] / z;
+            let se3 = errors[2] / z;
+
+            Ok(indices.into_iter().for_each(|idx| {
+                self.weights[(*idx, 0)] += se1;
+                self.weights[(*idx, 1)] += se2;
+                self.weights[(*idx, 2)] += se3;
+            }))
         })
     }
 }
@@ -73,11 +95,9 @@ mod tests {
     extern crate seahash;
 
     use crate::{
+        composition::Composable,
         core::*,
-        basis::{
-            Composable,
-            fixed::{Fourier, TileCoding},
-        },
+        basis::{Projector, fixed::{Fourier, TileCoding}},
         geometry::Space,
     };
     use std::hash::BuildHasherDefault;
@@ -95,12 +115,12 @@ mod tests {
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, (20.0, 50.0, 100.0));
+        let _ = evaluator.update(&features, [20.0, 50.0, 100.0]);
         let out = evaluator.evaluate(&features).unwrap();
 
-        assert!((out.0 - 20.0).abs() < 1e-6);
-        assert!((out.1 - 50.0).abs() < 1e-6);
-        assert!((out.2 - 100.0).abs() < 1e-6);
+        assert!((out[0] - 20.0).abs() < 1e-6);
+        assert!((out[1] - 50.0).abs() < 1e-6);
+        assert!((out[2] - 100.0).abs() < 1e-6);
     }
 
     #[test]
@@ -113,11 +133,11 @@ mod tests {
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, (20.0, 50.0, 100.0));
+        let _ = evaluator.update(&features, [20.0, 50.0, 100.0]);
         let out = evaluator.evaluate(&features).unwrap();
 
-        assert!((out.0 - 20.0).abs() < 1e-6);
-        assert!((out.1 - 50.0).abs() < 1e-6);
-        assert!((out.2 - 100.0).abs() < 1e-6);
+        assert!((out[0] - 20.0).abs() < 1e-6);
+        assert!((out[1] - 50.0).abs() < 1e-6);
+        assert!((out[2] - 100.0).abs() < 1e-6);
     }
 }

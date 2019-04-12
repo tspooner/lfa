@@ -42,6 +42,25 @@ impl Approximator for VectorFunction {
         })
     }
 
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        let dim = self.weights_dim();
+        let phi = features.expanded(dim.0);
+
+        let mut g = unsafe { Matrix::uninitialized(dim) };
+
+        g.gencolumns_mut().into_iter().for_each(|mut c| {
+            c.assign(&phi);
+        });
+
+        g
+    }
+
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        Ok(update.into_iter().enumerate().for_each(|(c, &e)| {
+            self.weights.column_mut(c).scaled_add(e, &grad.column(c));
+        }))
+    }
+
     fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
         apply_to_features!(features => activations, {
             Ok(for (c, &e) in errors.into_iter().enumerate() {
@@ -65,11 +84,9 @@ mod tests {
     extern crate seahash;
 
     use crate::{
+        composition::Composable,
         core::*,
-        basis::{
-            Composable,
-            fixed::{Fourier, TileCoding},
-        },
+        basis::{Projector, fixed::{Fourier, TileCoding}},
         geometry::{Space, Vector},
     };
     use std::hash::BuildHasherDefault;

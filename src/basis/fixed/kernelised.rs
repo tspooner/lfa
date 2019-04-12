@@ -1,9 +1,6 @@
 use crate::{
-    basis::{
-        kernels::{self, Kernel},
-        Composable,
-    },
-    core::{Features, Projector},
+    basis::{Projector, kernels::{self, Kernel}},
+    core::Features,
     geometry::{
         discrete::Partition,
         product::LinearSpace,
@@ -90,8 +87,6 @@ impl<I, K: Kernel<I>> Projector<I> for KernelProjector<I, K> {
         Features::Dense(self.prototypes.iter().map(|p| p.kernel(input)).collect())
     }
 }
-
-impl<I, K: Kernel<I>> Composable for KernelProjector<I, K> {}
 
 #[cfg(test)]
 mod tests {

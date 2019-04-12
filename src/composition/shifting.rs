@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{Card, Space},
 };
 
@@ -33,8 +33,6 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for Shift<P> {
         Features::Dense(self.offset + self.projector.project_expanded(input))
     }
 }
-
-impl<P> Composable for Shift<P> {}
 
 #[cfg(test)]
 mod tests {

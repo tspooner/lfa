@@ -1,4 +1,5 @@
 use crate::{
+    basis::Projector,
     core::*,
     eval::*,
     geometry::{Matrix, MatrixView, MatrixViewMut, Space},
@@ -51,6 +52,22 @@ impl<P, E: Parameterised> Parameterised for LFA<P, E> {
     fn weights_view(&self) -> MatrixView<f64> { self.evaluator.weights_view() }
 
     fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.evaluator.weights_view_mut() }
+
+    fn weights_dim(&self) -> (usize, usize) { self.evaluator.weights_dim() }
+}
+
+impl<I: ?Sized, P, E> Embedding<I> for LFA<P, E>
+where
+    P: Projector<I>,
+    E: Approximator,
+{
+    fn n_features(&self) -> usize {
+        self.projector.dim()
+    }
+
+    fn embed(&self, input: &I) -> Features {
+        self.projector.project(input)
+    }
 }
 
 impl<P, E> Approximator for LFA<P, E>
@@ -67,20 +84,15 @@ where
         self.evaluator.evaluate(features)
     }
 
-    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
-        self.evaluator.update(features, update)
-    }
-}
-impl<I: ?Sized, P, E> Embedded<I> for LFA<P, E>
-where
-    P: Projector<I>,
-    E: Approximator,
-{
-    fn n_features(&self) -> usize {
-        self.projector.dim()
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        self.evaluator.jacobian(features)
     }
 
-    fn to_features(&self, input: &I) -> Features {
-        self.projector.project(input)
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        self.evaluator.update_grad(grad, update)
+    }
+
+    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
+        self.evaluator.update(features, update)
     }
 }

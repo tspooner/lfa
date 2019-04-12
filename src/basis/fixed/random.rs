@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{Card, Space},
 };
 use rand::{
@@ -66,8 +66,6 @@ impl<I: ?Sized, D: Distribution<f64>> Projector<I> for Random<D> {
             .collect()
     }
 }
-
-impl<D: Distribution<f64>> Composable for Random<D> {}
 
 #[cfg(test)]
 mod tests {

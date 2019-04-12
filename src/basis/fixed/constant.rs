@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{Card, Space},
 };
 
@@ -36,8 +36,6 @@ impl<I: ?Sized> Projector<I> for Constant {
     fn project(&self, _: &I) -> Features { vec![self.value; self.n_features].into() }
 }
 
-impl Composable for Constant {}
-
 /// Fixed uniform basis projector.
 #[derive(Clone)]
 pub struct Indices {
@@ -65,8 +63,6 @@ impl Space for Indices {
 impl<I: ?Sized> Projector<I> for Indices {
     fn project(&self, _: &I) -> Features { self.active_features.iter().cloned().collect() }
 }
-
-impl Composable for Indices {}
 
 #[cfg(test)]
 mod tests {

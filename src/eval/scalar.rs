@@ -1,7 +1,8 @@
 use crate::{
     core::*,
-    geometry::{MatrixView, MatrixViewMut, Vector},
+    geometry::{Matrix, MatrixView, MatrixViewMut, Vector},
 };
+use ndarray::Axis;
 
 /// Weight-`Features` evaluator with scalar `f64` output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,6 +47,14 @@ impl Approximator for ScalarFunction {
         })
     }
 
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        features.expanded(self.weights.len()).insert_axis(Axis(1))
+    }
+
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        Ok({ self.weights.scaled_add(update, &grad.column(0)) })
+    }
+
     fn update(&mut self, features: &Features, error: Self::Output) -> UpdateResult<()> {
         apply_to_features!(features => activations, {
             Ok(self.weights.scaled_add(error, activations))
@@ -66,11 +75,9 @@ mod tests {
     extern crate seahash;
 
     use crate::{
+        composition::Composable,
         core::*,
-        basis::{
-            Composable,
-            fixed::{Fourier, TileCoding},
-        },
+        basis::{Projector, fixed::{Fourier, TileCoding}},
         geometry::Space,
     };
     use std::hash::BuildHasherDefault;

@@ -1,6 +1,0 @@
-//! Module for _composition_ of basis representations.
-import_all!(stack);
-import_all!(arithmetic);
-import_all!(scaling);
-import_all!(shifting);
-import_all!(normalisation);

@@ -1,14 +1,53 @@
+use crate::geometry::Vector;
 use super::Transform;
 
 // f(x) ≜ exp(x)
 pub struct Exp;
 
 impl Transform<f64> for Exp {
+    type Output = f64;
+
     fn transform(&self, x: f64) -> f64 {
         x.exp()
     }
 
     fn grad(&self, x: f64) -> f64 {
+        self.transform(x)
+    }
+}
+
+impl Transform<[f64; 2]> for Exp {
+    type Output = [f64; 2];
+
+    fn transform(&self, x: [f64; 2]) -> [f64; 2] {
+        [x[0].exp(), x[1].exp()]
+    }
+
+    fn grad(&self, x: [f64; 2]) -> [f64; 2] {
+        self.transform(x)
+    }
+}
+
+impl Transform<[f64; 3]> for Exp {
+    type Output = [f64; 3];
+
+    fn transform(&self, x: [f64; 3]) -> [f64; 3] {
+        [x[0].exp(), x[1].exp(), x[2].exp()]
+    }
+
+    fn grad(&self, x: [f64; 3]) -> [f64; 3] {
+        self.transform(x)
+    }
+}
+
+impl Transform<Vector<f64>> for Exp {
+    type Output = Vector<f64>;
+
+    fn transform(&self, x: Vector<f64>) -> Vector<f64> {
+        x.mapv_into(|v| v.exp())
+    }
+
+    fn grad(&self, x: Vector<f64>) -> Vector<f64> {
         self.transform(x)
     }
 }

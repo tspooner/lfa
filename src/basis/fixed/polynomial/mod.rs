@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{
         continuous::Interval,
         product::LinearSpace,
@@ -116,8 +116,6 @@ impl Projector<[f64]> for Polynomial {
 
 impl_array_proxies!(Polynomial; f64);
 
-impl Composable for Polynomial {}
-
 /// Chebyshev polynomial basis projector.
 #[derive(Clone, Debug)]
 pub struct Chebyshev {
@@ -211,5 +209,3 @@ impl Projector<[f64]> for Chebyshev {
 }
 
 impl_array_proxies!(Chebyshev; f64);
-
-impl Composable for Chebyshev {}

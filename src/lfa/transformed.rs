@@ -1,7 +1,8 @@
 use crate::{
+    basis::Projector,
     core::*,
     eval::*,
-    geometry::{Matrix, MatrixView, MatrixViewMut, Space},
+    geometry::{Matrix, MatrixView, MatrixViewMut, Space, Vector},
     transforms::{Transform, Identity},
 };
 
@@ -17,10 +18,6 @@ macro_rules! impl_builder {
     };
 }
 
-impl_builder!(ScalarFunction => scalar);
-impl_builder!(PairFunction => pair);
-impl_builder!(TripleFunction => triple);
-
 /// Transformed linear function approximator.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct TransformedLFA<P, E, T = Identity> {
@@ -35,17 +32,15 @@ impl<P, E, T> TransformedLFA<P, E, T> {
     }
 }
 
+impl_builder!(ScalarFunction => scalar);
+impl_builder!(PairFunction => pair);
+impl_builder!(TripleFunction => triple);
+
 impl<P: Space, T> TransformedLFA<P, VectorFunction, T> {
     pub fn vector(projector: P, n_outputs: usize, transform: T) -> Self {
         let evaluator = VectorFunction::zeros(projector.dim(), n_outputs);
 
         Self::new(projector, evaluator, transform)
-    }
-}
-
-impl<P, E, T> TransformedLFA<P, E, T> {
-    fn chain_update<V: Gradient>(&self, v: V, update: V) -> V where T: Transform<V> {
-        self.transform.grad(v).chain(update)
     }
 }
 
@@ -57,13 +52,28 @@ impl<P, E: Parameterised, T> Parameterised for TransformedLFA<P, E, T> {
     fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.evaluator.weights_view_mut() }
 }
 
+impl<I: ?Sized, P, E, T> Embedding<I> for TransformedLFA<P, E, T>
+where
+    P: Projector<I>,
+    E: Approximator,
+{
+    fn n_features(&self) -> usize {
+        self.projector.dim()
+    }
+
+    fn embed(&self, input: &I) -> Features {
+        self.projector.project(input)
+    }
+}
+
 impl<P, E, T> Approximator for TransformedLFA<P, E, T>
 where
     E: Approximator,
     T: Transform<E::Output>,
-    E::Output: Gradient,
+    E::Output: IntoVector + ElementwiseProduct<T::Output, Output = E::Output>,
+    T::Output: AsRepeated<E::Output>,
 {
-    type Output = E::Output;
+    type Output = T::Output;
 
     fn n_outputs(&self) -> usize {
         self.evaluator.n_outputs()
@@ -73,21 +83,25 @@ where
         self.evaluator.evaluate(features).map(|v| self.transform.transform(v))
     }
 
+    fn jacobian(&self, features: &Features) -> Matrix<f64> {
+        let v = self.evaluator.evaluate(features).unwrap();
+        let g = self.evaluator.jacobian(features);
+
+        g * self.transform.grad(v).into_vector()
+    }
+
+    fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
+        self.evaluator.update_grad(grad, update.as_repeated())
+    }
+
     fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
-        match self.evaluator.evaluate(features).ok() {
-            Some(v) => self.evaluator.update(features, self.chain_update(v, update)),
-            None => Err(UpdateError::Failed),
+        match self.evaluator.evaluate(features) {
+            Ok(v) => self.evaluator.update(
+                features,
+                self.transform.grad(v).elementwise_product(update)
+            ),
+            Err(_) => Err(UpdateError::Failed)
         }
-    }
-}
-
-impl<I: ?Sized, P: Projector<I>, E, T> Embedded<I> for TransformedLFA<P, E, T> {
-    fn n_features(&self) -> usize {
-        self.projector.dim()
-    }
-
-    fn to_features(&self, input: &I) -> Features {
-        self.projector.project(input)
     }
 }
 
@@ -95,29 +109,34 @@ impl<I: ?Sized, P: Projector<I>, E, T> Embedded<I> for TransformedLFA<P, E, T> {
 mod tests {
     use crate::{
         basis::fixed::Polynomial,
-        core::{Approximator, Parameterised, Embedded},
-        transforms::Softplus,
+        core::{Approximator, Parameterised, Embedding},
+        transforms::Logistic,
     };
     use super::TransformedLFA;
 
     #[test]
-    fn test_softplus_lfa() {
-        let mut fa = TransformedLFA::scalar(Polynomial::new(2, vec![(-1.0, 1.0)]), Softplus);
+    fn test_logistic_lfa() {
+        let mut fa = TransformedLFA::scalar(
+            Polynomial::new(2, vec![(-1.0, 1.0)]),
+            Logistic::default()
+        );
 
         for _ in 0..10000 {
-            let x = fa.to_features(&vec![-1.0]);
+            let x = fa.embed(&vec![-1.0]);
             let y_apx = fa.evaluate(&x).unwrap();
 
             fa.update(&x, -1.0 - y_apx).ok();
 
-            let x = fa.to_features(&vec![1.0]);
+            let x = fa.embed(&vec![1.0]);
             let y_apx = fa.evaluate(&x).unwrap();
 
             fa.update(&x, 1.0 - y_apx).ok();
         }
 
         for x in -10..10 {
-            assert!(fa.evaluate(&fa.to_features(&vec![x as f64 / 10.0])).unwrap() > 0.0);
+            let v = fa.evaluate(&fa.embed(&vec![x as f64 / 10.0])).unwrap();
+
+            assert!(v > 0.0);
         }
     }
 }

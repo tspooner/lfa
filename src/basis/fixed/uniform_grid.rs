@@ -1,6 +1,6 @@
 use crate::{
-    basis::Composable,
-    core::{Features, Projector},
+    basis::Projector,
+    core::Features,
     geometry::{
         discrete::Partition,
         product::LinearSpace,
@@ -52,8 +52,6 @@ impl Projector<[f64]> for UniformGrid {
 }
 
 impl_array_proxies!(UniformGrid; f64);
-
-impl Composable for UniformGrid {}
 
 #[cfg(test)]
 mod tests {

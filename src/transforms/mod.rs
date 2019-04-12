@@ -1,13 +1,15 @@
-use crate::core::Gradient;
-
 /// An interface for differentiable transformations.
-pub trait Transform<T> {
+pub trait Transform<T: ?Sized> {
+    type Output;
+
     /// Return the value of the transform for input `x`.
-    fn transform(&self, x: T) -> T;
+    fn transform(&self, x: T) -> Self::Output;
 
     /// Return the gradient of the transform for input `x`.
-    fn grad(&self, x: T) -> T where T: Gradient;
+    fn grad(&self, x: T) -> T;
 }
+
+pub type EndoTransform<T> = Transform<T, Output = T>;
 
 import_all!(identity);
 import_all!(softplus);
