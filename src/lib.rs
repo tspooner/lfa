@@ -2,6 +2,7 @@
 extern crate ndarray;
 extern crate rand;
 extern crate itertools;
+extern crate elementwise;
 
 extern crate serde;
 #[macro_use]

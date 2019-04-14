@@ -17,8 +17,8 @@ macro_rules! impl_identity {
 }
 
 impl_identity!(f64; 1.0);
-impl_identity!((f64, f64); (1.0, 1.0));
-impl_identity!((f64, f64, f64); (1.0, 1.0, 1.0));
+impl_identity!([f64; 2]; [1.0; 2]);
+impl_identity!([f64; 3]; [1.0; 3]);
 
 impl Transform<Vector<f64>> for Identity {
     type Output = Vector<f64>;
@@ -53,15 +53,15 @@ mod tests {
     #[test]
     fn test_pair() {
         fn prop_transform(val: (f64, f64)) -> bool {
-            let t = Identity.transform(val);
+            let t = Identity.transform([val.0, val.1]);
 
-            (t.0 - val.0).abs() < 1e-7 && (t.1 - val.1).abs() < 1e-7
+            (t[0] - val.0).abs() < 1e-7 && (t[1] - val.1).abs() < 1e-7
         }
 
         fn prop_grad(val: (f64, f64)) -> bool {
-            let g = Identity.grad(val);
+            let g = Identity.grad([val.0, val.1]);
 
-            (g.0 - 1.0).abs() < 1e-7 && (g.1 - 1.0).abs() < 1e-7
+            (g[0] - 1.0).abs() < 1e-7 && (g[1] - 1.0).abs() < 1e-7
         }
 
         quickcheck(prop_transform as fn((f64, f64)) -> bool);
@@ -71,15 +71,15 @@ mod tests {
     #[test]
     fn test_triple() {
         fn prop_transform(val: (f64, f64, f64)) -> bool {
-            let t = Identity.transform(val);
+            let t = Identity.transform([val.0, val.1, val.2]);
 
-            (t.0 - val.0).abs() < 1e-7 && (t.1 - val.1).abs() < 1e-7 && (t.2 - val.2).abs() < 1e-7
+            (t[0] - val.0).abs() < 1e-7 && (t[1] - val.1).abs() < 1e-7 && (t[2] - val.2).abs() < 1e-7
         }
 
         fn prop_grad(val: (f64, f64, f64)) -> bool {
-            let g = Identity.grad(val);
+            let g = Identity.grad([val.0, val.1, val.2]);
 
-            (g.0 - 1.0).abs() < 1e-7 && (g.1 - 1.0).abs() < 1e-7 && (g.2 - 1.0).abs() < 1e-7
+            (g[0] - 1.0).abs() < 1e-7 && (g[1] - 1.0).abs() < 1e-7 && (g[2] - 1.0).abs() < 1e-7
         }
 
         quickcheck(prop_transform as fn((f64, f64, f64)) -> bool);

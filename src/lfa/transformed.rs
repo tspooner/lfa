@@ -2,9 +2,10 @@ use crate::{
     basis::Projector,
     core::*,
     eval::*,
-    geometry::{Matrix, MatrixView, MatrixViewMut, Space, Vector},
+    geometry::{Matrix, MatrixView, MatrixViewMut, Space},
     transforms::{Transform, Identity},
 };
+use elementwise::arithmetic::ElementwiseMul;
 
 macro_rules! impl_builder {
     ($ftype:ty => $fname:ident) => {
@@ -69,9 +70,8 @@ where
 impl<P, E, T> Approximator for TransformedLFA<P, E, T>
 where
     E: Approximator,
-    T: Transform<E::Output>,
-    E::Output: IntoVector + ElementwiseProduct<T::Output, Output = E::Output>,
-    T::Output: AsRepeated<E::Output>,
+    T: Transform<E::Output, Output = E::Output>,
+    T::Output: ElementwiseMul<T::Output> + IntoVector,
 {
     type Output = T::Output;
 
@@ -91,15 +91,13 @@ where
     }
 
     fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
-        self.evaluator.update_grad(grad, update.as_repeated())
+        self.evaluator.update_grad(grad, update)
     }
 
     fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()> {
         match self.evaluator.evaluate(features) {
             Ok(v) => self.evaluator.update(
-                features,
-                self.transform.grad(v).elementwise_product(update)
-            ),
+                features, self.transform.grad(v).elementwise_mul(&update)),
             Err(_) => Err(UpdateError::Failed)
         }
     }
@@ -118,7 +116,7 @@ mod tests {
     fn test_logistic_lfa() {
         let mut fa = TransformedLFA::scalar(
             Polynomial::new(2, vec![(-1.0, 1.0)]),
-            Logistic::default()
+            Logistic::default(),
         );
 
         for _ in 0..10000 {

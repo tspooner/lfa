@@ -23,6 +23,7 @@ rand = "0.6"
 spaces = "4.5"
 ndarray = "0.12"
 itertools = "0.8"
+elementwise = "0.3"
 
 serde = "1.0"
 serde_derive = "1.0"
