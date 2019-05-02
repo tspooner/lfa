@@ -1,0 +1,31 @@
+[package]
+name = "lfa_derive"
+description = "Macros for LFA"
+authors = ["Tom Spooner <spooner10000@gmail.com>"]
+
+version = "0.0.0"
+edition = "2018"
+
+license = "MIT"
+readme = "README.md"
+
+keywords = ["function", "approximation", "linear", "ai", "rl"]
+
+repository = "https://github.com/tspooner/lfa"
+documentation = "https://docs.rs/lfa"
+
+[badges]
+travis-ci = { repository = "tspooner/lfa", branch = "master" }
+coveralls = { repository = "tspooner/lfa", branch = "master", service = "github" }
+
+[lib]
+name = "lfa_derive"
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "0.4"
+quote = "0.6"
+syn = "0.15"
+
+[dev-dependencies]
+lfa = { path = "../lfa" }
