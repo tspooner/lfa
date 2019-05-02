@@ -118,11 +118,13 @@ impl Projector<[f64]> for Polynomial {
 impl_array_proxies!(Polynomial; f64);
 
 /// Chebyshev polynomial basis projector.
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
 #[derive(Clone, Debug)]
 pub struct Chebyshev {
     pub order: u8,
     pub limits: Vec<(f64, f64)>,
+
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub polynomials: Vec<Vec<fn(f64) -> f64>>,
 }
 
@@ -211,3 +213,75 @@ impl Projector<[f64]> for Chebyshev {
 }
 
 impl_array_proxies!(Chebyshev; f64);
+
+#[cfg(feature = "serialize")] use serde::{
+    Deserialize,
+    Deserializer,
+    de::{self, Visitor, SeqAccess, MapAccess}
+};
+#[cfg(feature = "serialize")] use std::fmt;
+#[cfg(feature = "serialize")]
+impl<'de> Deserialize<'de> for Chebyshev {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field { Order, Limits }
+
+        struct ChebyshevVisitor;
+
+        impl<'de> Visitor<'de> for ChebyshevVisitor {
+            type Value = Chebyshev;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct Chebyshev")
+            }
+
+            fn visit_seq<V>(self, mut seq: V) -> Result<Chebyshev, V::Error>
+            where
+                V: SeqAccess<'de>,
+            {
+                let order = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let limits = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+
+                Ok(Chebyshev::new(order, limits))
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<Chebyshev, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut order = None;
+                let mut limits = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Order => {
+                            if order.is_some() {
+                                return Err(de::Error::duplicate_field("order"));
+                            }
+                            order = Some(map.next_value()?);
+                        }
+                        Field::Limits => {
+                            if limits.is_some() {
+                                return Err(de::Error::duplicate_field("limits"));
+                            }
+                            limits = Some(map.next_value()?);
+                        }
+                    }
+                }
+
+                let order = order.ok_or_else(|| de::Error::missing_field("order"))?;
+                let limits = limits.ok_or_else(|| de::Error::missing_field("limits"))?;
+
+                Ok(Chebyshev::new(order, limits))
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["order", "limits"];
+        deserializer.deserialize_struct("Chebyshev", FIELDS, ChebyshevVisitor)
+    }
+}
