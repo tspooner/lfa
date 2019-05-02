@@ -1,11 +1,11 @@
-#[macro_use]
 extern crate ndarray;
 extern crate rand;
 extern crate itertools;
 extern crate elementwise;
 
-extern crate serde;
-#[macro_use]
+#[cfg(feature = "serialize")] extern crate serde;
+#[cfg_attr(feature = "serialize", macro_use)]
+#[cfg(feature = "serialize")]
 extern crate serde_derive;
 
 #[cfg(tests)]

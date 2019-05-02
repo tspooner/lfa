@@ -2,6 +2,8 @@ use crate::geometry::Vector;
 use super::{Transform, Logistic};
 
 // f(x) ≜ log(1 + exp(x))
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Softplus;
 
 impl Transform<f64> for Softplus {
@@ -61,6 +63,8 @@ impl Transform<Vector<f64>> for Softplus {
 }
 
 // f(x, y, ...) ≜ log(C + exp(x) + exp(y) + ...)
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct LogSumExp(f64);
 
 impl LogSumExp {

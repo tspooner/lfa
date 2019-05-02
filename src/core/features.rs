@@ -71,7 +71,8 @@ macro_rules! apply_to_dense_or_sparse {
 }
 
 /// Projected feature vector representation.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub enum Features {
     /// Dense, floating-point activation vector.
     Dense(DenseT),

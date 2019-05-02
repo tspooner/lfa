@@ -39,7 +39,8 @@ fn hash_state<H: Hasher>(
 }
 
 /// Generalised tile coding scheme with hashing.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct TileCoding<H> {
     hasher_builder: H,
     n_tilings: usize,

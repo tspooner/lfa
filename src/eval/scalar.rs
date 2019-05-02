@@ -5,7 +5,8 @@ use crate::{
 use ndarray::Axis;
 
 /// Weight-`Features` evaluator with scalar `f64` output.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct ScalarFunction {
     pub weights: Vector<f64>,
 }

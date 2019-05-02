@@ -9,7 +9,8 @@ use rand::{
 };
 
 /// Fixed uniform basis projector.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Random<D: Distribution<f64>> {
     n_features: usize,
     distribution: D,

@@ -1,5 +1,4 @@
 use crate::{
-    composition::Composable,
     core::{DenseT, Features},
     geometry::Space,
 };
@@ -42,7 +41,6 @@ pub trait Projector<I: ?Sized>: Space<Value = Features> {
     fn project_expanded(&self, input: &I) -> DenseT { self.project(input).expanded(self.dim()) }
 }
 
-// #[macro_export]
 macro_rules! impl_array_proxy {
     ([$itype:ty; $($n:expr),*] for $type:ty) => {
         $(
@@ -74,7 +72,6 @@ macro_rules! impl_array_proxy {
     };
 }
 
-// #[macro_export]
 macro_rules! impl_array_proxies {
     ($type:ty; $($itype:ty),*) => {
         $(

@@ -12,7 +12,8 @@ use crate::{
 };
 
 /// Feature prototype used by the `KernelProjector` basis.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct Prototype<I, K> {
     pub centroid: I,
     pub kernel: K,
@@ -23,7 +24,8 @@ impl<I, K: Kernel<I>> Prototype<I, K> {
 }
 
 /// Kernel machine basis projector.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct KernelProjector<I, K> {
     pub prototypes: Vec<Prototype<I, K>>,
 }

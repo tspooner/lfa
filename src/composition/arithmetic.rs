@@ -5,7 +5,8 @@ use crate::{
 };
 
 /// Apply negation to the output.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Negate<T>(T);
 
 impl<T> Negate<T> {
@@ -27,7 +28,8 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for Negate<P> {
 }
 
 /// Sum the output of two `Projector` instances.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Sum<T1, T2>(T1, T2);
 
 impl<T1, T2> Sum<T1, T2> {
@@ -70,7 +72,8 @@ impl<I: ?Sized, P1: Projector<I>, P2: Projector<I>> Projector<I> for Sum<P1, P2>
 }
 
 /// Apply inversion to the output of a `Projector` instance.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Reciprocal<P>(P);
 
 impl<P: Space> Reciprocal<P> {
@@ -99,7 +102,8 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for Reciprocal<P> {
 }
 
 /// Multiply the output of two `Projector` instances.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Product<P1, P2> {
     p1: P1,
     p2: P2,

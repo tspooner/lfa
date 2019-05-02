@@ -1,11 +1,11 @@
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum EvaluationError {
     Failed,
 }
 
 pub type EvaluationResult<T> = Result<T, EvaluationError>;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum UpdateError {
     Failed,
 }

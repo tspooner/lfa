@@ -26,7 +26,8 @@ impl_builder!(PairFunction => pair);
 impl_builder!(TripleFunction => triple);
 
 /// Linear function approximator.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct LFA<P, E> {
     pub projector: P,
     pub evaluator: E,

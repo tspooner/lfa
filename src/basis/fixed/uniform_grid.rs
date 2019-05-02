@@ -12,7 +12,8 @@ use crate::{
 };
 
 /// Fixed uniform basis projector.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct UniformGrid {
     n_features: usize,
     feature_space: LinearSpace<Partition>,
