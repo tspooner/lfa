@@ -4,7 +4,8 @@ use crate::{
 };
 
 /// Weight-`Projection` evaluator with pair `[f64; 2]` output.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct PairFunction {
     pub weights: Matrix<f64>,
 }

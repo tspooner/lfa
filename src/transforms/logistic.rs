@@ -2,6 +2,8 @@ use crate::geometry::Vector;
 use super::Transform;
 
 // f(x) ≜ L / (1 + exp(-k(x - x0))
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Logistic {
     amplitude: f64,
     growth_rate: f64,

@@ -41,7 +41,8 @@ mod cpfk;
 /// assert_eq!(p.project(&vec![0.75]), vec![0.5, 0.25].into());
 /// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0].into());
 /// ```
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct Polynomial {
     pub order: u8,
     pub limits: Vec<(f64, f64)>,
@@ -117,6 +118,7 @@ impl Projector<[f64]> for Polynomial {
 impl_array_proxies!(Polynomial; f64);
 
 /// Chebyshev polynomial basis projector.
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug)]
 pub struct Chebyshev {
     pub order: u8,

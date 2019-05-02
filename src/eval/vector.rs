@@ -4,7 +4,8 @@ use crate::{
 };
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct VectorFunction {
     pub weights: Matrix<f64>,
 }

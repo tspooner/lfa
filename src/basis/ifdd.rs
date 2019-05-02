@@ -10,7 +10,8 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Feature {
     pub index: usize,
     pub parent_indices: IndexSet,
@@ -29,7 +30,8 @@ impl Hash for Feature {
     fn hash<H: Hasher>(&self, state: &mut H) { self.index.hash(state); }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CandidateFeature {
     pub relevance: f64,
     pub parent_indices: IndexSet,
@@ -71,7 +73,8 @@ impl PartialOrd for CandidateFeature {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct IFDD<P> {
     pub base: P,
     pub features: Vec<Feature>,

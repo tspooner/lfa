@@ -2,6 +2,8 @@ use geometry::Vector;
 use super::Transform;
 
 // f(x) ≜ x
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Identity;
 
 macro_rules! impl_identity {

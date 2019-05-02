@@ -5,7 +5,8 @@ use crate::{
 };
 
 /// Fixed uniform basis projector.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Constant {
     n_features: usize,
     value: f64,
@@ -37,7 +38,8 @@ impl<I: ?Sized> Projector<I> for Constant {
 }
 
 /// Fixed uniform basis projector.
-#[derive(Clone)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct Indices {
     n_features: usize,
     active_features: Vec<usize>,

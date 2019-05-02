@@ -5,7 +5,8 @@ use crate::{
 };
 
 /// Shift the output of a `Projector` instance by some fixed amount.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Shift<P> {
     projector: P,
     offset: f64,

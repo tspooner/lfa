@@ -2,6 +2,8 @@ use crate::geometry::Vector;
 use super::Transform;
 
 // f(x) ≜ exp(x)
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Exp;
 
 impl Transform<f64> for Exp {

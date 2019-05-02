@@ -20,7 +20,8 @@ macro_rules! impl_builder {
 }
 
 /// Transformed linear function approximator.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct TransformedLFA<P, E, T = Identity> {
     pub projector: P,
     pub evaluator: E,

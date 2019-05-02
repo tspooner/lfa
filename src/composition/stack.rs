@@ -5,7 +5,8 @@ use crate::{
 };
 
 /// Stack the output of two `Projector` instances.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct Stack<P1, P2> {
     p1: P1,
     p2: P2,

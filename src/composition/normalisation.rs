@@ -9,7 +9,8 @@ use crate::{
 };
 
 /// Apply _L₁_ normalisation to the output of a `Projector` instance.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct L1Normalise<P>(P);
 
 impl<P> L1Normalise<P> {
@@ -36,7 +37,8 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for L1Normalise<P> {
 }
 
 /// Apply _L₂_ normalisation to the output of a `Projector` instance.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct L2Normalise<P>(P);
 
 impl<P> L2Normalise<P> {
@@ -63,7 +65,8 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for L2Normalise<P> {
 }
 
 /// Apply _Lp_ normalisation to the output of a `Projector` instance.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct LpNormalise<P>(P, u8);
 
 impl<P> LpNormalise<P> {
@@ -90,7 +93,8 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for LpNormalise<P> {
 }
 
 /// Apply _L∞_ normalisation to the output of a `Projector` instance.
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug)]
 pub struct LinfNormalise<P>(P);
 
 impl<P> LinfNormalise<P> {

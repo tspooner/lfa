@@ -4,7 +4,8 @@ use crate::{
 };
 
 /// Weight-`Projection` evaluator with triple `[f64; 3]` output.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub struct TripleFunction {
     pub weights: Matrix<f64>,
 }
