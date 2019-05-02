@@ -11,6 +11,7 @@ pub trait Transform<T: ?Sized> {
 
 pub type EndoTransform<T> = Transform<T, Output = T>;
 
+import_all!(tanh);
 import_all!(identity);
 import_all!(softplus);
 import_all!(logistic);
