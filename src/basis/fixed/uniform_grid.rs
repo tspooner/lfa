@@ -7,7 +7,7 @@ use crate::{
         Card,
         Space,
         Surjection,
-        Vector
+        Vector,
     },
 };
 
@@ -56,8 +56,8 @@ impl_array_proxies!(UniformGrid; f64);
 
 #[cfg(test)]
 mod tests {
+    use crate::core::DenseT;
     use super::*;
-    use ndarray::arr1;
 
     #[test]
     fn test_is_sparse() {
@@ -90,7 +90,7 @@ mod tests {
                 _ => assert!(false),
             }
 
-            let mut dense = arr1(&vec![0.0; 10]);
+            let mut dense: DenseT = vec![0.0; 10].into();
             dense[expected_bin] = 1.0;
 
             assert_eq!(out.expanded(t.dim()), dense);
@@ -117,7 +117,7 @@ mod tests {
                     _ => assert!(false),
                 }
 
-                let mut dense = arr1(&vec![0.0; 100]);
+                let mut dense: DenseT = vec![0.0; 100].into();
                 dense[expected_bin] = 1.0;
 
                 assert_eq!(out.expanded(t.dim()), dense);
@@ -146,7 +146,7 @@ mod tests {
                         _ => assert!(false),
                     }
 
-                    let mut dense = arr1(&vec![0.0; 1000]);
+                    let mut dense: DenseT = vec![0.0; 1000].into();
                     dense[expected_bin] = 1.0;
 
                     assert_eq!(out.expanded(t.dim()), dense);

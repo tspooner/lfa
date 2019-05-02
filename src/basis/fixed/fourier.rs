@@ -98,8 +98,10 @@ impl_array_proxies!(Fourier; f64);
 
 #[cfg(test)]
 mod tests {
+    use crate::core::DenseT;
     use super::*;
-    use ndarray::arr1;
+
+    fn arr1(values: Vec<f64>) -> DenseT { values.into() }
 
     #[test]
     fn test_dim() {
@@ -141,19 +143,19 @@ mod tests {
 
         assert!(f
             .project_expanded(&vec![0.0])
-            .all_close(&arr1(&vec![1.0]), 1e-6));
+            .all_close(&arr1(vec![1.0]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0 / 3.0])
-            .all_close(&arr1(&vec![0.75]), 1e-6));
+            .all_close(&arr1(vec![0.75]), 1e-6));
         assert!(f
             .project_expanded(&vec![0.5])
-            .all_close(&arr1(&vec![0.5]), 1e-6));
+            .all_close(&arr1(vec![0.5]), 1e-6));
         assert!(f
             .project_expanded(&vec![2.0 / 3.0])
-            .all_close(&arr1(&vec![0.25]), 1e-6));
+            .all_close(&arr1(vec![0.25]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0])
-            .all_close(&arr1(&vec![0.0]), 1e-6));
+            .all_close(&arr1(vec![0.0]), 1e-6));
     }
 
     #[test]
@@ -165,19 +167,19 @@ mod tests {
 
         assert!(f
             .project_expanded(&vec![0.0])
-            .all_close(&arr1(&vec![1.0, 1.0]), 1e-6));
+            .all_close(&arr1(vec![1.0, 1.0]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0 / 3.0])
-            .all_close(&arr1(&vec![0.25, 0.75]), 1e-6));
+            .all_close(&arr1(vec![0.25, 0.75]), 1e-6));
         assert!(f
             .project_expanded(&vec![0.5])
-            .all_close(&arr1(&vec![0.0, 0.5]), 1e-6));
+            .all_close(&arr1(vec![0.0, 0.5]), 1e-6));
         assert!(f
             .project_expanded(&vec![2.0 / 3.0])
-            .all_close(&arr1(&vec![0.25, 0.25]), 1e-6));
+            .all_close(&arr1(vec![0.25, 0.25]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0])
-            .all_close(&arr1(&vec![1.0, 0.0]), 1e-6));
+            .all_close(&arr1(vec![1.0, 0.0]), 1e-6));
     }
 
     #[test]
@@ -189,25 +191,25 @@ mod tests {
 
         assert!(f
             .project_expanded(&vec![0.0, 5.0])
-            .all_close(&arr1(&vec![1.0; 3]), 1e-6));
+            .all_close(&arr1(vec![1.0; 3]), 1e-6));
         assert!(f
             .project_expanded(&vec![0.5, 5.0])
-            .all_close(&arr1(&vec![0.5, 0.5, 1.0]), 1e-6,));
+            .all_close(&arr1(vec![0.5, 0.5, 1.0]), 1e-6,));
         assert!(f
             .project_expanded(&vec![0.0, 5.5])
-            .all_close(&arr1(&vec![0.5, 1.0, 0.5]), 1e-6,));
+            .all_close(&arr1(vec![0.5, 1.0, 0.5]), 1e-6,));
         assert!(f
             .project_expanded(&vec![0.5, 5.5])
-            .all_close(&arr1(&vec![0.0, 0.5, 0.5]), 1e-6));
+            .all_close(&arr1(vec![0.0, 0.5, 0.5]), 1e-6));
         assert!(f
             .project_expanded(&vec![1.0, 5.5])
-            .all_close(&arr1(&vec![0.5, 0.0, 0.5]), 1e-6,));
+            .all_close(&arr1(vec![0.5, 0.0, 0.5]), 1e-6,));
         assert!(f
             .project_expanded(&vec![0.5, 6.0])
-            .all_close(&arr1(&vec![0.5, 0.5, 0.0]), 1e-6,));
+            .all_close(&arr1(vec![0.5, 0.5, 0.0]), 1e-6,));
         assert!(f
             .project_expanded(&vec![1.0, 6.0])
-            .all_close(&arr1(&vec![1.0, 0.0, 0.0]), 1e-6));
+            .all_close(&arr1(vec![1.0, 0.0, 0.0]), 1e-6));
     }
 
     #[test]
@@ -219,25 +221,25 @@ mod tests {
 
         assert!(f
             .project_expanded(&vec![0.0, 5.0])
-            .all_close(&arr1(&vec![1.0; 8]), 1e-6));
+            .all_close(&arr1(vec![1.0; 8]), 1e-6));
         assert!(f.project_expanded(&vec![0.5, 5.0],).all_close(
-            &arr1(&vec![0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 1.0]),
+            &arr1(vec![0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 1.0]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![0.0, 5.5],).all_close(
-            &arr1(&vec![0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.5]),
+            &arr1(vec![0.0, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.5]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![0.5, 5.5],).all_close(
-            &arr1(&vec![1.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5]),
+            &arr1(vec![1.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![0.5, 6.0],).all_close(
-            &arr1(&vec![0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0]),
+            &arr1(vec![0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0]),
             1e-6,
         ));
         assert!(f.project_expanded(&vec![1.0, 6.0],).all_close(
-            &arr1(&vec![1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]),
+            &arr1(vec![1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]),
             1e-6,
         ));
     }

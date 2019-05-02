@@ -3,10 +3,9 @@ use crate::{
     core::*,
     geometry::{MatrixView, Vector, VectorView},
 };
-use ndarray::{stack, Axis};
 use std::{
     iter::FromIterator,
-    ops::{Add, Index},
+    ops::Index,
 };
 
 macro_rules! apply_to_features {
@@ -153,11 +152,11 @@ impl Features {
         })
     }
 
-    pub(crate) fn dot_dense(activations: &DenseT, weights: &VectorView<f64>) -> f64 {
+    pub fn dot_dense(activations: &DenseT, weights: &VectorView<f64>) -> f64 {
         activations.dot(weights)
     }
 
-    pub(crate) fn dot_sparse(indices: &SparseT, weights: &VectorView<f64>) -> f64 {
+    pub fn dot_sparse(indices: &SparseT, weights: &VectorView<f64>) -> f64 {
         indices
             .iter()
             .fold(0.0, |acc, idx| acc + weights[*idx])
@@ -282,25 +281,6 @@ impl Features {
         }; indices, {
             f_sparse(indices)
         })
-    }
-}
-
-impl Add<Features> for Features {
-    type Output = Features;
-
-    fn add(self, rhs: Features) -> Features {
-        match (self, rhs) {
-            (SparseFeatures(idx1), SparseFeatures(idx2)) => {
-                SparseFeatures(idx1.union(&idx2).cloned().collect())
-            },
-            (DenseFeatures(act1), DenseFeatures(act2)) => {
-                DenseFeatures(stack(Axis(0), &[act1.view(), act2.view()]).unwrap())
-            },
-            _ => unimplemented!(
-                "Cannot combine dense/sparse with no knowledge of the full \
-                 dimensionality of sparse features."
-            ),
-        }
     }
 }
 

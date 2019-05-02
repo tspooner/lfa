@@ -195,8 +195,11 @@ impl<P: Space> Space for IFDD<P> {
 
 impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
     fn project(&self, input: &I) -> Features {
+        let n_base = self.base.dim();
+        let n_total = self.dim();
+
         let mut p = self.base.project(input);
-        let np: Vec<usize> = (self.base.dim()..self.dim())
+        let np: Vec<usize> = (n_base..n_total)
             .filter_map(|i| {
                 let f = &self.features[i];
 
@@ -214,7 +217,7 @@ impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
             }
         }
 
-        p + np.into()
+        p.stack(n_base, np.into(), n_total-n_base)
     }
 }
 

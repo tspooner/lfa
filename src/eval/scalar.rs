@@ -2,7 +2,6 @@ use crate::{
     core::*,
     geometry::{Matrix, MatrixView, MatrixViewMut, Vector},
 };
-use ndarray::Axis;
 
 /// Weight-`Features` evaluator with scalar `f64` output.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -49,7 +48,9 @@ impl Approximator for ScalarFunction {
     }
 
     fn jacobian(&self, features: &Features) -> Matrix<f64> {
-        features.expanded(self.weights.len()).insert_axis(Axis(1))
+        let n_weights = self.weights.len();
+
+        features.expanded(n_weights).into_shape((n_weights, 1)).unwrap()
     }
 
     fn update_grad(&mut self, grad: &Matrix<f64>, update: Self::Output) -> UpdateResult<()> {
