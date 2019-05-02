@@ -1,7 +1,6 @@
 //! # LFA
 //!
 //! LFA is a framework for linear function approximation with gradient descent.
-extern crate rand;
 extern crate itertools;
 extern crate elementwise;
 

@@ -1,9 +1,11 @@
+extern crate rand;
+
 use crate::{
     basis::Projector,
     core::Features,
     geometry::{Card, Space},
 };
-use rand::{
+use self::rand::{
     distributions::{self as dists, Distribution},
     thread_rng,
 };
