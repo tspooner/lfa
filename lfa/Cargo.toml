@@ -25,6 +25,8 @@ random = ["rand"]
 serialize = ["serde", "serde_derive"]
 
 [dependencies]
+lfa_derive = { path = "../lfa_derive" }
+
 spaces = "4.5"
 itertools = "0.8"
 elementwise = "0.3"

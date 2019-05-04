@@ -21,10 +21,10 @@ macro_rules! impl_builder {
 
 /// Transformed linear function approximator.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Parameterised)]
 pub struct TransformedLFA<P, E, T = Identity> {
     pub projector: P,
-    pub evaluator: E,
+    #[weights] pub evaluator: E,
     pub transform: T,
 }
 
@@ -44,14 +44,6 @@ impl<P: Space, T> TransformedLFA<P, VectorFunction, T> {
 
         Self::new(projector, evaluator, transform)
     }
-}
-
-impl<P, E: Parameterised, T> Parameterised for TransformedLFA<P, E, T> {
-    fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
-
-    fn weights_view(&self) -> MatrixView<f64> { self.evaluator.weights_view() }
-
-    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.evaluator.weights_view_mut() }
 }
 
 impl<I: ?Sized, P, E, T> Embedding<I> for TransformedLFA<P, E, T>
@@ -108,7 +100,7 @@ where
 mod tests {
     use crate::{
         basis::fixed::Polynomial,
-        core::{Approximator, Parameterised, Embedding},
+        core::*,
         transforms::Logistic,
     };
     use super::TransformedLFA;

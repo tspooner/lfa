@@ -5,7 +5,7 @@ use crate::{
 
 /// Weight-`Features` evaluator with scalar `f64` output.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Parameterised)]
 pub struct ScalarFunction {
     pub weights: Vector<f64>,
 }
@@ -17,20 +17,6 @@ impl ScalarFunction {
 
     pub fn zeros(n_features: usize) -> Self {
         ScalarFunction::new(Vector::zeros((n_features,)))
-    }
-}
-
-impl Parameterised for ScalarFunction {
-    fn weights_view(&self) -> MatrixView<f64> {
-        let n_rows = self.weights.len();
-
-        self.weights.view().into_shape((n_rows, 1)).unwrap()
-    }
-
-    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> {
-        let n_rows = self.weights.len();
-
-        self.weights.view_mut().into_shape((n_rows, 1)).unwrap()
     }
 }
 
