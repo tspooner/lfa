@@ -5,7 +5,7 @@ use crate::{
 
 /// Weight-`Projection` evaluator with pair `[f64; 2]` output.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Parameterised)]
 pub struct PairFunction {
     pub weights: Matrix<f64>,
 }
@@ -18,12 +18,6 @@ impl PairFunction {
     pub fn zeros(n_features: usize) -> Self {
         PairFunction::new(Matrix::zeros((n_features, 2)))
     }
-}
-
-impl Parameterised for PairFunction {
-    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
-    fn weights_view(&self) -> MatrixView<f64> { self.weights.view() }
-    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.weights.view_mut() }
 }
 
 impl Approximator for PairFunction {

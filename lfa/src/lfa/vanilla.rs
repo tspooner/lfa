@@ -27,10 +27,10 @@ impl_builder!(TripleFunction => triple);
 
 /// Linear function approximator.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Parameterised)]
 pub struct LFA<P, E> {
     pub projector: P,
-    pub evaluator: E,
+    #[weights] pub evaluator: E,
 }
 
 impl<P, E> LFA<P, E> {
@@ -47,20 +47,9 @@ impl<P: Space> LFA<P, VectorFunction> {
     }
 }
 
-impl<P, E: Parameterised> Parameterised for LFA<P, E> {
-    fn weights(&self) -> Matrix<f64> { self.evaluator.weights() }
-
-    fn weights_view(&self) -> MatrixView<f64> { self.evaluator.weights_view() }
-
-    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.evaluator.weights_view_mut() }
-
-    fn weights_dim(&self) -> (usize, usize) { self.evaluator.weights_dim() }
-}
-
 impl<I: ?Sized, P, E> Embedding<I> for LFA<P, E>
 where
     P: Projector<I>,
-    E: Approximator,
 {
     fn n_features(&self) -> usize {
         self.projector.dim()

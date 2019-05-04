@@ -5,7 +5,7 @@ use crate::{
 
 /// Weight-`Projection` evaluator with vector `Vector<f64>` output.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Parameterised)]
 pub struct VectorFunction {
     pub weights: Matrix<f64>,
 }
@@ -20,12 +20,6 @@ impl VectorFunction {
             weights: Matrix::zeros((n_features, n_outputs)),
         }
     }
-}
-
-impl Parameterised for VectorFunction {
-    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
-    fn weights_view(&self) -> MatrixView<f64> { self.weights.view() }
-    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.weights.view_mut() }
 }
 
 impl Approximator for VectorFunction {

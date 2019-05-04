@@ -5,7 +5,7 @@ use crate::{
 
 /// Weight-`Projection` evaluator with triple `[f64; 3]` output.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Parameterised)]
 pub struct TripleFunction {
     pub weights: Matrix<f64>,
 }
@@ -18,12 +18,6 @@ impl TripleFunction {
     pub fn zeros(n_features: usize) -> Self {
         TripleFunction::new(Matrix::zeros((n_features, 3)))
     }
-}
-
-impl Parameterised for TripleFunction {
-    fn weights(&self) -> Matrix<f64> { self.weights.clone() }
-    fn weights_view(&self) -> MatrixView<f64> { self.weights.view() }
-    fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { self.weights.view_mut() }
 }
 
 impl Approximator for TripleFunction {
