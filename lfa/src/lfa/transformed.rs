@@ -49,7 +49,6 @@ impl<P: Space, T> TransformedLFA<P, VectorFunction, T> {
 impl<I: ?Sized, P, E, T> Embedding<I> for TransformedLFA<P, E, T>
 where
     P: Projector<I>,
-    E: Approximator,
 {
     fn n_features(&self) -> usize {
         self.projector.dim()

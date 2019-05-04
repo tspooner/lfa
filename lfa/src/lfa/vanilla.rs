@@ -50,7 +50,6 @@ impl<P: Space> LFA<P, VectorFunction> {
 impl<I: ?Sized, P, E> Embedding<I> for LFA<P, E>
 where
     P: Projector<I>,
-    E: Approximator,
 {
     fn n_features(&self) -> usize {
         self.projector.dim()
