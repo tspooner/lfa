@@ -1,78 +1,65 @@
 use crate::{
+    IndexT, ActivationT, Features,
     basis::Projector,
-    core::Features,
-    geometry::{
-        continuous::Interval,
-        product::LinearSpace,
-        BoundedSpace,
-        Card,
-        Space,
-        Vector,
-    },
     utils::cartesian_product,
+};
+use spaces::{
+    BoundedSpace,
+    Interval, ProductSpace,
 };
 
 mod cpfk;
 
 /// Polynomial basis projector.
 ///
-/// ## Linear regression on the interval [-1, 1]
+/// ## Linear regression
 /// ```
-/// use lfa::basis::{Projector, fixed::Polynomial};
+/// use lfa::basis::{Projector, Polynomial};
 ///
-/// let p = Polynomial::new(1, vec![(0.0, 1.0)]);
+/// let p = Polynomial::new(1, 1);
 ///
-/// assert_eq!(p.project(&vec![0.00]), vec![-1.0].into());
-/// assert_eq!(p.project(&vec![0.25]), vec![-0.5].into());
-/// assert_eq!(p.project(&vec![0.50]), vec![0.0].into());
-/// assert_eq!(p.project(&vec![0.75]), vec![0.5].into());
-/// assert_eq!(p.project(&vec![1.00]), vec![1.0].into());
+/// assert_eq!(p.project(&vec![-1.0]), vec![-1.0].into());
+/// assert_eq!(p.project(&vec![-0.5]), vec![-0.5].into());
+/// assert_eq!(p.project(&vec![0.0]), vec![0.0].into());
+/// assert_eq!(p.project(&vec![0.5]), vec![0.5].into());
+/// assert_eq!(p.project(&vec![1.0]), vec![1.0].into());
 /// ```
 ///
-/// ## Quadratic regression on the interval [-1, 1]
+/// ## Quadratic regression
 /// ```
-/// use lfa::basis::{Projector, fixed::Polynomial};
+/// use lfa::basis::{Projector, Polynomial};
 ///
-/// let p = Polynomial::new(2, vec![(0.0, 1.0)]);
+/// let p = Polynomial::new(1, 2);
 ///
-/// assert_eq!(p.project(&vec![0.00]), vec![-1.0, 1.0].into());
-/// assert_eq!(p.project(&vec![0.25]), vec![-0.5, 0.25].into());
-/// assert_eq!(p.project(&vec![0.50]), vec![0.0, 0.0].into());
-/// assert_eq!(p.project(&vec![0.75]), vec![0.5, 0.25].into());
+/// assert_eq!(p.project(&vec![-1.0]), vec![-1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![-0.5]), vec![-0.5, 0.25].into());
+/// assert_eq!(p.project(&vec![0.0]), vec![0.0, 0.0].into());
+/// assert_eq!(p.project(&vec![0.5]), vec![0.5, 0.25].into());
 /// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0].into());
 /// ```
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Polynomial {
     pub order: u8,
-    pub limits: Vec<(f64, f64)>,
     pub exponents: Vec<Vec<i32>>,
 }
 
 impl Polynomial {
-    pub fn new(order: u8, limits: Vec<(f64, f64)>) -> Self {
-        let exponents = Polynomial::make_exponents(order, limits.len());
+    pub fn new(dim: usize, order: u8) -> Self {
+        let exponents = Polynomial::make_exponents(dim, order);
 
         Polynomial {
             order: order,
-            limits: limits,
             exponents: exponents,
         }
     }
 
-    pub fn from_space(order: u8, input_space: LinearSpace<Interval>) -> Self {
-        Polynomial::new(
-            order,
-            input_space
-                .iter()
-                .map(|d| (d.inf().unwrap(), d.sup().unwrap()))
-                .collect(),
-        )
-    }
-
-    fn make_exponents(order: u8, dim: usize) -> Vec<Vec<i32>> {
-        let dcs = vec![(0..(order + 1)).map(|v| v as i32).collect::<Vec<i32>>(); dim];
-        let mut exponents = cartesian_product(&dcs);
+    fn make_exponents(dim: usize, order: u8) -> Vec<Vec<i32>> {
+        let dcs = vec![(0..=order).map(|v| v as i32).collect::<Vec<i32>>(); dim];
+        let mut exponents: Vec<Vec<i32>> = cartesian_product(&dcs)
+            .into_iter()
+            .filter(|exps| exps.iter().fold(0, |acc, e| acc + e) <= order as i32)
+            .collect();
 
         exponents.sort_by(|a, b| b.partial_cmp(a).unwrap());
         exponents.dedup();
@@ -81,45 +68,30 @@ impl Polynomial {
 
         exponents
     }
-}
 
-impl Space for Polynomial {
-    type Value = Features;
-
-    fn dim(&self) -> usize { self.exponents.len() }
-
-    fn card(&self) -> Card { Card::Infinite }
-}
-
-impl Projector<[f64]> for Polynomial {
-    fn project(&self, input: &[f64]) -> Features {
-        let scaled_state = input
-            .iter()
-            .enumerate()
-            .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
-            .map(|v| 2.0 * v - 1.0)
-            .collect::<Vec<f64>>();
-
-        Features::Dense(
-            self.exponents
-                .iter()
-                .map(|exps| {
-                    scaled_state
-                        .iter()
-                        .zip(exps)
-                        .map(|(v, e)| v.powi(*e))
-                        .product()
-                })
-                .collect(),
-        )
+    fn compute_feature(&self, ss: &[f64], exps: &[i32]) -> f64 {
+        ss.iter().zip(exps).map(|(v, e)| v.powi(*e)).product()
     }
 }
 
-impl_array_proxies!(Polynomial; f64);
+impl Projector for Polynomial {
+    fn n_features(&self) -> usize { self.exponents.len() }
+
+    fn project_ith(&self, input: &[f64], i: IndexT) -> Option<ActivationT> {
+        Some(self.compute_feature(input, &self.exponents[i]))
+    }
+
+    fn project(&self, input: &[f64]) -> Features {
+        self.exponents
+            .iter()
+            .map(|exps| self.compute_feature(input, exps))
+            .collect()
+    }
+}
 
 /// Chebyshev polynomial basis projector.
-#[cfg_attr(feature = "serialize", derive(Serialize))]
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct Chebyshev {
     pub order: u8,
     pub limits: Vec<(f64, f64)>,
@@ -143,7 +115,7 @@ impl Chebyshev {
         }
     }
 
-    pub fn from_space(order: u8, input_space: LinearSpace<Interval>) -> Self {
+    pub fn from_space(order: u8, input_space: ProductSpace<Interval>) -> Self {
         Chebyshev::new(
             order,
             input_space
@@ -154,8 +126,11 @@ impl Chebyshev {
     }
 
     fn make_polynomials(order: u8, dim: usize) -> Vec<Vec<fn(f64) -> f64>> {
-        let dcs = vec![(0..(order + 1)).collect::<Vec<u8>>(); dim];
-        let mut coefficients = cartesian_product(&dcs);
+        let dcs = vec![(0..=order).collect::<Vec<u8>>(); dim];
+        let mut coefficients: Vec<Vec<u8>> = cartesian_product(&dcs)
+            .into_iter()
+            .filter(|cs| cs.iter().fold(0, |acc, c| acc + c) <= order)
+            .collect();
 
         coefficients.sort_by(|a, b| a.partial_cmp(b).unwrap());
         coefficients.dedup();
@@ -184,35 +159,40 @@ impl Chebyshev {
             })
             .collect()
     }
-}
 
-impl Space for Chebyshev {
-    type Value = Features;
-
-    fn dim(&self) -> usize { self.polynomials.len() }
-
-    fn card(&self) -> Card { Card::Infinite }
-}
-
-impl Projector<[f64]> for Chebyshev {
-    fn project(&self, input: &[f64]) -> Features {
-        let scaled_state = input
+    fn rescale_input(&self, input: &[f64]) -> Vec<f64> {
+        input
             .iter()
             .enumerate()
-            .map(|(i, v)| (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0))
-            .map(|v| 2.0 * v - 1.0)
-            .collect::<Vec<f64>>();
+            .map(|(i, v)| {
+                let v = (v - self.limits[i].0) / (self.limits[i].1 - self.limits[i].0);
 
-        Features::Dense(
-            self.polynomials
-                .iter()
-                .map(|ps| scaled_state.iter().zip(ps).map(|(v, f)| f(*v)).product())
-                .collect(),
-        )
+                2.0 * v - 1.0
+            })
+            .collect::<Vec<f64>>()
+    }
+
+    fn compute_feature(&self, ss: &[f64], ps: &[fn(f64) -> f64]) -> f64 {
+        ss.iter().zip(ps).map(|(v, f)| f(*v)).product()
     }
 }
 
-impl_array_proxies!(Chebyshev; f64);
+impl Projector for Chebyshev {
+    fn n_features(&self) -> usize { self.polynomials.len() }
+
+    fn project_ith(&self, input: &[f64], i: IndexT) -> Option<ActivationT> {
+        Some(self.compute_feature(&self.rescale_input(input), &self.polynomials[i]))
+    }
+
+    fn project(&self, input: &[f64]) -> Features {
+        let scaled_state = self.rescale_input(input);
+
+        self.polynomials
+            .iter()
+            .map(|ps| self.compute_feature(&scaled_state, ps))
+            .collect()
+    }
+}
 
 #[cfg(feature = "serialize")] use serde::{
     Deserialize,

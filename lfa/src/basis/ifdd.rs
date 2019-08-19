@@ -1,7 +1,9 @@
+extern crate itertools;
+
 use crate::{
     basis::Projector,
     core::*,
-    geometry::{Card, Space, Vector},
+    geometry::Vector,
 };
 use itertools::Itertools;
 use std::{
@@ -83,7 +85,7 @@ pub struct IFDD<P> {
     discovery_threshold: f64,
 }
 
-impl<P: Space> IFDD<P> {
+impl<P> IFDD<P> {
     pub fn new(base_projector: P, discovery_threshold: f64) -> Self {
         let initial_dim: usize = base_projector.dim();
         let mut base_features: Vec<Feature> = (0..initial_dim)
@@ -185,15 +187,11 @@ impl<P> IFDD<P> {
     }
 }
 
-impl<P: Space> Space for IFDD<P> {
-    type Value = Features;
-
-    fn dim(&self) -> usize { self.features.len() }
-
-    fn card(&self) -> Card { unimplemented!() }
-}
-
 impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
+    fn n_features(&self) -> usize {
+        self.features.len()
+    }
+
     fn project(&self, input: &I) -> Features {
         let n_base = self.base.dim();
         let n_total = self.dim();

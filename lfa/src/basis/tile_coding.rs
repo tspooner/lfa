@@ -1,8 +1,4 @@
-use crate::{
-    basis::Projector,
-    core::Features,
-    geometry::{Card, Space, Vector},
-};
+use crate::{IndexT, ActivationT, Features, basis::Projector};
 use std::hash::{BuildHasher, Hasher};
 
 #[inline]
@@ -14,14 +10,14 @@ fn bin_state(input: &[f64], n_tilings: usize) -> Vec<isize> {
 }
 
 #[inline]
-fn hash_state<H: Hasher>(
+fn hash_state<'a, H: Hasher + 'a>(
     mut hasher: H,
-    state: &[isize],
+    state: &'a [isize],
     n_tilings: usize,
     memory_size: usize,
-) -> Vec<usize>
+) -> impl Iterator<Item = usize> + 'a
 {
-    (0..n_tilings).map(|t| {
+    (0..n_tilings).map(move |t| {
         let t = t as isize;
         let tx2 = t * 2;
 
@@ -35,7 +31,6 @@ fn hash_state<H: Hasher>(
 
         hasher.finish() as usize % memory_size
     })
-    .collect()
 }
 
 /// Generalised tile coding scheme with hashing.
@@ -57,45 +52,49 @@ impl<H: BuildHasher> TileCoding<H> {
     }
 }
 
-impl<H> Space for TileCoding<H> {
-    type Value = Features;
+impl<H: BuildHasher> Projector for TileCoding<H> {
+    fn n_features(&self) -> usize { self.memory_size }
 
-    fn dim(&self) -> usize { self.memory_size }
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
+        if index >= self.memory_size {
+            None
+        } else {
+            let state = bin_state(input, self.n_tilings);
+            let mut hash = hash_state(
+                self.hasher_builder.build_hasher(),
+                &state,
+                self.n_tilings,
+                self.memory_size
+            );
 
-    fn card(&self) -> Card { unimplemented!() }
-}
+            if hash.any(|f| index == f) { Some(1.0) } else { None }
+        }
+    }
 
-impl<H: BuildHasher> Projector<[f64]> for TileCoding<H> {
     fn project(&self, input: &[f64]) -> Features {
         let state = bin_state(input, self.n_tilings);
-        let hasher = self.hasher_builder.build_hasher();
+        let hash = hash_state(
+            self.hasher_builder.build_hasher(),
+            &state,
+            self.n_tilings,
+            self.memory_size
+        );
 
-        hash_state(hasher, &state, self.n_tilings, self.memory_size).into()
-    }
-}
-
-impl<H: BuildHasher> Projector<Vec<f64>> for TileCoding<H> {
-    fn project(&self, input: &Vec<f64>) -> Features { Projector::<[f64]>::project(self, &input) }
-}
-
-impl<H: BuildHasher> Projector<Vector<f64>> for TileCoding<H> {
-    fn project(&self, input: &Vector<f64>) -> Features {
-        Projector::<[f64]>::project(self, input.as_slice().unwrap())
+        Features::Sparse(self.memory_size, hash.map(|i| (i, 1.0)).collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use quickcheck::quickcheck;
 
     #[test]
     fn test_bin_state() {
-        fn prop_output(state: f64, n_tilings: usize) -> bool {
-            bin_state(&[state], n_tilings)[0] == (state * n_tilings as f64).floor() as isize
+        quickcheck! {
+            fn prop_output(state: f64, n_tilings: usize) -> bool {
+                bin_state(&[state], n_tilings)[0] == (state * n_tilings as f64).floor() as isize
+            }
         }
-
-        quickcheck(prop_output as fn(f64, usize) -> bool);
 
         assert_eq!(bin_state(&[0.0, 0.0], 16), vec![0, 0]);
         assert_eq!(bin_state(&[0.99, 0.99], 16), vec![15, 15]);
