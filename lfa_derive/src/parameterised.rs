@@ -54,13 +54,13 @@ impl ToTokens for Body {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if let Some(ref weights_fn) = self.weights {
             tokens.extend(iter::once(quote! {
-                fn weights(&self) -> Matrix<f64> { #weights_fn }
+                fn weights(&self) -> Weights { #weights_fn }
             }));
         }
 
         if let Some(ref weights_dim_fn) = self.weights_dim {
             tokens.extend(iter::once(quote! {
-                fn weights_dim(&self) -> (usize, usize) { #weights_dim_fn }
+                fn weights_dim(&self) -> [usize; 2] { #weights_dim_fn }
             }));
         }
 
@@ -68,15 +68,15 @@ impl ToTokens for Body {
         let weights_view_mut_fn = &self.weights_view_mut;
 
         tokens.extend(iter::once(quote! {
-            fn weights_view(&self) -> MatrixView<f64> { #weights_view_fn }
+            fn weights_view(&self) -> WeightsView { #weights_view_fn }
         }).chain(iter::once(quote! {
-            fn weights_view_mut(&mut self) -> MatrixViewMut<f64> { #weights_view_mut_fn }
+            fn weights_view_mut(&mut self) -> WeightsViewMut { #weights_view_mut_fn }
         })));
     }
 }
 
 struct WeightsField<'a, I: ToTokens> {
-    pub accessor: I,
+    pub ident: I,
     pub field: &'a Field,
 }
 
@@ -100,6 +100,7 @@ pub fn expand_derive_parameterised(ast: &syn::DeriveInput) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     TokenStream::from(quote! {
+        #[automatically_derived]
         impl #impl_generics Parameterised for #name #ty_generics #where_clause { #body }
     })
 }
@@ -120,7 +121,7 @@ fn parameterised_struct_impl(ds: &DataStruct) -> Implementation {
             .enumerate()
             .filter(|(_, f)| has_weight_attribute(f))
             .map(|(i, f)| WeightsField {
-                accessor: f.ident.clone().map(|i| quote! { #i }).unwrap_or(quote! { #i }),
+                ident: f.ident.clone().map(|i| quote! { #i }).unwrap_or(quote! { #i }),
                 field: f,
             })
             .collect();
@@ -132,7 +133,7 @@ fn parameterised_struct_impl(ds: &DataStruct) -> Implementation {
             }).expect("Couldn't infer weights field, consider annotating with #[weights].");
 
             parameterised_wf_impl(WeightsField {
-                accessor: iwf.ident.clone().map(|i| quote! { #i }).unwrap_or(quote! { #index }),
+                ident: iwf.ident.clone().map(|i| quote! { #i }).unwrap_or(quote! { #index }),
                 field: iwf,
             })
         } else if annotated_fields.len() == 1 {
@@ -145,11 +146,11 @@ fn parameterised_struct_impl(ds: &DataStruct) -> Implementation {
     } else if n_fields == 1 {
         match ds.fields {
             Fields::Unnamed(ref fs) => parameterised_wf_impl(WeightsField {
-                accessor: quote!{ 0 },
+                ident: quote!{ 0 },
                 field: &fs.unnamed[0],
             }),
             Fields::Named(ref fs) => parameterised_wf_impl(WeightsField {
-                accessor: fs.named[0].ident.clone(),
+                ident: fs.named[0].ident.clone(),
                 field: &fs.named[0],
             }),
             _ => unreachable!(),
@@ -160,55 +161,55 @@ fn parameterised_struct_impl(ds: &DataStruct) -> Implementation {
 }
 
 fn parameterised_wf_impl<I: ToTokens>(wf: WeightsField<I>) -> Implementation {
-    let accessor = &wf.accessor;
+    let ident = &wf.ident;
     let type_ident = wf.type_ident();
 
     match type_ident.to_string().as_ref() {
         "Vec" => Implementation::concrete(Body {
             weights: Some(quote! {
-                let n_rows = self.#accessor.len();
+                let n_rows = self.#ident.len();
 
-                Matrix::from_shape_vec((n_rows, 1), self.#accessor.clone()).unwrap()
+                Weights::from_shape_vec((n_rows, 1), self.#ident.clone()).unwrap()
             }),
-            weights_dim: Some(quote! { (self.#accessor.len(), 1) }),
+            weights_dim: Some(quote! { [self.#ident.len(), 1] }),
             weights_view: quote! {
-                let n_rows = self.#accessor.len();
+                let n_rows = self.#ident.len();
 
-                MatrixView::from_shape((n_rows, 1), &self.#accessor).unwrap()
+                WeightsView::from_shape((n_rows, 1), &self.#ident).unwrap()
             },
             weights_view_mut: quote! {
-                let n_rows = self.#accessor.len();
+                let n_rows = self.#ident.len();
 
-                MatrixViewMut::from_shape((n_rows, 1), &mut self.#accessor).unwrap()
+                WeightsViewMut::from_shape((n_rows, 1), &mut self.#ident).unwrap()
             },
         }),
-        "Vector" => Implementation::concrete(Body {
+        "Array1" => Implementation::concrete(Body {
             weights: None,
-            weights_dim: Some(quote! { (self.#accessor.dim(), 1) }),
+            weights_dim: Some(quote! { [self.#ident.len(), 1] }),
             weights_view: quote! {
-                let n_rows = self.#accessor.len();
+                let n_rows = self.#ident.len();
 
-                self.#accessor.view().into_shape((n_rows, 1)).unwrap()
+                self.#ident.view().into_shape((n_rows, 1)).unwrap()
             },
             weights_view_mut: quote! {
-                let n_rows = self.#accessor.len();
+                let n_rows = self.#ident.len();
 
-                self.#accessor.view_mut().into_shape((n_rows, 1)).unwrap()
+                self.#ident.view_mut().into_shape((n_rows, 1)).unwrap()
             },
         }),
-        "Matrix" => Implementation::concrete(Body {
-            weights: Some(quote! { self.#accessor.clone() }),
-            weights_dim: Some(quote! { self.#accessor.dim() }),
-            weights_view: quote! { self.#accessor.view() },
-            weights_view_mut: quote! { self.#accessor.view_mut() },
+        "Weights" | "Array2" => Implementation::concrete(Body {
+            weights: Some(quote! { self.#ident.clone() }),
+            weights_dim: Some(quote! { let (r, c) = self.#ident.dim(); [r, c] }),
+            weights_view: quote! { self.#ident.view() },
+            weights_view_mut: quote! { self.#ident.view_mut() },
         }),
         _ => Implementation::with_generics(
             vec![wf.field.ty.clone()],
             Body {
-                weights: Some(quote! { self.#accessor.weights() }),
-                weights_dim: Some(quote! { self.#accessor.weights_dim() }),
-                weights_view: quote! { self.#accessor.weights_view() },
-                weights_view_mut: quote! { self.#accessor.weights_view_mut() },
+                weights: Some(quote! { self.#ident.weights() }),
+                weights_dim: Some(quote! { self.#ident.weights_dim() }),
+                weights_view: quote! { self.#ident.weights_view() },
+                weights_view_mut: quote! { self.#ident.weights_view_mut() },
             }
         )
     }
@@ -218,7 +219,7 @@ fn has_weight_attribute(f: &Field) -> bool {
     f.attrs.iter().any(|a| {
         a.parse_meta().map(|meta| {
             match meta {
-                Meta::Word(ref ident) if ident.to_string() == WEIGHTS => true,
+                Meta::Path(ref path) => path.is_ident(WEIGHTS),
                 _ => false,
             }
         }).unwrap_or(false)
