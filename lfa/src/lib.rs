@@ -28,7 +28,4 @@ pub mod core;
 pub mod eval;
 #[macro_use]
 pub mod basis;
-pub mod transforms;
-pub mod composition;
 
-import_all!(lfa);
