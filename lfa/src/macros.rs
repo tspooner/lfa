@@ -11,3 +11,12 @@ macro_rules! import_all {
         pub use self::$module::*;
     };
 }
+
+#[cfg(test)]
+macro_rules! assert_features {
+    ($projector:ident +- $tol:literal [$($input:expr => $output:expr),+]) => {{
+        $(assert!($crate::utils::compare_floats(
+            $projector.project(&$input).expanded().into_raw_vec(), $output, $tol,
+        ));)+
+    }}
+}
