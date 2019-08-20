@@ -31,8 +31,8 @@ impl Approximator for ScalarFunction {
         Ok(features.dot(&self.weights.view()))
     }
 
-    fn update(&mut self, features: &Features, error: Self::Output) -> UpdateResult<()> {
-        Ok(features.scaled_addto(error, &mut self.weights.view_mut()))
+    fn update_with<O: crate::sgd::Optimiser>(&mut self, opt: &mut O, f: &Features, e: f64) -> UpdateResult<()> {
+        opt.step(&mut self.weights.view_mut(), f, e)
     }
 }
 
@@ -43,6 +43,7 @@ mod tests {
     use crate::{
         Approximator,
         basis::{Projector, Fourier, TileCoding},
+        sgd::SGD,
     };
     use std::hash::BuildHasherDefault;
     use super::ScalarFunction;
@@ -52,14 +53,16 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let projector = TileCoding::new(SHBuilder::default(), 4, 100).normalise_l2();
+
         let mut fa = ScalarFunction::zeros(projector.n_features());
+        let mut opt = SGD(1.0);
 
         assert_eq!(fa.n_outputs(), 1);
         assert_eq!(fa.weights.len(), 100);
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = fa.update(&features, 50.0);
+        let _ = fa.update_with(&mut opt, &features, 50.0);
         let out = fa.evaluate(&features).unwrap();
 
         assert!((out - 50.0).abs() < 1e-6);
@@ -68,14 +71,16 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
+
         let mut fa = ScalarFunction::zeros(projector.n_features());
+        let mut opt = SGD(1.0);
 
         assert_eq!(fa.n_outputs(), 1);
         assert_eq!(fa.weights.len(), 3);
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = fa.update(&features, 50.0);
+        let _ = fa.update_with(&mut opt, &features, 50.0);
         let out = fa.evaluate(&features).unwrap();
 
         assert!((out - 50.0).abs() < 1e-6);
