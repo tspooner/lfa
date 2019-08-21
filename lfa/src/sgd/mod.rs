@@ -22,7 +22,8 @@ pub trait Optimiser<G = Features> {
 // }
 
 import_all!(vanilla);
-import_all!(momentum);
 import_all!(implicit);
 
 import_all!(adam);
+import_all!(adamax);
+import_all!(momentum);
