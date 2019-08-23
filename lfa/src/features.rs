@@ -47,6 +47,7 @@ macro_rules! apply_to_features {
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! apply_to_dense_or_sparse {
     ($call:ident => $features:expr) => {
         match $features {
@@ -276,7 +277,7 @@ impl Features {
     pub fn map_dense<T>(self, f: impl FnOnce(DenseT) -> T) -> Option<T> {
         apply_to_features!(self => activations, {
             Some(f(activations))
-        }; indices, {
+        }; _indices, {
             None
         })
     }
@@ -284,7 +285,7 @@ impl Features {
     /// Apply the function `f` to the features if the `Sparse` variant or
     /// return `None`.
     pub fn map_sparse<T>(self, f: impl FnOnce(SparseT) -> T) -> Option<T> {
-        apply_to_features!(self => activations, {
+        apply_to_features!(self => _activations, {
             None
         }; indices, {
             Some(f(indices))
@@ -306,7 +307,7 @@ impl Features {
         })
     }
 
-    pub fn merge(self, other: &Features, f: impl Fn(ActivationT, ActivationT) -> ActivationT) -> Features {
+    pub fn combine(self, other: &Features, f: impl Fn(ActivationT, ActivationT) -> ActivationT) -> Features {
         use Features::*;
 
         match self {

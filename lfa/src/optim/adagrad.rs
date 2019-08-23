@@ -1,6 +1,5 @@
 use ndarray::Array1;
 use super::*;
-use std::ops::MulAssign;
 
 const EPS: f64 = 1e-8;
 

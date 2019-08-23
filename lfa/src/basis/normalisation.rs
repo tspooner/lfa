@@ -64,7 +64,7 @@ impl<P: Projector> Projector for L1Normaliser<P> {
 
                     Some(activations[index] / z)
                 },
-                Features::Sparse(n, indices) => indices.get(&index).cloned().map(|f| {
+                Features::Sparse(_, indices) => indices.get(&index).cloned().map(|f| {
                     f / indices.iter().fold(0.0, |acc, (_, x)| acc + x.abs())
                 }),
             }
@@ -113,7 +113,7 @@ impl<P: Projector> Projector for L2Normaliser<P> {
 
                     Some(activations[index] / z)
                 },
-                Features::Sparse(n, indices) => indices.get(&index).cloned().map(|f| {
+                Features::Sparse(_, indices) => indices.get(&index).cloned().map(|f| {
                     f / indices.iter().fold(0.0, |acc, (_, x)| acc + x * x).sqrt()
                 }),
             }
@@ -162,7 +162,7 @@ impl<P: Projector> Projector for LinfNormaliser<P> {
 
                     Some(activations[index] / z)
                 },
-                Features::Sparse(n, indices) => indices.get(&index).cloned().map(|f| {
+                Features::Sparse(_, indices) => indices.get(&index).cloned().map(|f| {
                     f / indices.iter().fold(f64::NEG_INFINITY, |acc, (_, x)| acc.max(x.abs()))
                 }),
             }
