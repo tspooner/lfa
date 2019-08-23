@@ -31,7 +31,7 @@ impl Approximator for ScalarFunction {
         Ok(features.dot(&self.weights.view()))
     }
 
-    fn update_with<O: crate::sgd::Optimiser>(&mut self, opt: &mut O, f: &Features, e: f64) -> UpdateResult<()> {
+    fn update_with<O: crate::optim::Optimiser>(&mut self, opt: &mut O, f: &Features, e: f64) -> UpdateResult<()> {
         opt.step(&mut self.weights.view_mut(), f, e)
     }
 }
@@ -43,7 +43,7 @@ mod tests {
     use crate::{
         Approximator,
         basis::{Projector, Fourier, TileCoding},
-        sgd::SGD,
+        optim::SGD,
     };
     use std::hash::BuildHasherDefault;
     use super::ScalarFunction;

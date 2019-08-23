@@ -23,7 +23,7 @@ mod utils;
 
 #[macro_use]
 pub mod basis;
-pub mod sgd;
+pub mod optim;
 
 import_all!(error);
 import_all!(features);
@@ -64,10 +64,10 @@ pub trait Approximator: Parameterised {
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output>;
 
     fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
-        self.update_with(&mut sgd::SGD(1.0), features, errors)
+        self.update_with(&mut optim::SGD(1.0), features, errors)
     }
 
-    fn update_with<O: sgd::Optimiser>(&mut self, optimiser: &mut O, features: &Features, errors: Self::Output) -> UpdateResult<()>;
+    fn update_with<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, errors: Self::Output) -> UpdateResult<()>;
 }
 
 pub trait ScalarApproximator: Approximator<Output = f64> {}
@@ -108,12 +108,12 @@ pub trait VectorApproximator: Approximator<Output = Vec<f64>> {
     }
 
     fn update_index(&mut self, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
-        use crate::sgd::Optimiser;
+        use crate::optim::Optimiser;
 
-        sgd::SGD(1.0).step(&mut self.weights_view_mut().column_mut(index), features, update)
+        optim::SGD(1.0).step(&mut self.weights_view_mut().column_mut(index), features, update)
     }
 
-    fn update_index_with<O: sgd::Optimiser>(&mut self, opt: &mut O, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
+    fn update_index_with<O: optim::Optimiser>(&mut self, opt: &mut O, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
         opt.step(&mut self.weights_view_mut().column_mut(index), features, update)
     }
 }

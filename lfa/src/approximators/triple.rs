@@ -34,7 +34,7 @@ impl Approximator for TripleFunction {
         ])
     }
 
-    fn update_with<O: crate::sgd::Optimiser>(&mut self, opt: &mut O, f: &Features, es: [f64; 3]) -> UpdateResult<()> {
+    fn update_with<O: crate::optim::Optimiser>(&mut self, opt: &mut O, f: &Features, es: [f64; 3]) -> UpdateResult<()> {
         opt.step(&mut self.weights.column_mut(0), f, es[0])
             .and(opt.step(&mut self.weights.column_mut(1), f, es[1]))
             .and(opt.step(&mut self.weights.column_mut(2), f, es[2]))
@@ -48,7 +48,7 @@ mod tests {
     use crate::{
         Approximator,
         basis::{Projector, Fourier, TileCoding},
-        sgd::SGD,
+        optim::SGD,
     };
     use std::hash::BuildHasherDefault;
     use super::TripleFunction;
