@@ -75,4 +75,9 @@ impl Optimiser<Features> for AdaMax {
 
         Ok(())
     }
+
+    fn reset(&mut self) {
+        self.moment.fill(0.0);
+        self.inf_norm.fill(0.0);
+    }
 }

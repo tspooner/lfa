@@ -52,4 +52,8 @@ impl Optimiser<Features> for Adagrad {
 
         Ok(())
     }
+
+    fn reset(&mut self) {
+        self.accumulator.fill(0.0);
+    }
 }

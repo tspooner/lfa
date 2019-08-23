@@ -47,4 +47,8 @@ impl Optimiser<Features> for NAG {
             features.scaled_addto(lr, weights);
         })
     }
+
+    fn reset(&mut self) {
+        self.velocity.fill(0.0);
+    }
 }

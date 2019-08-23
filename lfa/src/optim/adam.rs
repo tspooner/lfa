@@ -79,4 +79,9 @@ impl Optimiser<Features> for Adam {
 
         Ok(())
     }
+
+    fn reset(&mut self) {
+        self.moment1.fill(0.0);
+        self.moment2.fill(0.0);
+    }
 }

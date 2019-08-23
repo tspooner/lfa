@@ -43,4 +43,8 @@ impl Optimiser<Features> for SGDMomentum {
 
         Ok(weights.add_assign(&self.velocity))
     }
+
+    fn reset(&mut self) {
+        self.velocity.fill(0.0);
+    }
 }

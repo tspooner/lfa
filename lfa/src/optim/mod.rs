@@ -18,7 +18,7 @@ pub trait Optimiser<G = Features> {
         samples.into_iter().map(|(g, e)| self.step(weights, g, *e)).collect()
     }
 
-    fn reset(&mut self) { unimplemented!() }
+    fn reset(&mut self) {}
 }
 
 import_all!(vanilla);
