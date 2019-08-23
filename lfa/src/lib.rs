@@ -23,6 +23,7 @@ mod utils;
 
 #[macro_use]
 pub mod basis;
+pub mod optim;
 
 import_all!(error);
 import_all!(features);
@@ -62,8 +63,11 @@ pub trait Approximator: Parameterised {
     /// Evaluate the approximator and return its value.
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output>;
 
-    /// Update the approximator's estimate for the given input.
-    fn update(&mut self, features: &Features, update: Self::Output) -> UpdateResult<()>;
+    fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
+        self.update_with(&mut optim::SGD(1.0), features, errors)
+    }
+
+    fn update_with<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, errors: Self::Output) -> UpdateResult<()>;
 }
 
 pub trait ScalarApproximator: Approximator<Output = f64> {}
@@ -104,9 +108,13 @@ pub trait VectorApproximator: Approximator<Output = Vec<f64>> {
     }
 
     fn update_index(&mut self, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
-        Ok(if update.abs() > 1e-7 {
-            features.scaled_addto(update, &mut self.weights_view_mut().column_mut(index))
-        })
+        use crate::optim::Optimiser;
+
+        optim::SGD(1.0).step(&mut self.weights_view_mut().column_mut(index), features, update)
+    }
+
+    fn update_index_with<O: optim::Optimiser>(&mut self, opt: &mut O, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
+        opt.step(&mut self.weights_view_mut().column_mut(index), features, update)
     }
 }
 

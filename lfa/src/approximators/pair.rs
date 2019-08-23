@@ -33,11 +33,9 @@ impl Approximator for PairFunction {
         ])
     }
 
-    fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
-        Ok({
-            features.scaled_addto(errors[0], &mut self.weights.column_mut(0));
-            features.scaled_addto(errors[1], &mut self.weights.column_mut(1));
-        })
+    fn update_with<O: crate::optim::Optimiser>(&mut self, opt: &mut O, f: &Features, es: [f64; 2]) -> UpdateResult<()> {
+        opt.step(&mut self.weights.column_mut(0), f, es[0])
+            .and(opt.step(&mut self.weights.column_mut(1), f, es[1]))
     }
 }
 
@@ -48,6 +46,7 @@ mod tests {
     use crate::{
         Approximator,
         basis::{Projector, Fourier, TileCoding},
+        optim::SGD,
     };
     use std::hash::BuildHasherDefault;
     use super::PairFunction;
@@ -57,15 +56,17 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let projector = TileCoding::new(SHBuilder::default(), 4, 100).normalise_l2();
-        let mut evaluator = PairFunction::zeros(projector.n_features());
 
-        assert_eq!(evaluator.n_outputs(), 2);
-        assert_eq!(evaluator.weights.len(), 200);
+        let mut fa = PairFunction::zeros(projector.n_features());
+        let mut opt = SGD(1.0);
+
+        assert_eq!(fa.n_outputs(), 2);
+        assert_eq!(fa.weights.len(), 200);
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, [20.0, 50.0]);
-        let out = evaluator.evaluate(&features).unwrap();
+        let _ = fa.update_with(&mut opt, &features, [20.0, 50.0]);
+        let out = fa.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);
@@ -74,15 +75,17 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
-        let mut evaluator = PairFunction::zeros(projector.n_features());
 
-        assert_eq!(evaluator.n_outputs(), 2);
-        assert_eq!(evaluator.weights.len(), 6);
+        let mut fa = PairFunction::zeros(projector.n_features());
+        let mut opt = SGD(1.0);
+
+        assert_eq!(fa.n_outputs(), 2);
+        assert_eq!(fa.weights.len(), 6);
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, [20.0, 50.0]);
-        let out = evaluator.evaluate(&features).unwrap();
+        let _ = fa.update_with(&mut opt, &features, [20.0, 50.0]);
+        let out = fa.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);

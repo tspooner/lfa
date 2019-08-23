@@ -348,6 +348,14 @@ impl Features {
         }
     }
 
+    pub fn fold(&self, init: f64, f: impl Fn(f64, &f64) -> f64) -> f64 {
+        apply_to_features!(self => ref activations, {
+            activations.iter().fold(init, f)
+        }; ref indices, {
+            indices.values().fold(init, f)
+        })
+    }
+
     pub fn addto(&self, weights: &mut ArrayViewMut1<ActivationT>) {
         apply_to_features!(self => ref activations, {
             weights.add_assign(activations)

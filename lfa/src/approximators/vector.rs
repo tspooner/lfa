@@ -28,16 +28,14 @@ impl Approximator for VectorFunction {
 
     fn n_outputs(&self) -> usize { self.weights.cols() }
 
-    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
-        Ok(features.matmul(&self.weights.view()).into_raw_vec())
+    fn evaluate(&self, f: &Features) -> EvaluationResult<Self::Output> {
+        Ok(f.matmul(&self.weights.view()).into_raw_vec())
     }
 
-    fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
-        Ok(for (c, e) in errors.into_iter().enumerate() {
-            if e.abs() > 1e-7 {
-                features.scaled_addto(e, &mut self.weights.column_mut(c))
-            }
-        })
+    fn update_with<O: crate::optim::Optimiser>(&mut self, opt: &mut O, f: &Features, es: Vec<f64>) -> UpdateResult<()> {
+        es.into_iter()
+            .zip(self.weights.gencolumns_mut().into_iter())
+            .fold(Ok(()), |acc, (e, mut c)| acc.and(opt.step(&mut c, f, e)))
     }
 }
 
@@ -48,6 +46,7 @@ mod tests {
     use crate::{
         Approximator,
         basis::{Projector, Fourier, TileCoding},
+        optim::SGD,
     };
     use std::hash::BuildHasherDefault;
     use super::VectorFunction;
@@ -57,14 +56,16 @@ mod tests {
     #[test]
     fn test_sparse_update_eval() {
         let projector = TileCoding::new(SHBuilder::default(), 4, 100).normalise_l2();
+
         let mut evaluator = VectorFunction::zeros(projector.n_features(), 2);
+        let mut opt = SGD(1.0);
 
         assert_eq!(evaluator.n_outputs(), 2);
         assert_eq!(evaluator.weights.len(), 200);
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, vec![20.0, 50.0]);
+        let _ = evaluator.update_with(&mut opt, &features, vec![20.0, 50.0]);
         let out = evaluator.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
@@ -74,15 +75,17 @@ mod tests {
     #[test]
     fn test_dense_update_eval() {
         let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
-        let mut evaluator = VectorFunction::zeros(projector.n_features(), 2);
 
-        assert_eq!(evaluator.n_outputs(), 2);
-        assert_eq!(evaluator.weights.len(), 6);
+        let mut fa = VectorFunction::zeros(projector.n_features(), 2);
+        let mut opt = SGD(1.0);
+
+        assert_eq!(fa.n_outputs(), 2);
+        assert_eq!(fa.weights.len(), 6);
 
         let features = projector.project(&vec![5.0]);
 
-        let _ = evaluator.update(&features, vec![20.0, 50.0]);
-        let out = evaluator.evaluate(&features).unwrap();
+        let _ = fa.update_with(&mut opt, &features, vec![20.0, 50.0]);
+        let out = fa.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);
