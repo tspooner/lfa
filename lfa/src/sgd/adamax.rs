@@ -32,7 +32,7 @@ impl Optimiser<Features> for AdaMax {
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
-        error: f64
+        loss: f64
     ) -> UpdateResult<()>
     {
         match features {
@@ -41,7 +41,7 @@ impl Optimiser<Features> for AdaMax {
                 let u = self.inf_norm.as_slice_memory_order_mut().unwrap();
 
                 for (i, a) in activations.indexed_iter() {
-                    let g = a * error;
+                    let g = a * loss;
 
                     let m_new = self.beta1 * m[i] + (1.0 - self.beta1) * g;
                     let u_new = (self.beta2 * u[i]).max(g.abs());
@@ -60,7 +60,7 @@ impl Optimiser<Features> for AdaMax {
                 let u = self.inf_norm.as_slice_memory_order_mut().unwrap();
 
                 for (&i, a) in activations.iter() {
-                    let g = a * error;
+                    let g = a * loss;
 
                     let m_new = m[i] + (1.0 - self.beta1) * g;
                     let u_new = u[i].max(g.abs());

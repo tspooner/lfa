@@ -1,24 +1,27 @@
 use ndarray::Array1;
 use super::*;
-use std::ops::{AddAssign, MulAssign};
+use std::ops::MulAssign;
 
-pub struct SGDMomentum {
+/// Nesterov's Accelerated Gradient descent
+pub struct NAG {
     momentum: f64,
     learning_rate: f64,
 
     velocity: Array1<f64>,
+    velocity_prev: Array1<f64>,
 }
 
-impl SGDMomentum {
+impl NAG {
     pub fn new(n_params: usize, momentum: f64, learning_rate: f64) -> Self {
-        SGDMomentum {
+        NAG {
             momentum, learning_rate,
             velocity: Array1::zeros(n_params),
+            velocity_prev: Array1::zeros(n_params),
         }
     }
 }
 
-impl Optimiser<Features> for SGDMomentum {
+impl Optimiser<Features> for NAG {
     fn step(
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
@@ -27,6 +30,8 @@ impl Optimiser<Features> for SGDMomentum {
     ) -> UpdateResult<()> {
         let momentum = self.momentum;
         let learning_rate = self.learning_rate;
+
+        ::std::mem::swap(&mut self.velocity, &mut self.velocity_prev);
 
         match features {
             Features::Dense(activations) => self.velocity.zip_mut_with(activations, |x, y| {
@@ -41,6 +46,9 @@ impl Optimiser<Features> for SGDMomentum {
             },
         }
 
-        Ok(weights.add_assign(&self.velocity))
+        Ok({
+            weights.scaled_add(momentum, &self.velocity);
+            features.scaled_addto(learning_rate, weights);
+        })
     }
 }

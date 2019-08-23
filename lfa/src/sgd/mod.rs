@@ -7,19 +7,19 @@ pub trait Optimiser<G = Features> {
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
         features: &G,
-        error: f64,
+        loss: f64,
     ) -> UpdateResult<()>;
+
+    fn step_batch(
+        &mut self,
+        weights: &mut ArrayViewMut1<f64>,
+        samples: &[(G, f64)],
+    ) -> UpdateResult<()> {
+        samples.into_iter().map(|(g, e)| self.step(weights, g, *e)).collect()
+    }
 
     fn reset(&mut self) { unimplemented!() }
 }
-
-// pub trait BatchOptimiser<G = Features>: Optimiser<G> {
-    // fn step_batch(
-        // &mut self,
-        // weights: &mut ArrayViewMut1<f64>,
-        // samples: &[(G, f64)],
-    // ) -> UpdateResult<()>;
-// }
 
 import_all!(vanilla);
 import_all!(implicit);
@@ -27,3 +27,4 @@ import_all!(implicit);
 import_all!(adam);
 import_all!(adamax);
 import_all!(momentum);
+import_all!(nesterov);

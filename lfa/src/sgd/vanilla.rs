@@ -7,14 +7,12 @@ impl Optimiser<Features> for SGD {
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
-        error: f64
+        loss: f64
     ) -> UpdateResult<()>
     {
-        Ok(features.scaled_addto(self.0 * error, weights))
+        Ok(features.scaled_addto(self.0 * loss, weights))
     }
-}
 
-// impl BatchOptimiser<Features> for SGD {
     // fn step_batch(
         // &mut self,
         // weights: &mut ArrayViewMut1<f64>,
@@ -30,4 +28,4 @@ impl Optimiser<Features> for SGD {
 
         // Ok(update.addto(&mut weights))
     // }
-// }
+}

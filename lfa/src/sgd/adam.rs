@@ -4,6 +4,9 @@ use std::ops::MulAssign;
 
 const EPS: f64 = 1e-8;
 
+/// Adaptive moment estimation gradient descent
+///
+/// https://arxiv.org/pdf/1412.6980.pdf
 pub struct Adam {
     beta1: f64,
     beta2: f64,
@@ -29,7 +32,7 @@ impl Optimiser<Features> for Adam {
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
-        error: f64
+        loss: f64
     ) -> UpdateResult<()>
     {
         match features {
@@ -38,7 +41,7 @@ impl Optimiser<Features> for Adam {
                 let m2 = self.moment2.as_slice_memory_order_mut().unwrap();
 
                 for (i, a) in activations.indexed_iter() {
-                    let g = a * error;
+                    let g = a * loss;
 
                     let m1_new = self.beta1 * m1[i] + (1.0 - self.beta1) * g;
                     let m2_new = self.beta2 * m2[i] + (1.0 - self.beta2) * g * g;
@@ -60,7 +63,7 @@ impl Optimiser<Features> for Adam {
                 let m2 = self.moment2.as_slice_memory_order_mut().unwrap();
 
                 for (&i, a) in activations.iter() {
-                    let g = a * error;
+                    let g = a * loss;
 
                     let m1_new = m1[i] + (1.0 - self.beta1) * g;
                     let m2_new = m2[i] + (1.0 - self.beta2) * g * g;
