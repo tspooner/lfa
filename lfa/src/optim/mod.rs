@@ -26,5 +26,6 @@ import_all!(implicit);
 
 import_all!(adam);
 import_all!(adamax);
+import_all!(adagrad);
 import_all!(momentum);
 import_all!(nesterov);

@@ -25,18 +25,18 @@ impl Optimiser<Features> for SGDMomentum {
         features: &Features,
         loss: f64
     ) -> UpdateResult<()> {
-        let momentum = self.momentum;
-        let learning_rate = self.learning_rate;
+        let m = self.momentum;
+        let lr = self.learning_rate;
 
         match features {
             Features::Dense(activations) => self.velocity.zip_mut_with(activations, |x, y| {
-                *x = momentum * *x + learning_rate * y * loss
+                *x = m * *x + lr * y * loss
             }),
             Features::Sparse(_, activations) => {
-                self.velocity.mul_assign(momentum);
+                self.velocity.mul_assign(m);
 
                 for (i, a) in activations.iter() {
-                    self.velocity[*i] += learning_rate * a * loss;
+                    self.velocity[*i] += lr * a * loss;
                 }
             },
         }

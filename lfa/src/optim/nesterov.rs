@@ -8,7 +8,6 @@ pub struct NAG {
     learning_rate: f64,
 
     velocity: Array1<f64>,
-    velocity_prev: Array1<f64>,
 }
 
 impl NAG {
@@ -16,7 +15,6 @@ impl NAG {
         NAG {
             momentum, learning_rate,
             velocity: Array1::zeros(n_params),
-            velocity_prev: Array1::zeros(n_params),
         }
     }
 }
@@ -28,27 +26,25 @@ impl Optimiser<Features> for NAG {
         features: &Features,
         loss: f64
     ) -> UpdateResult<()> {
-        let momentum = self.momentum;
-        let learning_rate = self.learning_rate;
-
-        ::std::mem::swap(&mut self.velocity, &mut self.velocity_prev);
+        let m = self.momentum;
+        let lr = self.learning_rate;
 
         match features {
             Features::Dense(activations) => self.velocity.zip_mut_with(activations, |x, y| {
-                *x = momentum * *x + learning_rate * y * loss
+                *x = m * *x + lr * y * loss
             }),
             Features::Sparse(_, activations) => {
-                self.velocity.mul_assign(momentum);
+                self.velocity.mul_assign(m);
 
                 for (i, a) in activations.iter() {
-                    self.velocity[*i] += learning_rate * a * loss;
+                    self.velocity[*i] += lr * a * loss;
                 }
             },
         }
 
         Ok({
-            weights.scaled_add(momentum, &self.velocity);
-            features.scaled_addto(learning_rate, weights);
+            weights.scaled_add(m, &self.velocity);
+            features.scaled_addto(lr, weights);
         })
     }
 }

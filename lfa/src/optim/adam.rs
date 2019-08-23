@@ -51,8 +51,7 @@ impl Optimiser<Features> for Adam {
 
                     m1[i] = m1_new;
                     m2[i] = m2_new;
-                    weights[i] +=
-                        self.learning_rate * m1_unbiased / (m2_unbiased.sqrt() + EPS);
+                    weights[i] += self.learning_rate * m1_unbiased / (m2_unbiased.sqrt() + EPS);
                 }
             },
             Features::Sparse(_, activations) => {
@@ -73,8 +72,7 @@ impl Optimiser<Features> for Adam {
 
                     m1[i] = m1_new;
                     m2[i] = m2_new;
-                    weights[i] +=
-                        self.learning_rate * m1_unbiased / (m2_unbiased.sqrt() + EPS);
+                    weights[i] += self.learning_rate * m1_unbiased / (m2_unbiased.sqrt() + EPS);
                 }
             },
         }
