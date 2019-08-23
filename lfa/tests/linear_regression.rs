@@ -7,7 +7,7 @@ use rand_distr::Uniform;
 use self::lfa::{
     Approximator, Parameterised, ScalarFunction, Features,
     basis::{Projector, Polynomial},
-    sgd,
+    optim,
 };
 
 #[test]
@@ -18,7 +18,7 @@ fn scalar_sgd() {
     let basis = Polynomial::new(1, 1).with_constant();
 
     let mut fa = ScalarFunction::zeros(basis.n_features());
-    let mut opt = sgd::SGD(1.0);
+    let mut opt = optim::SGD(1.0);
 
     for x in thread_rng().sample_iter(&Uniform::new_inclusive(-1.0, 1.0)).take(1000) {
         let y_exp = M*x + C;
