@@ -2,11 +2,13 @@ use ndarray::Array1;
 use super::*;
 use std::ops::MulAssign;
 
-const EPS: f64 = 1e-8;
+const EPS: f64 = 1e-7;
 
 /// Adaptive moment estimation gradient descent (with infinity norm)
 ///
 /// https://arxiv.org/pdf/1412.6980.pdf
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct AdaMax {
     beta1: f64,
     beta2: f64,

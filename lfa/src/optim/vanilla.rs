@@ -1,5 +1,7 @@
 use super::*;
 
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct SGD(pub f64);
 
 impl Optimiser<Features> for SGD {

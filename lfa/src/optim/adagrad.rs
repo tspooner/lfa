@@ -1,8 +1,10 @@
 use ndarray::Array1;
 use super::*;
 
-const EPS: f64 = 1e-8;
+const EPS: f64 = 1e-7;
 
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Adagrad {
     learning_rate: f64,
 

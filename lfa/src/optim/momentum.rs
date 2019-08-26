@@ -2,6 +2,8 @@ use ndarray::Array1;
 use super::*;
 use std::ops::{AddAssign, MulAssign};
 
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct SGDMomentum {
     momentum: f64,
     learning_rate: f64,
