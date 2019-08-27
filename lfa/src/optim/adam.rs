@@ -11,20 +11,30 @@ const EPS: f64 = 1e-7;
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Adam {
     beta1: f64,
+    beta1_prod: f64,
+
     beta2: f64,
+    beta2_prod: f64,
+
     learning_rate: f64,
 
-    moment1: Array1<f64>,
-    moment2: Array1<f64>,
+    exp_avg: Array1<f64>,
+    exp_avg_sq: Array1<f64>,
 }
 
 impl Adam {
     pub fn new(n_params: usize, learning_rate: f64, beta1: f64, beta2: f64) -> Self {
         Adam {
-            beta1, beta2, learning_rate,
+            beta1,
+            beta1_prod: beta1,
 
-            moment1: Array1::zeros(n_params),
-            moment2: Array1::zeros(n_params),
+            beta2,
+            beta2_prod: beta2,
+
+            learning_rate,
+
+            exp_avg: Array1::zeros(n_params),
+            exp_avg_sq: Array1::zeros(n_params),
         }
     }
 }
@@ -37,10 +47,13 @@ impl Optimiser<Features> for Adam {
         loss: f64
     ) -> UpdateResult<()>
     {
+        self.beta1_prod *= self.beta1;
+        self.beta2_prod *= self.beta2;
+
         match features {
             Features::Dense(activations) => {
-                let m1 = self.moment1.as_slice_memory_order_mut().unwrap();
-                let m2 = self.moment2.as_slice_memory_order_mut().unwrap();
+                let m1 = self.exp_avg.as_slice_memory_order_mut().unwrap();
+                let m2 = self.exp_avg_sq.as_slice_memory_order_mut().unwrap();
 
                 for (i, a) in activations.indexed_iter() {
                     let g = a * loss;
@@ -48,8 +61,8 @@ impl Optimiser<Features> for Adam {
                     let m1_new = self.beta1 * m1[i] + (1.0 - self.beta1) * g;
                     let m2_new = self.beta2 * m2[i] + (1.0 - self.beta2) * g * g;
 
-                    let m1_unbiased = m1_new / (1.0 - self.beta1);
-                    let m2_unbiased = m2_new / (1.0 - self.beta2);
+                    let m1_unbiased = m1_new / (1.0 - self.beta1_prod);
+                    let m2_unbiased = m2_new / (1.0 - self.beta2_prod);
 
                     m1[i] = m1_new;
                     m2[i] = m2_new;
@@ -57,11 +70,11 @@ impl Optimiser<Features> for Adam {
                 }
             },
             Features::Sparse(_, activations) => {
-                self.moment1.mul_assign(self.beta1);
-                self.moment2.mul_assign(self.beta2);
+                self.exp_avg.mul_assign(self.beta1);
+                self.exp_avg_sq.mul_assign(self.beta2);
 
-                let m1 = self.moment1.as_slice_memory_order_mut().unwrap();
-                let m2 = self.moment2.as_slice_memory_order_mut().unwrap();
+                let m1 = self.exp_avg.as_slice_memory_order_mut().unwrap();
+                let m2 = self.exp_avg_sq.as_slice_memory_order_mut().unwrap();
 
                 for (&i, a) in activations.iter() {
                     let g = a * loss;
@@ -69,8 +82,8 @@ impl Optimiser<Features> for Adam {
                     let m1_new = m1[i] + (1.0 - self.beta1) * g;
                     let m2_new = m2[i] + (1.0 - self.beta2) * g * g;
 
-                    let m1_unbiased = m1_new / (1.0 - self.beta1);
-                    let m2_unbiased = m2_new / (1.0 - self.beta2);
+                    let m1_unbiased = m1_new / (1.0 - self.beta1_prod);
+                    let m2_unbiased = m2_new / (1.0 - self.beta2_prod);
 
                     m1[i] = m1_new;
                     m2[i] = m2_new;
@@ -83,7 +96,7 @@ impl Optimiser<Features> for Adam {
     }
 
     fn reset(&mut self) {
-        self.moment1.fill(0.0);
-        self.moment2.fill(0.0);
+        self.exp_avg.fill(0.0);
+        self.exp_avg_sq.fill(0.0);
     }
 }

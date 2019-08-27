@@ -11,20 +11,28 @@ const EPS: f64 = 1e-7;
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct AdaMax {
     beta1: f64,
+    beta1_prod: f64,
+
     beta2: f64,
+
     learning_rate: f64,
 
-    moment: Array1<f64>,
-    inf_norm: Array1<f64>,
+    exp_avg: Array1<f64>,
+    exp_inf: Array1<f64>,
 }
 
 impl AdaMax {
     pub fn new(n_params: usize, learning_rate: f64, beta1: f64, beta2: f64) -> Self {
         AdaMax {
-            beta1, beta2, learning_rate,
+            beta1,
+            beta1_prod: beta1,
 
-            moment: Array1::zeros(n_params),
-            inf_norm: Array1::zeros(n_params),
+            beta2,
+
+            learning_rate,
+
+            exp_avg: Array1::zeros(n_params),
+            exp_inf: Array1::zeros(n_params),
         }
     }
 }
@@ -37,17 +45,19 @@ impl Optimiser<Features> for AdaMax {
         loss: f64
     ) -> UpdateResult<()>
     {
+        self.beta1_prod *= self.beta1;
+
         match features {
             Features::Dense(activations) => {
-                let m = self.moment.as_slice_memory_order_mut().unwrap();
-                let u = self.inf_norm.as_slice_memory_order_mut().unwrap();
+                let m = self.exp_avg.as_slice_memory_order_mut().unwrap();
+                let u = self.exp_inf.as_slice_memory_order_mut().unwrap();
 
                 for (i, a) in activations.indexed_iter() {
                     let g = a * loss;
 
                     let m_new = self.beta1 * m[i] + (1.0 - self.beta1) * g;
                     let u_new = (self.beta2 * u[i]).max(g.abs());
-                    let m_unbiased = m_new / (1.0 - self.beta1);
+                    let m_unbiased = m_new / (1.0 - self.beta1_prod);
 
                     m[i] = m_new;
                     u[i] = u_new;
@@ -55,18 +65,18 @@ impl Optimiser<Features> for AdaMax {
                 }
             },
             Features::Sparse(_, activations) => {
-                self.moment.mul_assign(self.beta1);
-                self.inf_norm.mul_assign(self.beta2);
+                self.exp_avg.mul_assign(self.beta1);
+                self.exp_inf.mul_assign(self.beta2);
 
-                let m = self.moment.as_slice_memory_order_mut().unwrap();
-                let u = self.inf_norm.as_slice_memory_order_mut().unwrap();
+                let m = self.exp_avg.as_slice_memory_order_mut().unwrap();
+                let u = self.exp_inf.as_slice_memory_order_mut().unwrap();
 
                 for (&i, a) in activations.iter() {
                     let g = a * loss;
 
                     let m_new = m[i] + (1.0 - self.beta1) * g;
                     let u_new = u[i].max(g.abs());
-                    let m_unbiased = m_new / (1.0 - self.beta1);
+                    let m_unbiased = m_new / (1.0 - self.beta1_prod);
 
                     m[i] = m_new;
                     u[i] = u_new;
@@ -79,7 +89,7 @@ impl Optimiser<Features> for AdaMax {
     }
 
     fn reset(&mut self) {
-        self.moment.fill(0.0);
-        self.inf_norm.fill(0.0);
+        self.exp_avg.fill(0.0);
+        self.exp_inf.fill(0.0);
     }
 }
