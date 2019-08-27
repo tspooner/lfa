@@ -33,20 +33,24 @@ impl Optimiser<Features> for NAG {
 
         match features {
             Features::Dense(activations) => self.velocity.zip_mut_with(activations, |x, y| {
-                *x = m * *x + lr * y * loss
+                let g = y * loss;
+
+                *x = m * *x + g
             }),
             Features::Sparse(_, activations) => {
                 self.velocity.mul_assign(m);
 
                 for (i, a) in activations.iter() {
-                    self.velocity[*i] += lr * a * loss;
+                    let g = a * loss;
+
+                    self.velocity[*i] += g;
                 }
             },
         }
 
         Ok({
-            weights.scaled_add(m, &self.velocity);
-            features.scaled_addto(lr, weights);
+            weights.scaled_add(lr, &self.velocity);
+            features.scaled_addto(m * loss, weights);
         })
     }
 
