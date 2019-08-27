@@ -32,18 +32,18 @@ impl Optimiser<Features> for SGDMomentum {
 
         match features {
             Features::Dense(activations) => self.velocity.zip_mut_with(activations, |x, y| {
-                *x = m * *x + lr * y * loss
+                *x = m * *x + y * loss
             }),
             Features::Sparse(_, activations) => {
                 self.velocity.mul_assign(m);
 
                 for (i, a) in activations.iter() {
-                    self.velocity[*i] += lr * a * loss;
+                    self.velocity[*i] += a * loss;
                 }
             },
         }
 
-        Ok(weights.add_assign(&self.velocity))
+        Ok(weights.scaled_add(lr, &self.velocity))
     }
 
     fn reset(&mut self) {
