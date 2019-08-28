@@ -32,7 +32,7 @@ impl Approximator for VectorFunction {
         Ok(f.matmul(&self.weights.view()).into_raw_vec())
     }
 
-    fn update_with<O: crate::optim::Optimiser>(&mut self, opt: &mut O, f: &Features, es: Vec<f64>) -> UpdateResult<()> {
+    fn update<O: crate::optim::Optimiser>(&mut self, opt: &mut O, f: &Features, es: Vec<f64>) -> UpdateResult<()> {
         es.into_iter()
             .zip(self.weights.gencolumns_mut().into_iter())
             .fold(Ok(()), |acc, (e, mut c)| acc.and(opt.step(&mut c, f, e)))

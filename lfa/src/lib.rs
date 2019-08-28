@@ -1,6 +1,6 @@
-//! # LFA
-//!
-//! LFA is a framework for linear function approximation with gradient descent.
+//! LFA is a framework for online learning of linear function approximation models. Included is a
+//! suite of scalar and multi-output approximator helpers, a range of basis functions for feature
+//! construction, and a set of optimisation routines.
 #[allow(unused_imports)]
 #[macro_use]
 extern crate lfa_derive;
@@ -63,11 +63,7 @@ pub trait Approximator: Parameterised {
     /// Evaluate the approximator and return its value.
     fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output>;
 
-    fn update(&mut self, features: &Features, errors: Self::Output) -> UpdateResult<()> {
-        self.update_with(&mut optim::SGD(1.0), features, errors)
-    }
-
-    fn update_with<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, errors: Self::Output) -> UpdateResult<()>;
+    fn update<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, errors: Self::Output) -> UpdateResult<()>;
 }
 
 pub trait ScalarApproximator: Approximator<Output = f64> {}
@@ -81,6 +77,14 @@ pub trait PairApproximator: Approximator<Output = [f64; 2]> {
 
     fn evaluate_second(&self, features: &Features) -> EvaluationResult<f64> {
         Ok(features.dot(&self.weights_view().column(1)))
+    }
+
+    fn update_first<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, error: f64) -> UpdateResult<()> {
+        optimiser.step(&mut self.weights_view_mut().column_mut(0), features, error)
+    }
+
+    fn update_second<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, error: f64) -> UpdateResult<()> {
+        optimiser.step(&mut self.weights_view_mut().column_mut(1), features, error)
     }
 }
 
@@ -98,6 +102,18 @@ pub trait TripleApproximator: Approximator<Output = [f64; 3]> {
     fn evaluate_third(&self, features: &Features) -> EvaluationResult<f64> {
         Ok(features.dot(&self.weights_view().column(2)))
     }
+
+    fn update_first<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, error: f64) -> UpdateResult<()> {
+        optimiser.step(&mut self.weights_view_mut().column_mut(0), features, error)
+    }
+
+    fn update_second<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, error: f64) -> UpdateResult<()> {
+        optimiser.step(&mut self.weights_view_mut().column_mut(1), features, error)
+    }
+
+    fn update_third<O: optim::Optimiser>(&mut self, optimiser: &mut O, features: &Features, error: f64) -> UpdateResult<()> {
+        optimiser.step(&mut self.weights_view_mut().column_mut(2), features, error)
+    }
 }
 
 impl<T: Approximator<Output = [f64; 3]>> TripleApproximator for T {}
@@ -107,14 +123,8 @@ pub trait VectorApproximator: Approximator<Output = Vec<f64>> {
         Ok(features.dot(&self.weights_view().column(index)))
     }
 
-    fn update_index(&mut self, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
-        use crate::optim::Optimiser;
-
-        optim::SGD(1.0).step(&mut self.weights_view_mut().column_mut(index), features, update)
-    }
-
-    fn update_index_with<O: optim::Optimiser>(&mut self, opt: &mut O, features: &Features, index: usize, update: f64) -> UpdateResult<()> {
-        opt.step(&mut self.weights_view_mut().column_mut(index), features, update)
+    fn update_index<O: optim::Optimiser>(&mut self, opt: &mut O, features: &Features, index: usize, error: f64) -> UpdateResult<()> {
+        opt.step(&mut self.weights_view_mut().column_mut(index), features, error)
     }
 }
 
