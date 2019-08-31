@@ -3,7 +3,7 @@ name = "lfa_derive"
 description = "Macros for LFA"
 authors = ["Tom Spooner <spooner10000@gmail.com>"]
 
-version = "0.12.0"
+version = "0.13.0"
 edition = "2018"
 
 license = "MIT"
