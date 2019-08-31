@@ -1,6 +1,6 @@
 use ndarray::Array1;
 use super::*;
-use std::ops::{AddAssign, MulAssign};
+use std::ops::MulAssign;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -26,7 +26,7 @@ impl Optimiser<Features> for SGDMomentum {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         loss: f64
-    ) -> UpdateResult<()> {
+    ) -> Result<()> {
         let m = self.momentum;
         let lr = self.learning_rate;
 

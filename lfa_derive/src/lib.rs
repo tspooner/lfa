@@ -1,6 +1,8 @@
 extern crate proc_macro;
-#[macro_use] extern crate quote;
-#[macro_use] extern crate syn;
+#[macro_use]
+extern crate quote;
+#[macro_use]
+extern crate syn;
 
 mod parameterised;
 

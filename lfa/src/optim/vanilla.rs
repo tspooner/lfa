@@ -10,7 +10,7 @@ impl Optimiser<Features> for SGD {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         loss: f64
-    ) -> UpdateResult<()>
+    ) -> Result<()>
     {
         Ok(features.scaled_addto(self.0 * loss, weights))
     }
@@ -19,7 +19,7 @@ impl Optimiser<Features> for SGD {
         // &mut self,
         // weights: &mut ArrayViewMut1<f64>,
         // samples: &[(Features, f64)],
-    // ) -> UpdateResult<()>
+    // ) -> Result<()>
     // {
         // let sample_iter = samples.iter();
         // let (f, e) = sample_iter.next().unwrap();

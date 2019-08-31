@@ -1,11 +1,18 @@
 #![macro_use]
-use ndarray::{Array1, ArrayView1, ArrayViewMut1, ArrayView2};
+use crate::{Result, check_index, WeightsView};
+use ndarray::{ArrayBase, Data, DataMut, Dimension, NdIndex, Array1, linalg::Dot};
 use std::{iter::FromIterator, ops::{AddAssign, Index}};
 
+/// Internal type used to represent a feature's index.
 pub type IndexT = usize;
+
+/// Internal type used to represent a feature's activation.
 pub type ActivationT = f64;
 
+/// Internal type used to represent a dense feature vector.
 pub type DenseT = Array1<ActivationT>;
+
+/// Internal type used to represent a sparse feature vector.
 pub type SparseT = ::std::collections::HashMap<IndexT, ActivationT>;
 
 macro_rules! apply_to_features {
@@ -75,7 +82,12 @@ macro_rules! apply_to_dense_or_sparse {
     };
 }
 
-/// Projected feature vector representation.
+/// Sparse/dense feature vector representation.
+///
+/// __Note:__ many of the methods associated with `Features` are based on those of the `ArrayBase`
+/// type provided in the [`ndarray`] crate.
+///
+/// [`ndarray`]: https://crates.io/crates/ndarray
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Features {
@@ -116,9 +128,24 @@ impl Features {
         })
     }
 
-    pub fn get(&self, idx: usize) -> Option<&f64> {
+    /// Return the activation of the feature at index `idx` if defined.
+    ///
+    /// __Panics__ if the index exceeds the size of the feature vector.
+    pub fn get(&self, idx: usize) -> Result<Option<&f64>> {
         apply_to_features!(self => activations, {
-            activations.get(idx)
+            check_index(
+                idx, self.n_features(),
+                || Ok(unsafe { Some(activations.uget(idx)) })
+            )
+        }; indices, {
+            Ok(indices.get(&idx))
+        })
+    }
+
+    /// Return the activation of the feature at index `idx` _without bounds checking_.
+    pub unsafe fn uget(&self, idx: usize) -> Option<&f64> {
+        apply_to_features!(self => activations, {
+            Some(activations.uget(idx))
         }; indices, {
             indices.get(&idx)
         })
@@ -164,7 +191,13 @@ impl Features {
     /// assert_eq!(Features::dot(&vec![0.0, 0.2, 0.8].into(), &weights.view()), 1.8);
     /// assert_eq!(Features::dot(&vec![0, 1].into(), &weights.view()), 7.0);
     /// ```
-    pub fn dot(&self, weights: &ArrayView1<ActivationT>) -> f64 {
+    pub fn dot<S, E>(&self, weights: &ArrayBase<S, E>) -> f64
+    where
+        S: Data<Elem = f64>,
+        E: Dimension,
+        usize: NdIndex<E>,
+        DenseT: Dot<ArrayBase<S, E>, Output = f64>,
+    {
         apply_to_features!(self => activations, {
             Features::dot_dense(activations, weights)
         }; indices, {
@@ -172,11 +205,21 @@ impl Features {
         })
     }
 
-    pub fn dot_dense(activations: &DenseT, weights: &ArrayView1<ActivationT>) -> f64 {
+    fn dot_dense<S, E>(activations: &DenseT, weights: &ArrayBase<S, E>) -> f64
+    where
+        S: Data<Elem = f64>,
+        E: Dimension,
+        DenseT: Dot<ArrayBase<S, E>, Output = f64>
+    {
         activations.dot(weights)
     }
 
-    pub fn dot_sparse(indices: &SparseT, weights: &ArrayView1<ActivationT>) -> f64 {
+    fn dot_sparse<S, E>(indices: &SparseT, weights: &ArrayBase<S, E>) -> f64
+    where
+        S: Data<Elem = f64>,
+        E: Dimension,
+        usize: NdIndex<E>,
+    {
         indices.iter().fold(0.0, |acc, (idx, act)| acc + weights[*idx] * act)
     }
 
@@ -202,7 +245,7 @@ impl Features {
     ///     Array1::from_vec(vec![3.0, 8.0])
     /// );
     /// ```
-    pub fn matmul(&self, weights: &ArrayView2<f64>) -> Array1<f64> {
+    pub fn matmul(&self, weights: &WeightsView) -> Array1<f64> {
         weights
             .gencolumns()
             .into_iter()
@@ -235,7 +278,7 @@ impl Features {
         }
     }
 
-    /// Stack two feature vectors together, maintaining sparsity where possible.
+    /// Stack two feature vectors together, maintaining sparsity if possible.
     ///
     /// ```
     /// use lfa::Features;
@@ -263,6 +306,9 @@ impl Features {
         }
     }
 
+    /// Mutate the feature activations inplace using a given operation, `f`.
+    ///
+    /// __Note:__ only applied to non-zero features.
     pub fn mut_activations(&mut self, f: impl Fn(ActivationT) -> ActivationT) {
         match self {
             Features::Dense(activations) => activations.mapv_inplace(&f),
@@ -272,8 +318,8 @@ impl Features {
         }
     }
 
-    /// Apply the function `f` to the features if the `Dense` variant or
-    /// return `None`.
+    /// Map the function `f` over the internal `DenseT` representation if `self` is the `Dense`
+    /// variant, otherwise return `None`.
     pub fn map_dense<T>(self, f: impl FnOnce(DenseT) -> T) -> Option<T> {
         apply_to_features!(self => activations, {
             Some(f(activations))
@@ -282,8 +328,8 @@ impl Features {
         })
     }
 
-    /// Apply the function `f` to the features if the `Sparse` variant or
-    /// return `None`.
+    /// Map the function `f` over the internal `SparseT` representation if `self` is the `Dense`
+    /// variant, otherwise return `None`.
     pub fn map_sparse<T>(self, f: impl FnOnce(SparseT) -> T) -> Option<T> {
         apply_to_features!(self => _activations, {
             None
@@ -292,8 +338,7 @@ impl Features {
         })
     }
 
-    /// Apply the function `f` or `g` depending on the contents of the features; either `Dense` or
-    /// `Sparse`, respectively.
+    /// Map the function `f_dense` or `f_sparse` based on the sparsity of the features.
     pub fn map_either<T>(
         self,
         f_dense: impl FnOnce(DenseT) -> T,
@@ -307,6 +352,7 @@ impl Features {
         })
     }
 
+    /// Combine `self` with another feature vector using a given merge operation, `f`.
     pub fn combine(self, other: &Features, f: impl Fn(ActivationT, ActivationT) -> ActivationT) -> Features {
         use Features::*;
 
@@ -349,6 +395,9 @@ impl Features {
         }
     }
 
+    /// Perform a fold operation over the feature activations.
+    ///
+    /// __Note:__ for sparse features this method will ignore zeroes.
     pub fn fold(&self, init: f64, f: impl Fn(f64, &f64) -> f64) -> f64 {
         apply_to_features!(self => ref activations, {
             activations.iter().fold(init, f)
@@ -357,7 +406,13 @@ impl Features {
         })
     }
 
-    pub fn addto(&self, weights: &mut ArrayViewMut1<ActivationT>) {
+    /// Perform an elementwise add of activations to a `weights` vector.
+    pub fn addto<S, E>(&self, weights: &mut ArrayBase<S, E>)
+    where
+        S: DataMut<Elem = f64>,
+        E: Dimension,
+        usize: NdIndex<E>,
+    {
         apply_to_features!(self => ref activations, {
             weights.add_assign(activations)
         }; ref indices, {
@@ -365,7 +420,13 @@ impl Features {
         });
     }
 
-    pub fn scaled_addto(&self, alpha: ActivationT, weights: &mut ArrayViewMut1<ActivationT>) {
+    /// Perform an elementwise add of activations (scaled by `alpha`) to a `weights` vector.
+    pub fn scaled_addto<S, E>(&self, alpha: ActivationT, weights: &mut ArrayBase<S, E>)
+    where
+        S: DataMut<Elem = f64>,
+        E: Dimension,
+        usize: NdIndex<E>,
+    {
         apply_to_features!(self => ref activations, {
             weights.scaled_add(alpha, activations)
         }; ref indices, {

@@ -1,21 +1,23 @@
-use crate::{
-    Approximator, Parameterised, Features,
-    EvaluationResult, UpdateResult,
-    Weights, WeightsView, WeightsViewMut,
-};
+use crate::{Approximator, Parameterised, Features, Result, Weights, WeightsView, WeightsViewMut};
 
-/// `Weights`-`Features` evaluator with pair `[f64; 2]` output.
+/// [`Weights`]-[`Features`] evaluator with `[f64; 2]` output.
+///
+/// [`Weights`]: type.Weights.html
+/// [`Features`]: enum.Features.html
 #[derive(Clone, Debug, PartialEq, Parameterised)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct PairFunction {
+    /// Approximation weights.
     pub weights: Weights,
 }
 
 impl PairFunction {
+    /// Construct a new approximation with specified `weights`.
     pub fn new(weights: Weights) -> Self {
         PairFunction { weights, }
     }
 
+    /// Construct a new approximation with zeroed weights.
     pub fn zeros(n_features: usize) -> Self {
         PairFunction::new(Weights::zeros((n_features, 2)))
     }
@@ -26,14 +28,17 @@ impl Approximator for PairFunction {
 
     fn n_outputs(&self) -> usize { 2 }
 
-    fn evaluate(&self, features: &Features) -> EvaluationResult<Self::Output> {
+    fn evaluate(&self, features: &Features) -> Result<Self::Output> {
         Ok([
             features.dot(&self.weights.column(0)),
             features.dot(&self.weights.column(1)),
         ])
     }
 
-    fn update<O: crate::optim::Optimiser>(&mut self, opt: &mut O, f: &Features, es: [f64; 2]) -> UpdateResult<()> {
+    fn update<O>(&mut self, opt: &mut O, f: &Features, es: [f64; 2]) -> Result<()>
+    where
+        O: crate::optim::Optimiser,
+    {
         opt.step(&mut self.weights.column_mut(0), f, es[0])
             .and(opt.step(&mut self.weights.column_mut(1), f, es[1]))
     }
@@ -63,9 +68,9 @@ mod tests {
         assert_eq!(fa.n_outputs(), 2);
         assert_eq!(fa.weights.len(), 200);
 
-        let features = projector.project(&vec![5.0]);
+        let features = projector.project(&vec![5.0]).unwrap();
 
-        let _ = fa.update_with(&mut opt, &features, [20.0, 50.0]);
+        let _ = fa.update(&mut opt, &features, [20.0, 50.0]);
         let out = fa.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
@@ -82,9 +87,9 @@ mod tests {
         assert_eq!(fa.n_outputs(), 2);
         assert_eq!(fa.weights.len(), 6);
 
-        let features = projector.project(&vec![5.0]);
+        let features = projector.project(&vec![5.0]).unwrap();
 
-        let _ = fa.update_with(&mut opt, &features, [20.0, 50.0]);
+        let _ = fa.update(&mut opt, &features, [20.0, 50.0]);
         let out = fa.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);

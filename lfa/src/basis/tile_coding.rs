@@ -1,4 +1,4 @@
-use crate::{IndexT, ActivationT, Features, basis::Projector};
+use crate::{IndexT, ActivationT, Features, Result, check_index, basis::Projector};
 use std::hash::{BuildHasher, Hasher};
 
 #[inline]
@@ -55,10 +55,8 @@ impl<H: BuildHasher> TileCoding<H> {
 impl<H: BuildHasher> Projector for TileCoding<H> {
     fn n_features(&self) -> usize { self.memory_size }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
-        if index >= self.memory_size {
-            None
-        } else {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        check_index(index, self.memory_size, || {
             let state = bin_state(input, self.n_tilings);
             let mut hash = hash_state(
                 self.hasher_builder.build_hasher(),
@@ -67,11 +65,11 @@ impl<H: BuildHasher> Projector for TileCoding<H> {
                 self.memory_size
             );
 
-            if hash.any(|f| index == f) { Some(1.0) } else { None }
-        }
+            Ok(if hash.any(|f| index == f) { Some(1.0) } else { None })
+        })
     }
 
-    fn project(&self, input: &[f64]) -> Features {
+    fn project(&self, input: &[f64]) -> Result<Features> {
         let state = bin_state(input, self.n_tilings);
         let hash = hash_state(
             self.hasher_builder.build_hasher(),
@@ -80,7 +78,7 @@ impl<H: BuildHasher> Projector for TileCoding<H> {
             self.memory_size
         );
 
-        Features::Sparse(self.memory_size, hash.map(|i| (i, 1.0)).collect())
+        Ok(Features::Sparse(self.memory_size, hash.map(|i| (i, 1.0)).collect()))
     }
 }
 
@@ -88,14 +86,14 @@ impl<H: BuildHasher> Projector for TileCoding<H> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_bin_state() {
-        quickcheck! {
-            fn prop_output(state: f64, n_tilings: usize) -> bool {
-                bin_state(&[state], n_tilings)[0] == (state * n_tilings as f64).floor() as isize
-            }
+    quickcheck! {
+        fn test_bin_state_1d(state: f64, n_tilings: usize) -> bool {
+            bin_state(&[state], n_tilings)[0] == (state * n_tilings as f64).floor() as isize
         }
+    }
 
+    #[test]
+    fn test_bin_state_2d() {
         assert_eq!(bin_state(&[0.0, 0.0], 16), vec![0, 0]);
         assert_eq!(bin_state(&[0.99, 0.99], 16), vec![15, 15]);
         assert_eq!(bin_state(&[1.0, 1.0], 16), vec![16, 16]);

@@ -1,13 +1,47 @@
-#[derive(Copy, Clone, Debug)]
-pub enum EvaluationError {
-    Failed,
+//! LFA error and result types.
+use crate::IndexT;
+use std::{error::Error as StdError, fmt};
+
+pub type Result<T> = ::std::result::Result<T, Error>;
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum ErrorKind {
+    Evaluation,
+    Projection,
+    Optimisation,
 }
 
-pub type EvaluationResult<T> = Result<T, EvaluationError>;
-
-#[derive(Copy, Clone, Debug)]
-pub enum UpdateError {
-    Failed,
+#[derive(Debug, Clone)]
+pub struct Error {
+    kind: ErrorKind,
+    message: String,
 }
 
-pub type UpdateResult<T> = Result<T, UpdateError>;
+impl Error {
+    pub fn index_error(index: IndexT, dim: IndexT) -> Self {
+        Error {
+            kind: ErrorKind::Projection,
+            message: format!(
+                "Index ({}) exceeded dimensionality ({}) of the projection.",
+                index, dim
+            ),
+        }
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { writeln!(f, "{}", self.message) }
+}
+
+impl StdError for Error {
+    fn description(&self) -> &str { &*self.message }
+}
+
+#[inline(always)]
+pub(crate) fn check_index<T>(index: IndexT, dim: IndexT, f: impl Fn() -> Result<T>) -> Result<T> {
+    if index < dim {
+        f()
+    } else {
+        Err(Error::index_error(index, dim))
+    }
+}

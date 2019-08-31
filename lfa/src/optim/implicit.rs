@@ -10,7 +10,7 @@ impl Optimiser<Features> for ISGD {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         loss: f64
-    ) -> UpdateResult<()> {
+    ) -> Result<()> {
         let norm = features.fold(0.0, |acc, x| acc + x*x);
         let lr = self.0 / (1.0 + self.0 * norm);
 

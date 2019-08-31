@@ -27,7 +27,7 @@ impl Optimiser<Features> for NAG {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         loss: f64
-    ) -> UpdateResult<()> {
+    ) -> Result<()> {
         let m = self.momentum;
         let lr = self.learning_rate;
 

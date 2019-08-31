@@ -1,4 +1,4 @@
-use crate::{IndexT, ActivationT, Features, basis::Projector};
+use crate::{IndexT, ActivationT, Features, Result, Error, basis::Projector};
 
 /// Stack the output of two `Projector` instances.
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
@@ -21,30 +21,30 @@ where
         self.p1.n_features() + self.p2.n_features()
     }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
         let n1 = self.p1.n_features();
         let n2 = self.p2.n_features();
+        let n12 = n1 + n2;
 
         if index < n1 {
             self.p1.project_ith(input, index)
-        } else if index < n1 + n2 {
+        } else if index < n12 {
             self.p2.project_ith(input, index - n1)
         } else {
-            None
+            Err(Error::index_error(index, n12))
         }
     }
 
-    fn project(&self, input: &[f64]) -> Features {
-        self.p1.project(input).stack(self.p2.project(input))
+    fn project(&self, input: &[f64]) -> Result<Features> {
+        self.p1.project(input).and_then(|f1| {
+            self.p2.project(input).map(|f2| f1.stack(f2))
+        })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        basis::{Projector, Constants, Indices},
-        features,
-    };
+    use crate::basis::{Projector, Constants, Indices};
     use std::iter;
     use super::*;
 
@@ -59,9 +59,9 @@ mod tests {
 
         assert_eq!(p.n_features(), 20);
 
-        assert_eq!(p.project(&[0.0]), output);
-        assert_eq!(p.project(&[0.0, 1.0]), output);
-        assert_eq!(p.project(&[-1.0, 1.0]), output);
+        assert_eq!(p.project(&[0.0]).unwrap(), output);
+        assert_eq!(p.project(&[0.0, 1.0]).unwrap(), output);
+        assert_eq!(p.project(&[-1.0, 1.0]).unwrap(), output);
     }
 
     #[test]
@@ -71,9 +71,9 @@ mod tests {
 
         assert_eq!(p.n_features(), 20);
 
-        assert_eq!(p.project(&[0.0]), output);
-        assert_eq!(p.project(&[0.0, 1.0]), output);
-        assert_eq!(p.project(&[-1.0, 1.0]), output);
+        assert_eq!(p.project(&[0.0]).unwrap(), output);
+        assert_eq!(p.project(&[0.0, 1.0]).unwrap(), output);
+        assert_eq!(p.project(&[-1.0, 1.0]).unwrap(), output);
     }
 
     #[test]
@@ -87,8 +87,8 @@ mod tests {
 
         assert_eq!(p.n_features(), 20);
 
-        assert_eq!(p.project(&[0.0]), output);
-        assert_eq!(p.project(&[0.0, 1.0]), output);
-        assert_eq!(p.project(&[-1.0, 1.0]), output);
+        assert_eq!(p.project(&[0.0]).unwrap(), output);
+        assert_eq!(p.project(&[0.0, 1.0]).unwrap(), output);
+        assert_eq!(p.project(&[-1.0, 1.0]).unwrap(), output);
     }
 }

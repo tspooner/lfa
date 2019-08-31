@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{Generics, Data, DataStruct, Field, Fields, Meta, Type, Ident};
 use std::iter;
+use syn::{Data, DataStruct, Field, Fields, Generics, Ident, Meta, Type};
 
 const WEIGHTS: &str = "weights";
 
@@ -26,17 +26,17 @@ impl Implementation {
     }
 
     fn make_where_predicates(types: &Vec<Type>) -> Vec<syn::WherePredicate> {
-        types.into_iter().map(|g| parse_quote! { #g: Parameterised }).collect()
+        types
+            .into_iter()
+            .map(|g| parse_quote! { #g: Parameterised })
+            .collect()
     }
 
     pub fn add_trait_bounds(&self, mut generics: Generics) -> Generics {
         if let Some(ref gs) = self.generics {
             let new_ps = Self::make_where_predicates(gs);
 
-            generics
-                .make_where_clause()
-                .predicates
-                .extend(new_ps);
+            generics.make_where_clause().predicates.extend(new_ps);
         }
 
         generics
@@ -67,11 +67,14 @@ impl ToTokens for Body {
         let weights_view_fn = &self.weights_view;
         let weights_view_mut_fn = &self.weights_view_mut;
 
-        tokens.extend(iter::once(quote! {
-            fn weights_view(&self) -> WeightsView { #weights_view_fn }
-        }).chain(iter::once(quote! {
-            fn weights_view_mut(&mut self) -> WeightsViewMut { #weights_view_mut_fn }
-        })));
+        tokens.extend(
+            iter::once(quote! {
+                fn weights_view(&self) -> WeightsView { #weights_view_fn }
+            })
+            .chain(iter::once(quote! {
+                fn weights_view_mut(&mut self) -> WeightsViewMut { #weights_view_mut_fn }
+            })),
+        );
     }
 }
 
@@ -83,9 +86,7 @@ struct WeightsField<'a, I: ToTokens> {
 impl<'a, I: ToTokens> WeightsField<'a, I> {
     pub fn type_ident(&self) -> &'a Ident {
         match self.field.ty {
-            Type::Path(ref tp) => {
-                &tp.path.segments[0].ident
-            },
+            Type::Path(ref tp) => &tp.path.segments[0].ident,
             _ => unimplemented!(),
         }
     }
@@ -116,37 +117,52 @@ fn parameterised_struct_impl(ds: &DataStruct) -> Implementation {
     let n_fields = ds.fields.iter().len();
 
     if n_fields > 1 {
-        let mut annotated_fields: Vec<_> = ds.fields
+        let mut annotated_fields: Vec<_> = ds
+            .fields
             .iter()
             .enumerate()
             .filter(|(_, f)| has_weight_attribute(f))
             .map(|(i, f)| WeightsField {
-                ident: f.ident.clone().map(|i| quote! { #i }).unwrap_or(quote! { #i }),
+                ident: f
+                    .ident
+                    .clone()
+                    .map(|i| quote! { #i })
+                    .unwrap_or(quote! { #i }),
                 field: f,
             })
             .collect();
 
         if annotated_fields.is_empty() {
-            let (index, iwf) = ds.fields.iter().enumerate().find(|(_, f)| match &f.ident {
-                Some(ident) => ident.to_string() == WEIGHTS,
-                None => false,
-            }).expect("Couldn't infer weights field, consider annotating with #[weights].");
+            let (index, iwf) = ds
+                .fields
+                .iter()
+                .enumerate()
+                .find(|(_, f)| match &f.ident {
+                    Some(ident) => ident.to_string() == WEIGHTS,
+                    None => false,
+                })
+                .expect("Couldn't infer weights field, consider annotating with #[weights].");
 
             parameterised_wf_impl(WeightsField {
-                ident: iwf.ident.clone().map(|i| quote! { #i }).unwrap_or(quote! { #index }),
+                ident: iwf
+                    .ident
+                    .clone()
+                    .map(|i| quote! { #i })
+                    .unwrap_or(quote! { #index }),
                 field: iwf,
             })
         } else if annotated_fields.len() == 1 {
             parameterised_wf_impl(annotated_fields.pop().unwrap())
         } else {
-            panic!("Duplicate #[weights] annotations - \
-                automatic view concatenation implementations are not currently supported.")
+            panic!(
+                "Duplicate #[weights] annotations - \
+                 automatic view concatenation implementations are not currently supported."
+            )
         }
-
     } else if n_fields == 1 {
         match ds.fields {
             Fields::Unnamed(ref fs) => parameterised_wf_impl(WeightsField {
-                ident: quote!{ 0 },
+                ident: quote! { 0 },
                 field: &fs.unnamed[0],
             }),
             Fields::Named(ref fs) => parameterised_wf_impl(WeightsField {
@@ -210,18 +226,18 @@ fn parameterised_wf_impl<I: ToTokens>(wf: WeightsField<I>) -> Implementation {
                 weights_dim: Some(quote! { self.#ident.weights_dim() }),
                 weights_view: quote! { self.#ident.weights_view() },
                 weights_view_mut: quote! { self.#ident.weights_view_mut() },
-            }
-        )
+            },
+        ),
     }
 }
 
 fn has_weight_attribute(f: &Field) -> bool {
     f.attrs.iter().any(|a| {
-        a.parse_meta().map(|meta| {
-            match meta {
+        a.parse_meta()
+            .map(|meta| match meta {
                 Meta::Path(ref path) => path.is_ident(WEIGHTS),
                 _ => false,
-            }
-        }).unwrap_or(false)
+            })
+            .unwrap_or(false)
     })
 }

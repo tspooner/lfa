@@ -43,7 +43,7 @@ impl Optimiser<Features> for AdaMax {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         loss: f64
-    ) -> UpdateResult<()>
+    ) -> Result<()>
     {
         self.beta1_prod *= self.beta1;
 

@@ -1,14 +1,10 @@
 use crate::{
-    IndexT, ActivationT, Features,
+    IndexT, ActivationT, Features, Result, Error,
     basis::Projector,
-    utils::cartesian_product,
 };
-use spaces::{
-    BoundedSpace,
-    ProductSpace,
-    real::Interval,
-};
+use spaces::{ProductSpace, real::Interval};
 use std::f64::consts::PI;
+use super::{compute_coefficients, get_bounds};
 
 /// Fourier basis projector.
 ///
@@ -26,7 +22,9 @@ pub struct Fourier {
 
 impl Fourier {
     pub fn new(order: u8, limits: Vec<(f64, f64)>) -> Self {
-        let coefficients = Fourier::compute_coefficients(order, limits.len());
+        let coefficients = compute_coefficients(order, limits.len())
+            .map(|cfs| cfs.into_iter().map(|c| c as f64).collect())
+            .collect();
 
         Fourier {
             order,
@@ -38,23 +36,8 @@ impl Fourier {
     pub fn from_space(order: u8, input_space: ProductSpace<Interval>) -> Self {
         Fourier::new(
             order,
-            input_space
-                .iter()
-                .map(|d| (d.inf().unwrap(), d.sup().unwrap()))
-                .collect(),
+            input_space.iter().map(get_bounds).collect(),
         )
-    }
-
-    fn compute_coefficients(order: u8, dim: usize) -> Vec<Vec<f64>> {
-        let mut coefficients = cartesian_product(&vec![
-            (0..(order + 1)).map(|v| v as f64).collect::<Vec<f64>>(); dim
-        ])
-        .split_off(1);
-
-        coefficients.sort_by(|a, b| b.partial_cmp(a).unwrap());
-        coefficients.dedup();
-
-        coefficients
     }
 
     fn rescale_input(&self, input: &[f64]) -> Vec<f64> {
@@ -75,27 +58,23 @@ impl Fourier {
 impl Projector for Fourier {
     fn n_features(&self) -> usize { self.coefficients.len() }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
         self.coefficients.get(index).map(|cfs| {
             let scaled_state = self.rescale_input(input);
 
-            self.compute_feature(&scaled_state, cfs)
-        })
+            Some(self.compute_feature(&scaled_state, cfs))
+        }).ok_or_else(|| Error::index_error(index, self.n_features()))
     }
 
-    fn project(&self, input: &[f64]) -> Features {
+    fn project(&self, input: &[f64]) -> Result<Features> {
         let scaled_state = self.rescale_input(input);
 
-        self.coefficients
-            .iter()
-            .map(|cfs| self.compute_feature(&scaled_state, cfs))
-            .collect()
+        Ok(self.coefficients.iter().map(|cfs| self.compute_feature(&scaled_state, cfs)).collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::features::{ActivationT, Features};
     use super::*;
 
     #[test]
@@ -144,10 +123,10 @@ mod tests {
         assert_eq!(f.n_features(), 2);
         assert_features!(f +- 1e-6 [
             vec![0.0]       => vec![1.0, 1.0],
-            vec![1.0 / 3.0] => vec![-0.5, 0.5],
-            vec![0.5]       => vec![-1.0, 0.0],
+            vec![1.0 / 3.0] => vec![0.5, -0.5],
+            vec![0.5]       => vec![0.0, -1.0],
             vec![2.0 / 3.0] => vec![-0.5, -0.5],
-            vec![1.0]       => vec![1.0, -1.0]
+            vec![1.0]       => vec![-1.0, 1.0]
         ]);
     }
 
@@ -158,12 +137,12 @@ mod tests {
         assert_eq!(f.n_features(), 3);
         assert_features!(f +- 1e-6 [
             vec![0.0, 5.0] => vec![1.0; 3],
-            vec![0.5, 5.0] => vec![0.0, 0.0, 1.0],
+            vec![0.5, 5.0] => vec![1.0, 0.0, 0.0],
             vec![0.0, 5.5] => vec![0.0, 1.0, 0.0],
-            vec![0.5, 5.5] => vec![-1.0, 0.0, 0.0],
+            vec![0.5, 5.5] => vec![0.0, 0.0, -1.0],
             vec![1.0, 5.5] => vec![0.0, -1.0, 0.0],
-            vec![0.5, 6.0] => vec![0.0, 0.0, -1.0],
-            vec![1.0, 6.0] => vec![1.0, -1.0, -1.0]
+            vec![0.5, 6.0] => vec![-1.0, 0.0, 0.0],
+            vec![1.0, 6.0] => vec![-1.0, -1.0, 1.0]
         ]);
     }
 
@@ -174,12 +153,12 @@ mod tests {
         assert_eq!(f.n_features(), 8);
         assert_features!(f +- 1e-6 [
             vec![0.0, 5.0] => vec![1.0; 8],
-            vec![0.5, 5.0] => vec![-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 1.0],
-            vec![0.0, 5.5] => vec![-1.0, 0.0, 1.0, -1.0, 0.0, 1.0, -1.0, 0.0],
-            vec![0.5, 5.5] => vec![1.0, 0.0, -1.0, 0.0, -1.0, 0.0, -1.0, 0.0],
+            vec![0.5, 5.0] => vec![1.0, 1.0, 0.0, 0.0, 0.0, -1.0, -1.0, -1.0],
+            vec![0.0, 5.5] => vec![0.0, -1.0, 1.0, 0.0, -1.0, 1.0, 0.0, -1.0],
+            vec![0.5, 5.5] => vec![0.0, -1.0, 0.0, -1.0, 0.0, -1.0, 0.0, 1.0],
             // vec![1.0, 5.5] => vec![],
-            vec![0.5, 6.0] => vec![-1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 1.0, -1.0],
-            vec![1.0, 6.0] => vec![1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0]
+            vec![0.5, 6.0] => vec![-1.0, 1.0, 0.0, 0.0, 0.0, -1.0, 1.0, -1.0],
+            vec![1.0, 6.0] => vec![-1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0]
         ]);
     }
 }

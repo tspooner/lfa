@@ -27,7 +27,7 @@ impl Optimiser<Features> for Adagrad {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         loss: f64
-    ) -> UpdateResult<()>
+    ) -> Result<()>
     {
         let lr = self.learning_rate;
 

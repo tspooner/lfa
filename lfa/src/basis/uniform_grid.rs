@@ -1,8 +1,5 @@
-use crate::{IndexT, ActivationT, Features, basis::Projector};
-use spaces::{
-    Space, Surjection,
-    Equipartition, ProductSpace,
-};
+use crate::{IndexT, ActivationT, Features, Result, check_index, basis::Projector};
+use spaces::{Space, Surjection, Equipartition, ProductSpace};
 
 /// Fixed uniform basis projector.
 #[derive(Clone, Debug)]
@@ -35,20 +32,23 @@ impl UniformGrid {
 impl Projector for UniformGrid {
     fn n_features(&self) -> usize { self.n_features }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
-        if self.hash(input) == index { Some(1.0) } else { None }
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        check_index(index, self.n_features, || Ok(if self.hash(input) == index {
+            Some(1.0)
+        } else {
+            None
+        }))
     }
 
-    fn project(&self, input: &[f64]) -> Features {
+    fn project(&self, input: &[f64]) -> Result<Features> {
         let active_bin = self.hash(input);
 
-        Features::Sparse(self.n_features, ::std::iter::once((active_bin, 1.0)).collect())
+        Ok(Features::Sparse(self.n_features, ::std::iter::once((active_bin, 1.0)).collect()))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::features::Features;
     use super::*;
 
     #[test]
@@ -59,12 +59,14 @@ mod tests {
         assert_eq!(t.n_features(), 10);
 
         for bin in 0..10 {
-            let fv = t.project(&vec![bin as u32 as f64]);
+            let fv = t.project(&vec![bin as u32 as f64]).unwrap();
 
             assert_eq!(fv.n_features(), 10);
             assert_eq!(fv.n_active(), 1);
 
-            assert!(fv.get(bin).filter(|&&a| a > 0.0).is_some());
+            unsafe {
+                assert!(fv.uget(bin).filter(|&&a| a > 0.0).is_some());
+            }
 
             let mut dense = vec![0.0; 10];
             dense[bin] = 1.0;
@@ -82,13 +84,15 @@ mod tests {
 
         for bin_i in 0..10 {
             for bin_j in 0..10 {
-                let fv = t.project(&vec![bin_i as u32 as f64, bin_j as u32 as f64]);
+                let fv = t.project(&vec![bin_i as u32 as f64, bin_j as u32 as f64]).unwrap();
                 let active_bin = bin_j * 10 + bin_i;
 
                 assert_eq!(fv.n_features(), 100);
                 assert_eq!(fv.n_active(), 1);
 
-                assert!(fv.get(active_bin).filter(|&&a| a > 0.0).is_some());
+                unsafe {
+                    assert!(fv.uget(active_bin).filter(|&&a| a > 0.0).is_some());
+                }
 
                 let mut dense = vec![0.0; 100];
                 dense[active_bin] = 1.0;
@@ -112,13 +116,15 @@ mod tests {
                         bin_i as u32 as f64,
                         bin_j as u32 as f64,
                         bin_k as u32 as f64
-                    ]);
+                    ]).unwrap();
                     let active_bin = bin_k * 100 + bin_j * 10 + bin_i;
 
                     assert_eq!(fv.n_features(), 1000);
                     assert_eq!(fv.n_active(), 1);
 
-                    assert!(fv.get(active_bin).filter(|&&a| a > 0.0).is_some());
+                    unsafe {
+                        assert!(fv.uget(active_bin).filter(|&&a| a > 0.0).is_some());
+                    }
 
                     let mut dense = vec![0.0; 1000];
                     dense[active_bin] = 1.0;

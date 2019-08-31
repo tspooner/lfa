@@ -1,21 +1,15 @@
-//! Module for SGD-based weight optimisers.
-use crate::{Features, UpdateResult};
+//! SGD-based weight optimisers.
+use crate::{Features, Result};
 use ndarray::ArrayViewMut1;
 
 pub trait Optimiser<G = Features> {
-    fn step(
-        &mut self,
-        weights: &mut ArrayViewMut1<f64>,
-        features: &G,
-        loss: f64,
-    ) -> UpdateResult<()>;
+    fn step(&mut self, weights: &mut ArrayViewMut1<f64>, features: &G, loss: f64) -> Result<()>;
 
-    fn step_batch(
-        &mut self,
-        weights: &mut ArrayViewMut1<f64>,
-        samples: &[(G, f64)],
-    ) -> UpdateResult<()> {
-        samples.into_iter().map(|(g, e)| self.step(weights, g, *e)).collect()
+    fn step_batch(&mut self, weights: &mut ArrayViewMut1<f64>, samples: &[(G, f64)]) -> Result<()> {
+        samples
+            .into_iter()
+            .map(|(g, e)| self.step(weights, g, *e))
+            .collect()
     }
 
     fn reset(&mut self) {}

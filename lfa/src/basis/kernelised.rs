@@ -1,8 +1,8 @@
 use crate::{
-    IndexT, ActivationT, Features,
+    IndexT, ActivationT, Features, Result, Error,
     basis::{Projector, kernels::{self, Kernel}},
-    utils::cartesian_product,
 };
+use itertools::Itertools;
 use spaces::{Equipartition, ProductSpace};
 
 /// Feature prototype used by the `KernelProjector` basis.
@@ -48,7 +48,8 @@ impl KernelProjector<kernels::ExpQuad> {
     pub fn exp_quad(partitioning: ProductSpace<Equipartition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
         let kernel = kernels::ExpQuad::new(1.0, lengthscales);
-        let centroids = cartesian_product(&partitioning.edges());
+        let centroids: Vec<Vec<_>> =
+            partitioning.centres().into_iter().multi_cartesian_product().collect();
 
         KernelProjector::homogeneous(centroids, kernel)
     }
@@ -58,7 +59,8 @@ impl KernelProjector<kernels::Matern32> {
     pub fn matern_32(partitioning: ProductSpace<Equipartition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
         let kernel = kernels::Matern32::new(1.0, lengthscales);
-        let centroids = cartesian_product(&partitioning.edges());
+        let centroids: Vec<Vec<_>> =
+            partitioning.centres().into_iter().multi_cartesian_product().collect();
 
         KernelProjector::homogeneous(centroids, kernel)
     }
@@ -68,7 +70,8 @@ impl KernelProjector<kernels::Matern52> {
     pub fn matern_52(partitioning: ProductSpace<Equipartition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
         let kernel = kernels::Matern52::new(1.0, lengthscales);
-        let centroids = cartesian_product(&partitioning.edges());
+        let centroids: Vec<Vec<_>> =
+            partitioning.centres().into_iter().multi_cartesian_product().collect();
 
         KernelProjector::homogeneous(centroids, kernel)
     }
@@ -79,21 +82,20 @@ impl<K: Kernel<[f64]>> Projector for KernelProjector<K> {
         self.prototypes.len()
     }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
-        self.prototypes.get(index).map(|p| p.kernel(input))
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        self.prototypes.get(index)
+            .map(|p| Some(p.kernel(input)))
+            .ok_or_else(|| Error::index_error(index, self.prototypes.len()))
     }
 
-    fn project(&self, input: &[f64]) -> Features {
-        self.prototypes.iter().map(|p| p.kernel(input)).collect()
+    fn project(&self, input: &[f64]) -> Result<Features> {
+        Ok(self.prototypes.iter().map(|p| p.kernel(input)).collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        basis::kernels::ExpQuad,
-        features::Features,
-    };
+    use crate::basis::kernels::ExpQuad;
     use super::*;
 
     fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> KernelProjector<ExpQuad> {
@@ -117,7 +119,7 @@ mod tests {
     #[test]
     fn test_projection_1d() {
         let net = make_net_1d(vec![0.0, 0.5, 1.0], 0.25);
-        let p = net.project(&[0.25]).expanded();
+        let p = net.project(&[0.25]).unwrap().expanded();
 
         assert!((p[0] - 0.6065307).abs() < 1e-6);
         assert!((p[1] - 0.6065307).abs() < 1e-6);
@@ -130,7 +132,7 @@ mod tests {
             vec![vec![0.0, -10.0], vec![0.5, -8.0], vec![1.0, -6.0]],
             vec![0.25, 2.0],
         );
-        let p = net.project(&[0.67, -7.0]).expanded();
+        let p = net.project(&[0.67, -7.0]).unwrap().expanded();
 
         assert!((p[0] - 0.0089491).abs() < 1e-6);
         assert!((p[1] - 0.7003325).abs() < 1e-6);

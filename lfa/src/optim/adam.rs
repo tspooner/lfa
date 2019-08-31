@@ -45,7 +45,7 @@ impl Optimiser<Features> for Adam {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         loss: f64
-    ) -> UpdateResult<()>
+    ) -> Result<()>
     {
         self.beta1_prod *= self.beta1;
         self.beta2_prod *= self.beta2;

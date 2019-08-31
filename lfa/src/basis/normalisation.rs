@@ -1,4 +1,4 @@
-use crate::{IndexT, ActivationT,Features, basis::Projector};
+use crate::{IndexT, ActivationT, Result, check_index, Features, basis::Projector};
 use std::f64;
 
 /// Apply _L₀_ normalisation to the output of a `Projector` instance.
@@ -17,24 +17,24 @@ impl<P: Projector> Projector for L0Normaliser<P> {
         self.0.n_features()
     }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
-        if index > self.0.n_features() {
-            None
-        } else {
-            let f = self.0.project(input);
-            let z = f.n_active() as f64;
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        check_index(index, self.n_features(), || {
+            self.0.project(input)
+                .map(|f| {
+                    let z = f.n_active() as f64;
 
-            f.get(index).cloned().map(|x| x / z)
-        }
+                    unsafe { f.uget(index).cloned().map(|x| x / z) }
+                })
+        })
     }
 
-    fn project(&self, input: &[f64]) -> Features {
-        let mut f = self.0.project(input);
-        let z = f.n_active() as f64;
-
-        f.mut_activations(|x| x / z);
-
-        f
+    fn project(&self, input: &[f64]) -> Result<Features> {
+        self.0.project(input)
+            .map(|mut f| {
+                let z = f.n_active() as f64;
+                f.mut_activations(|x| x / z);
+                f
+            })
     }
 }
 
@@ -54,11 +54,9 @@ impl<P: Projector> Projector for L1Normaliser<P> {
         self.0.n_features()
     }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
-        if index > self.0.n_features() {
-            None
-        } else {
-            match self.0.project(input) {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        check_index(index, self.n_features(), || {
+            self.0.project(input).map(|f| match f {
                 Features::Dense(activations) => {
                     let z = activations.fold(0.0, |acc, x| acc + x.abs());
 
@@ -67,12 +65,12 @@ impl<P: Projector> Projector for L1Normaliser<P> {
                 Features::Sparse(_, indices) => indices.get(&index).cloned().map(|f| {
                     f / indices.iter().fold(0.0, |acc, (_, x)| acc + x.abs())
                 }),
-            }
-        }
+            })
+        })
     }
 
-    fn project(&self, input: &[f64]) -> Features {
-        match self.0.project(input) {
+    fn project(&self, input: &[f64]) -> Result<Features> {
+        self.0.project(input).map(|f| match f {
             Features::Dense(activations) => {
                 let z = activations.fold(0.0, |acc, x| acc + x.abs());
 
@@ -83,7 +81,7 @@ impl<P: Projector> Projector for L1Normaliser<P> {
 
                 Features::Sparse(n, indices.into_iter().map(|(i, x)| (i, x / z)).collect())
             },
-        }
+        })
     }
 }
 
@@ -99,15 +97,11 @@ impl<P> L2Normaliser<P> {
 }
 
 impl<P: Projector> Projector for L2Normaliser<P> {
-    fn n_features(&self) -> usize {
-        self.0.n_features()
-    }
+    fn n_features(&self) -> usize { self.0.n_features() }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
-        if index > self.0.n_features() {
-            None
-        } else {
-            match self.0.project(input) {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        check_index(index, self.n_features(), || {
+            self.0.project(input).map(|f| match f {
                 Features::Dense(activations) => {
                     let z = activations.fold(0.0, |acc, x| acc + x * x).sqrt();
 
@@ -116,12 +110,12 @@ impl<P: Projector> Projector for L2Normaliser<P> {
                 Features::Sparse(_, indices) => indices.get(&index).cloned().map(|f| {
                     f / indices.iter().fold(0.0, |acc, (_, x)| acc + x * x).sqrt()
                 }),
-            }
-        }
+            })
+        })
     }
 
-    fn project(&self, input: &[f64]) -> Features {
-        match self.0.project(input) {
+    fn project(&self, input: &[f64]) -> Result<Features> {
+        self.0.project(input).map(|f| match f {
             Features::Dense(activations) => {
                 let z = activations.fold(0.0, |acc, x| acc + x * x).sqrt();
 
@@ -132,7 +126,7 @@ impl<P: Projector> Projector for L2Normaliser<P> {
 
                 Features::Sparse(n, indices.into_iter().map(|(i, x)| (i, x / z)).collect())
             },
-        }
+        })
     }
 }
 
@@ -152,11 +146,9 @@ impl<P: Projector> Projector for LinfNormaliser<P> {
         self.0.n_features()
     }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Option<ActivationT> {
-        if index > self.0.n_features() {
-            None
-        } else {
-            match self.0.project(input) {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        check_index(index, self.n_features(), || {
+            self.0.project(input).map(|f| match f {
                 Features::Dense(activations) => {
                     let z = activations.fold(f64::NEG_INFINITY, |acc, &x| acc.max(x.abs()));
 
@@ -165,12 +157,12 @@ impl<P: Projector> Projector for LinfNormaliser<P> {
                 Features::Sparse(_, indices) => indices.get(&index).cloned().map(|f| {
                     f / indices.iter().fold(f64::NEG_INFINITY, |acc, (_, x)| acc.max(x.abs()))
                 }),
-            }
-        }
+            })
+        })
     }
 
-    fn project(&self, input: &[f64]) -> Features {
-        match self.0.project(input) {
+    fn project(&self, input: &[f64]) -> Result<Features> {
+        self.0.project(input).map(|f| match f {
             Features::Dense(activations) => {
                 let z = activations.fold(f64::NEG_INFINITY, |acc, &x| acc.max(x.abs()));
 
@@ -181,7 +173,7 @@ impl<P: Projector> Projector for LinfNormaliser<P> {
 
                 Features::Sparse(n, indices.into_iter().map(|(i, x)| (i, x / z)).collect())
             },
-        }
+        })
     }
 }
 
@@ -190,31 +182,25 @@ mod tests {
     use crate::basis::Constants;
     use super::*;
 
-    #[test]
-    fn test_l1() {
-        quickcheck! {
-            fn prop_output(constants: Vec<f64>) -> bool {
-                let p = L1Normaliser::new(Constants::new(constants.clone()));
-                let f = p.project(&[0.0]).expanded();
+    quickcheck! {
+        fn test_l1(constants: Vec<f64>) -> bool {
+            let p = L1Normaliser::new(Constants::new(constants.clone()));
+            let f = p.project(&[0.0]).unwrap().expanded();
 
-                let abssum: f64 = constants.iter().map(|v| v.abs()).sum();
+            let abssum: f64 = constants.iter().map(|v| v.abs()).sum();
 
-                f.into_iter().zip(constants.into_iter()).all(|(x, y)| (x - y / abssum) < 1e-7)
-            }
+            f.into_iter().zip(constants.into_iter()).all(|(x, y)| (x - y / abssum) < 1e-7)
         }
     }
 
-    #[test]
-    fn test_l2() {
-        quickcheck! {
-            fn prop_output(constants: Vec<f64>) -> bool {
-                let p = L2Normaliser::new(Constants::new(constants.clone()));
-                let f = p.project(&[0.0]).expanded();
+    quickcheck! {
+        fn test_l2(constants: Vec<f64>) -> bool {
+            let p = L2Normaliser::new(Constants::new(constants.clone()));
+            let f = p.project(&[0.0]).unwrap().expanded();
 
-                let sqsum: f64 = constants.iter().map(|v| v*v).sum();
+            let sqsum: f64 = constants.iter().map(|v| v*v).sum();
 
-                f.into_iter().zip(constants.into_iter()).all(|(x, y)| (x - y / sqsum.sqrt()) < 1e-7)
-            }
+            f.into_iter().zip(constants.into_iter()).all(|(x, y)| (x - y / sqsum.sqrt()) < 1e-7)
         }
     }
 }

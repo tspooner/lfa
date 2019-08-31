@@ -1,12 +1,12 @@
 use crate::{
-    IndexT, ActivationT, Features,
+    IndexT, ActivationT, Features, Result, Error,
     basis::Projector,
-    utils::cartesian_product,
 };
 use spaces::{
     BoundedSpace,
     Interval, ProductSpace,
 };
+use super::compute_coefficients;
 
 mod cpfk;
 
@@ -18,11 +18,11 @@ mod cpfk;
 ///
 /// let p = Polynomial::new(1, 1);
 ///
-/// assert_eq!(p.project(&vec![-1.0]), vec![-1.0].into());
-/// assert_eq!(p.project(&vec![-0.5]), vec![-0.5].into());
-/// assert_eq!(p.project(&vec![0.0]), vec![0.0].into());
-/// assert_eq!(p.project(&vec![0.5]), vec![0.5].into());
-/// assert_eq!(p.project(&vec![1.0]), vec![1.0].into());
+/// assert_eq!(p.project(&vec![-1.0]).unwrap(), vec![-1.0].into());
+/// assert_eq!(p.project(&vec![-0.5]).unwrap(), vec![-0.5].into());
+/// assert_eq!(p.project(&vec![0.0]).unwrap(), vec![0.0].into());
+/// assert_eq!(p.project(&vec![0.5]).unwrap(), vec![0.5].into());
+/// assert_eq!(p.project(&vec![1.0]).unwrap(), vec![1.0].into());
 /// ```
 ///
 /// ## Quadratic regression
@@ -31,61 +31,45 @@ mod cpfk;
 ///
 /// let p = Polynomial::new(1, 2);
 ///
-/// assert_eq!(p.project(&vec![-1.0]), vec![-1.0, 1.0].into());
-/// assert_eq!(p.project(&vec![-0.5]), vec![-0.5, 0.25].into());
-/// assert_eq!(p.project(&vec![0.0]), vec![0.0, 0.0].into());
-/// assert_eq!(p.project(&vec![0.5]), vec![0.5, 0.25].into());
-/// assert_eq!(p.project(&vec![1.00]), vec![1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![-1.0]).unwrap(), vec![-1.0, 1.0].into());
+/// assert_eq!(p.project(&vec![-0.5]).unwrap(), vec![-0.5, 0.25].into());
+/// assert_eq!(p.project(&vec![0.0]).unwrap(), vec![0.0, 0.0].into());
+/// assert_eq!(p.project(&vec![0.5]).unwrap(), vec![0.5, 0.25].into());
+/// assert_eq!(p.project(&vec![1.00]).unwrap(), vec![1.0, 1.0].into());
 /// ```
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Polynomial {
     pub order: u8,
-    pub exponents: Vec<Vec<i32>>,
+    pub exponents: Vec<Vec<u8>>,
 }
 
 impl Polynomial {
     pub fn new(dim: usize, order: u8) -> Self {
-        let exponents = Polynomial::make_exponents(dim, order);
+        let exponents = compute_coefficients(order, dim).collect();
 
         Polynomial {
-            order: order,
-            exponents: exponents,
+            order,
+            exponents,
         }
     }
 
-    fn make_exponents(dim: usize, order: u8) -> Vec<Vec<i32>> {
-        let dcs = vec![(0..=order).map(|v| v as i32).collect::<Vec<i32>>(); dim];
-        let mut exponents: Vec<Vec<i32>> = cartesian_product(&dcs)
-            .into_iter()
-            .filter(|exps| exps.iter().fold(0, |acc, e| acc + e) <= order as i32)
-            .collect();
-
-        exponents.sort_by(|a, b| b.partial_cmp(a).unwrap());
-        exponents.dedup();
-        exponents.pop();
-        exponents.reverse();
-
-        exponents
-    }
-
-    fn compute_feature(&self, ss: &[f64], exps: &[i32]) -> f64 {
-        ss.iter().zip(exps).map(|(v, e)| v.powi(*e)).product()
+    fn compute_feature(&self, ss: &[f64], exps: &[u8]) -> f64 {
+        ss.iter().zip(exps).map(|(v, &e)| v.powi(e as i32)).product()
     }
 }
 
 impl Projector for Polynomial {
     fn n_features(&self) -> usize { self.exponents.len() }
 
-    fn project_ith(&self, input: &[f64], i: IndexT) -> Option<ActivationT> {
-        Some(self.compute_feature(input, &self.exponents[i]))
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        self.exponents.get(index)
+            .map(|exps| Some(self.compute_feature(input, exps)))
+            .ok_or_else(|| Error::index_error(index, self.exponents.len()))
     }
 
-    fn project(&self, input: &[f64]) -> Features {
-        self.exponents
-            .iter()
-            .map(|exps| self.compute_feature(input, exps))
-            .collect()
+    fn project(&self, input: &[f64]) -> Result<Features> {
+        Ok(self.exponents.iter().map(|exps| self.compute_feature(input, exps)).collect())
     }
 }
 
@@ -126,18 +110,9 @@ impl Chebyshev {
     }
 
     fn make_polynomials(order: u8, dim: usize) -> Vec<Vec<fn(f64) -> f64>> {
-        let dcs = vec![(0..=order).collect::<Vec<u8>>(); dim];
-        let mut coefficients: Vec<Vec<u8>> = cartesian_product(&dcs)
-            .into_iter()
-            .filter(|cs| cs.iter().fold(0, |acc, c| acc + c) <= order)
-            .collect();
+        let exponents = compute_coefficients(order, dim);
 
-        coefficients.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        coefficients.dedup();
-
-        coefficients
-            .iter()
-            .skip(1)
+        exponents
             .map(|vals| {
                 vals.iter()
                     .map(|i| match *i {
@@ -180,17 +155,16 @@ impl Chebyshev {
 impl Projector for Chebyshev {
     fn n_features(&self) -> usize { self.polynomials.len() }
 
-    fn project_ith(&self, input: &[f64], i: IndexT) -> Option<ActivationT> {
-        Some(self.compute_feature(&self.rescale_input(input), &self.polynomials[i]))
+    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+        self.polynomials.get(index)
+            .map(|ps| Some(self.compute_feature(&self.rescale_input(input), ps)))
+            .ok_or_else(|| Error::index_error(index, self.polynomials.len()))
     }
 
-    fn project(&self, input: &[f64]) -> Features {
+    fn project(&self, input: &[f64]) -> Result<Features> {
         let scaled_state = self.rescale_input(input);
 
-        self.polynomials
-            .iter()
-            .map(|ps| self.compute_feature(&scaled_state, ps))
-            .collect()
+        Ok(self.polynomials.iter().map(|ps| self.compute_feature(&scaled_state, ps)).collect())
     }
 }
 
