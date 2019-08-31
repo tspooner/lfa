@@ -1,8 +1,8 @@
 use crate::{IndexT, ActivationT, Features, Result, Error, basis::Projector};
 
 /// Stack the output of two `Projector` instances.
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Copy, Clone, Debug)]
 pub struct Stacker<P1, P2> {
     p1: P1,
     p2: P2,

@@ -1,7 +1,7 @@
 macro_rules! stationary_kernel {
     ($(#[$attr:meta])* => $name:ident, $self:ident, $r:ident, $code:block) => {
         $(#[$attr])*
-        #[derive(Clone)]
+        #[derive(Clone, Debug, PartialEq)]
         #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
         pub struct $name {
             pub variance: f64,

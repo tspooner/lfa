@@ -4,14 +4,16 @@ use std::{error::Error as StdError, fmt};
 
 pub type Result<T> = ::std::result::Result<T, Error>;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ErrorKind {
     Evaluation,
     Projection,
     Optimisation,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Error {
     kind: ErrorKind,
     message: String,

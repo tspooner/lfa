@@ -6,8 +6,8 @@ use itertools::Itertools;
 use spaces::{Equipartition, ProductSpace};
 
 /// Feature prototype used by the `KernelProjector` basis.
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug)]
 pub struct Prototype<K: Kernel<[f64]>> {
     pub centroid: Vec<f64>,
     pub kernel: K,
@@ -18,8 +18,8 @@ impl<K: Kernel<[f64]>> Prototype<K> {
 }
 
 /// Kernel machine basis projector.
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug)]
 pub struct KernelProjector<K: Kernel<[f64]>> {
     pub prototypes: Vec<Prototype<K>>,
 }

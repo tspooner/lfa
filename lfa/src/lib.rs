@@ -69,11 +69,9 @@ extern crate lfa_derive;
 #[doc(hidden)]
 pub use self::lfa_derive::*;
 
-#[cfg(feature = "serialize")]
-extern crate serde;
 #[cfg_attr(feature = "serialize", macro_use)]
 #[cfg(feature = "serialize")]
-extern crate serde_derive;
+extern crate serde;
 
 #[cfg(test)]
 #[macro_use(quickcheck)]

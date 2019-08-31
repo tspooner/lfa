@@ -3,7 +3,7 @@ use super::*;
 use std::ops::MulAssign;
 
 /// Nesterov's Accelerated Gradient descent
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct NAG {
     momentum: f64,

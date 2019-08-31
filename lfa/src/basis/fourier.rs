@@ -12,7 +12,7 @@ use super::{compute_coefficients, get_bounds};
 /// - [Konidaris, George, Sarah Osentoski, and Philip S. Thomas. "Value
 /// function approximation in reinforcement learning using the Fourier basis."
 /// AAAI. Vol. 6. 2011.](http://lis.csail.mit.edu/pubs/konidaris-aaai11a.pdf)
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Fourier {
     pub order: u8,

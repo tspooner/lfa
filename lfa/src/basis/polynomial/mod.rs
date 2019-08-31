@@ -1,5 +1,5 @@
 use crate::{
-    IndexT, ActivationT, Features, Result, Error,
+    IndexT, ActivationT, Features, Error,
     basis::Projector,
 };
 use spaces::{
@@ -37,7 +37,7 @@ mod cpfk;
 /// assert_eq!(p.project(&vec![0.5]).unwrap(), vec![0.5, 0.25].into());
 /// assert_eq!(p.project(&vec![1.00]).unwrap(), vec![1.0, 1.0].into());
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Polynomial {
     pub order: u8,
@@ -62,19 +62,20 @@ impl Polynomial {
 impl Projector for Polynomial {
     fn n_features(&self) -> usize { self.exponents.len() }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> crate::Result<Option<ActivationT>> {
         self.exponents.get(index)
             .map(|exps| Some(self.compute_feature(input, exps)))
             .ok_or_else(|| Error::index_error(index, self.exponents.len()))
     }
 
-    fn project(&self, input: &[f64]) -> Result<Features> {
+    fn project(&self, input: &[f64]) -> crate::Result<Features> {
         Ok(self.exponents.iter().map(|exps| self.compute_feature(input, exps)).collect())
     }
 }
 
 /// Chebyshev polynomial basis projector.
-#[derive(Clone, Debug)]
+// TODO: Manually implement Serialize and Deserialize for Chebyshev.
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct Chebyshev {
     pub order: u8,
@@ -155,13 +156,13 @@ impl Chebyshev {
 impl Projector for Chebyshev {
     fn n_features(&self) -> usize { self.polynomials.len() }
 
-    fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
+    fn project_ith(&self, input: &[f64], index: IndexT) -> crate::Result<Option<ActivationT>> {
         self.polynomials.get(index)
             .map(|ps| Some(self.compute_feature(&self.rescale_input(input), ps)))
             .ok_or_else(|| Error::index_error(index, self.polynomials.len()))
     }
 
-    fn project(&self, input: &[f64]) -> Result<Features> {
+    fn project(&self, input: &[f64]) -> crate::Result<Features> {
         let scaled_state = self.rescale_input(input);
 
         Ok(self.polynomials.iter().map(|ps| self.compute_feature(&scaled_state, ps)).collect())

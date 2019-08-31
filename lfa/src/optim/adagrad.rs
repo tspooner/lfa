@@ -3,7 +3,7 @@ use super::*;
 
 const EPS: f64 = 1e-7;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Adagrad {
     learning_rate: f64,

@@ -2,7 +2,7 @@ use ndarray::Array1;
 use super::*;
 use std::ops::MulAssign;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct SGDMomentum {
     momentum: f64,

@@ -1,4 +1,5 @@
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct RationalQuadratic {
     pub variance: f64,
     pub lengthscales: Vec<f64>,

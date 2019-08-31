@@ -1,7 +1,7 @@
 use crate::{Features, IndexT, ActivationT, Result, check_index, basis::Projector};
 use std::collections::HashSet;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Constant(f64);
 
@@ -21,7 +21,7 @@ impl Projector for Constant {
     fn project(&self, _: &[f64]) -> Result<Features> { Ok(vec![self.0].into()) }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Constants(Vec<f64>);
 
@@ -39,7 +39,7 @@ impl Projector for Constants {
     fn project(&self, _: &[f64]) -> Result<Features> { Ok(self.0.clone().into()) }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Indices {
     n_features: usize,

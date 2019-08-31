@@ -2,8 +2,8 @@ use crate::{IndexT, ActivationT, Result, check_index, Features, basis::Projector
 use std::f64;
 
 /// Apply _L₀_ normalisation to the output of a `Projector` instance.
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Copy, Clone, Debug)]
 pub struct L0Normaliser<P>(P);
 
 impl<P> L0Normaliser<P> {
@@ -39,8 +39,8 @@ impl<P: Projector> Projector for L0Normaliser<P> {
 }
 
 /// Apply _L₁_ normalisation to the output of a `Projector` instance.
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Copy, Clone, Debug)]
 pub struct L1Normaliser<P>(P);
 
 impl<P> L1Normaliser<P> {
@@ -86,8 +86,8 @@ impl<P: Projector> Projector for L1Normaliser<P> {
 }
 
 /// Apply _L₂_ normalisation to the output of a `Projector` instance.
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Copy, Clone, Debug)]
 pub struct L2Normaliser<P>(P);
 
 impl<P> L2Normaliser<P> {
@@ -131,8 +131,8 @@ impl<P: Projector> Projector for L2Normaliser<P> {
 }
 
 /// Apply _L∞_ normalisation to the output of a `Projector` instance.
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[derive(Copy, Clone, Debug)]
 pub struct LinfNormaliser<P>(P);
 
 impl<P> LinfNormaliser<P> {

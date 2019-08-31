@@ -7,7 +7,7 @@ const EPS: f64 = 1e-7;
 /// Adaptive moment estimation gradient descent (with infinity norm)
 ///
 /// https://arxiv.org/pdf/1412.6980.pdf
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct AdaMax {
     beta1: f64,
