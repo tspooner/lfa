@@ -1,7 +1,7 @@
 extern crate rand;
 extern crate rand_distr;
 
-use crate::{Features, basis::Projector};
+use crate::{Result, Features, basis::Projector};
 use self::{
     rand::{thread_rng, Rng},
     rand_distr::{self as dists, Distribution},
@@ -51,10 +51,14 @@ impl Random<dists::Uniform<f64>> {
 impl<D: Distribution<f64>> Projector for Random<D> {
     fn n_features(&self) -> usize { self.n_features }
 
-    fn project(&self, _: &[f64]) -> Features {
-        thread_rng().sample_iter(&self.distribution)
+    fn project_ith(&self, _: &[f64], _: usize) -> Result<Option<f64>> {
+        Ok(Some(thread_rng().sample(&self.distribution)))
+    }
+
+    fn project(&self, _: &[f64]) -> Result<Features> {
+        Ok(thread_rng().sample_iter(&self.distribution)
             .take(self.n_features)
-            .collect()
+            .collect())
     }
 }
 
@@ -70,7 +74,7 @@ mod tests {
                 if std < 0.0 {
                     TestResult::discard()
                 } else {
-                    let features = Random::normal(length, mean, std).project(&input);
+                    let features = Random::normal(length, mean, std).project(&input).unwrap();
 
                     TestResult::from_bool(features.n_features() == length)
                 }
@@ -85,7 +89,7 @@ mod tests {
                 if std < 0.0 {
                     TestResult::discard()
                 } else {
-                    let features = Random::log_normal(length, mean, std).project(&input);
+                    let features = Random::log_normal(length, mean, std).project(&input).unwrap();
 
                     TestResult::from_bool(
                         features.n_features() == length &&
@@ -103,7 +107,7 @@ mod tests {
                 if shape <= 0.0 || scale <= 0.0 {
                     TestResult::discard()
                 } else {
-                    let features = Random::gamma(length, shape, scale).project(&input);
+                    let features = Random::gamma(length, shape, scale).project(&input).unwrap();
 
                     TestResult::from_bool(
                         features.n_features() == length &&
@@ -121,7 +125,7 @@ mod tests {
                 if ub < lb {
                     TestResult::discard()
                 } else {
-                    let features = Random::uniform(length, lb, ub).project(&input);
+                    let features = Random::uniform(length, lb, ub).project(&input).unwrap();
 
                     TestResult::from_bool(
                         features.n_features() == length &&
