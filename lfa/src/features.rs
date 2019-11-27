@@ -186,7 +186,7 @@ impl Features {
     /// use lfa::Features;
     /// use ndarray::Array1;
     ///
-    /// let weights = Array1::from_vec(vec![2.0, 5.0, 1.0]);
+    /// let weights = Array1::from(vec![2.0, 5.0, 1.0]);
     ///
     /// assert_eq!(Features::dot(&vec![0.0, 0.2, 0.8].into(), &weights.view()), 1.8);
     /// assert_eq!(Features::dot(&vec![0, 1].into(), &weights.view()), 7.0);

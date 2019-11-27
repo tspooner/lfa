@@ -21,6 +21,7 @@ coveralls = { repository = "tspooner/lfa", branch = "master", service = "github"
 [features]
 default = []
 
+blas = ["ndarray/blas"]
 random = ["rand", "rand_distr"]
 serialize = ["serde", "serde/derive", "spaces/serialize", "ndarray/serde-1"]
 
@@ -28,7 +29,7 @@ serialize = ["serde", "serde/derive", "spaces/serialize", "ndarray/serde-1"]
 lfa_derive = { path = "../lfa_derive", version = "0.13" }
 
 spaces = "5.0"
-ndarray = "0.12"
+ndarray = "0.13"
 itertools = "0.8"
 
 rand = { version = "0.7", optional = true }

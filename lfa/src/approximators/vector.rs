@@ -26,7 +26,7 @@ impl VectorFunction {
 impl Approximator for VectorFunction {
     type Output = Vec<f64>;
 
-    fn n_outputs(&self) -> usize { self.weights.cols() }
+    fn n_outputs(&self) -> usize { self.weights.ncols() }
 
     fn evaluate(&self, f: &Features) -> Result<Self::Output> {
         Ok(f.matmul(&self.weights.view()).into_raw_vec())
