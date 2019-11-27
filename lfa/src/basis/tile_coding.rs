@@ -1,4 +1,4 @@
-use crate::{IndexT, ActivationT, Features, Result, check_index, basis::Projector};
+use crate::{IndexT, ActivationT, Features, Result, check_index, basis::Basis};
 use std::hash::{BuildHasher, Hasher};
 
 #[inline]
@@ -37,7 +37,7 @@ fn hash_state<'a, H: Hasher + 'a>(
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct TileCoding<H> {
-    hasher_builder: H,
+    #[cfg_attr(feature = "serialize", serde(default))] hasher_builder: H,
     n_tilings: usize,
     memory_size: usize,
 }
@@ -52,7 +52,7 @@ impl<H: BuildHasher> TileCoding<H> {
     }
 }
 
-impl<H: BuildHasher> Projector for TileCoding<H> {
+impl<H: BuildHasher> Basis for TileCoding<H> {
     fn n_features(&self) -> usize { self.memory_size }
 
     fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {

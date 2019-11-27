@@ -1,7 +1,4 @@
-use crate::{
-    IndexT, ActivationT, Features, Result, Error,
-    basis::Projector,
-};
+use crate::{IndexT, ActivationT, Features, Result, Error, basis::Basis};
 use spaces::{ProductSpace, real::Interval};
 use std::f64::consts::PI;
 use super::{compute_coefficients, get_bounds};
@@ -55,7 +52,7 @@ impl Fourier {
     }
 }
 
-impl Projector for Fourier {
+impl Basis for Fourier {
     fn n_features(&self) -> usize { self.coefficients.len() }
 
     fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {

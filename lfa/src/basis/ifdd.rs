@@ -1,10 +1,6 @@
 extern crate itertools;
 
-use crate::{
-    basis::Projector,
-    core::*,
-    geometry::Vector,
-};
+use crate::{basis::Basis, core::*, geometry::Vector};
 use itertools::Itertools;
 use std::{
     cmp::Ordering,
@@ -77,17 +73,17 @@ impl PartialOrd for CandidateFeature {
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct IFDD<P> {
-    pub base: P,
+pub struct IFDD<B> {
+    pub basis: B,
     pub features: Vec<Feature>,
 
     candidates: HashMap<IndexSet, CandidateFeature>,
     discovery_threshold: f64,
 }
 
-impl<P> IFDD<P> {
-    pub fn new(base_projector: P, discovery_threshold: f64) -> Self {
-        let initial_dim: usize = base_projector.dim();
+impl<B> IFDD<B> {
+    pub fn new(basis: B, discovery_threshold: f64) -> Self {
+        let initial_dim: usize = basis.dim();
         let mut base_features: Vec<Feature> = (0..initial_dim)
             .map(|i| Feature {
                 index: i,
@@ -102,7 +98,7 @@ impl<P> IFDD<P> {
         base_features.reserve(initial_dim);
 
         IFDD {
-            base: base_projector,
+            basis,
 
             features: base_features,
             candidates: HashMap::new(),
@@ -161,13 +157,13 @@ impl<P> IFDD<P> {
     }
 }
 
-impl<P> IFDD<P> {
+impl<B> IFDD<B> {
     fn discover<I>(&mut self, input: &I, error: f64) -> Option<HashMap<IndexT, IndexSet>>
     where
         I: ?Sized,
-        P: Projector<I>
+        B: Basis<I>
     {
-        let new_features = match self.base.project(input) {
+        let new_features = match self.basis.project(input) {
             Features::Sparse(active_indices) => self.discover_sparse(active_indices, error),
             Features::Dense(activations) => self.discover_dense(activations, error),
         };
@@ -187,16 +183,16 @@ impl<P> IFDD<P> {
     }
 }
 
-impl<I: ?Sized, P: Projector<I>> Projector<I> for IFDD<P> {
+impl<I: ?Sized, B: Basis<I>> Basis<I> for IFDD<B> {
     fn n_features(&self) -> usize {
         self.features.len()
     }
 
     fn project(&self, input: &I) -> Features {
-        let n_base = self.base.dim();
+        let n_base = self.basis.dim();
         let n_total = self.dim();
 
-        let mut p = self.base.project(input);
+        let mut p = self.basis.project(input);
         let np: Vec<usize> = (n_base..n_total)
             .filter_map(|i| {
                 let f = &self.features[i];
@@ -225,9 +221,9 @@ mod tests {
     use crate::basis::ifdd::IFDD;
 
     #[derive(Clone)]
-    struct BaseProjector;
+    struct SimpleBasis;
 
-    impl Space for BaseProjector {
+    impl Space for SimpleBasis {
         type Value = Features;
 
         fn dim(&self) -> usize { 5 }
@@ -235,7 +231,7 @@ mod tests {
         fn card(&self) -> Card { unimplemented!() }
     }
 
-    impl Projector<[f64]> for BaseProjector {
+    impl Basis<[f64]> for SimpleBasis {
         fn project(&self, input: &[f64]) -> Features {
             input
                 .iter()
@@ -246,7 +242,7 @@ mod tests {
 
     #[test]
     fn test_discover() {
-        let mut f = IFDD::new(BaseProjector, 10.0);
+        let mut f = IFDD::new(SimpleBasis, 10.0);
 
         assert_eq!(
             f.discover(&vec![0.0, 4.0], 10.0),

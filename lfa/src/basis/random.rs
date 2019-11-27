@@ -1,13 +1,13 @@
 extern crate rand;
 extern crate rand_distr;
 
-use crate::{Result, Features, basis::Projector};
+use crate::{Result, Features, basis::Basis};
 use self::{
     rand::{thread_rng, Rng},
     rand_distr::{self as dists, Distribution},
 };
 
-/// Fixed uniform basis projector.
+/// Fixed uniform basis.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Random<D: Distribution<f64>> {
@@ -48,7 +48,7 @@ impl Random<dists::Uniform<f64>> {
     }
 }
 
-impl<D: Distribution<f64>> Projector for Random<D> {
+impl<D: Distribution<f64>> Basis for Random<D> {
     fn n_features(&self) -> usize { self.n_features }
 
     fn project_ith(&self, _: &[f64], _: usize) -> Result<Option<f64>> {

@@ -23,7 +23,7 @@
 //!
 //! use lfa::{
 //!     Approximator, Parameterised, ScalarFunction,
-//!     basis::{Projector, Polynomial},
+//!     basis::{Basis, Polynomial},
 //!     optim::SGD,
 //! };
 //! use rand::{Rng, thread_rng};
@@ -76,8 +76,6 @@ extern crate serde;
 #[cfg(test)]
 #[macro_use(quickcheck)]
 extern crate quickcheck;
-
-extern crate spaces;
 
 mod macros;
 mod utils;

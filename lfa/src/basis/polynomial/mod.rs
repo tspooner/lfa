@@ -1,11 +1,5 @@
-use crate::{
-    IndexT, ActivationT, Features, Error,
-    basis::Projector,
-};
-use spaces::{
-    BoundedSpace,
-    Interval, ProductSpace,
-};
+use crate::{IndexT, ActivationT, Features, Error, basis::Basis};
+use spaces::{BoundedSpace, Interval, ProductSpace};
 use super::compute_coefficients;
 
 mod cpfk;
@@ -14,7 +8,7 @@ mod cpfk;
 ///
 /// ## Linear regression
 /// ```
-/// use lfa::basis::{Projector, Polynomial};
+/// use lfa::basis::{Basis, Polynomial};
 ///
 /// let p = Polynomial::new(1, 1);
 ///
@@ -27,7 +21,7 @@ mod cpfk;
 ///
 /// ## Quadratic regression
 /// ```
-/// use lfa::basis::{Projector, Polynomial};
+/// use lfa::basis::{Basis, Polynomial};
 ///
 /// let p = Polynomial::new(1, 2);
 ///
@@ -59,7 +53,7 @@ impl Polynomial {
     }
 }
 
-impl Projector for Polynomial {
+impl Basis for Polynomial {
     fn n_features(&self) -> usize { self.exponents.len() }
 
     fn project_ith(&self, input: &[f64], index: IndexT) -> crate::Result<Option<ActivationT>> {
@@ -153,7 +147,7 @@ impl Chebyshev {
     }
 }
 
-impl Projector for Chebyshev {
+impl Basis for Chebyshev {
     fn n_features(&self) -> usize { self.polynomials.len() }
 
     fn project_ith(&self, input: &[f64], index: IndexT) -> crate::Result<Option<ActivationT>> {

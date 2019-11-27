@@ -7,8 +7,8 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum ErrorKind {
+    Basis,
     Evaluation,
-    Projection,
     Optimisation,
 }
 
@@ -22,7 +22,7 @@ pub struct Error {
 impl Error {
     pub fn index_error(index: IndexT, dim: IndexT) -> Self {
         Error {
-            kind: ErrorKind::Projection,
+            kind: ErrorKind::Basis,
             message: format!(
                 "Index ({}) exceeded dimensionality ({}) of the projection.",
                 index, dim

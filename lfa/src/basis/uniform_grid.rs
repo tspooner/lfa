@@ -1,7 +1,7 @@
-use crate::{IndexT, ActivationT, Features, Result, check_index, basis::Projector};
+use crate::{IndexT, ActivationT, Features, Result, check_index, basis::Basis};
 use spaces::{Space, Surjection, Equipartition, ProductSpace};
 
-/// Fixed uniform basis projector.
+/// Fixed uniform basis.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct UniformGrid {
@@ -29,7 +29,7 @@ impl UniformGrid {
     }
 }
 
-impl Projector for UniformGrid {
+impl Basis for UniformGrid {
     fn n_features(&self) -> usize { self.n_features }
 
     fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {

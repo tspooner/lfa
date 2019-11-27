@@ -1,4 +1,4 @@
-use crate::{Features, IndexT, ActivationT, Result, check_index, basis::Projector};
+use crate::{Features, IndexT, ActivationT, Result, check_index, basis::Basis};
 use std::collections::HashSet;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -11,7 +11,7 @@ impl Constant {
     pub fn unit() -> Self { Constant::new(1.0) }
 }
 
-impl Projector for Constant {
+impl Basis for Constant {
     fn n_features(&self) -> usize { 1 }
 
     fn project_ith(&self, _: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
@@ -29,7 +29,7 @@ impl Constants {
     pub fn new(constants: Vec<f64>) -> Self { Constants(constants) }
 }
 
-impl Projector for Constants {
+impl Basis for Constants {
     fn n_features(&self) -> usize { self.0.len() }
 
     fn project_ith(&self, _: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
@@ -55,7 +55,7 @@ impl Indices {
     }
 }
 
-impl Projector for Indices {
+impl Basis for Indices {
     fn n_features(&self) -> usize { self.n_features }
 
     fn project_ith(&self, _: &[f64], index: IndexT) -> Result<Option<ActivationT>> {

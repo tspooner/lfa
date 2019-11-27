@@ -1,50 +1,50 @@
-use crate::{IndexT, ActivationT, Features, Result, Error, basis::Projector};
+use crate::{IndexT, ActivationT, Features, Result, Error, basis::Basis};
 
-/// Stack the output of two `Projector` instances.
+/// Stack the output of two `Basis` instances.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct Stacker<P1, P2> {
-    p1: P1,
-    p2: P2,
+pub struct Stacker<B1, B2> {
+    b1: B1,
+    b2: B2,
 }
 
-impl<P1, P2> Stacker<P1, P2> {
-    pub fn new(p1: P1, p2: P2) -> Self { Stacker { p1, p2 } }
+impl<B1, B2> Stacker<B1, B2> {
+    pub fn new(b1: B1, b2: B2) -> Self { Stacker { b1, b2 } }
 }
 
-impl<P1, P2> Projector for Stacker<P1, P2>
+impl<B1, B2> Basis for Stacker<B1, B2>
 where
-    P1: Projector,
-    P2: Projector,
+    B1: Basis,
+    B2: Basis,
 {
     fn n_features(&self) -> usize {
-        self.p1.n_features() + self.p2.n_features()
+        self.b1.n_features() + self.b2.n_features()
     }
 
     fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
-        let n1 = self.p1.n_features();
-        let n2 = self.p2.n_features();
+        let n1 = self.b1.n_features();
+        let n2 = self.b2.n_features();
         let n12 = n1 + n2;
 
         if index < n1 {
-            self.p1.project_ith(input, index)
+            self.b1.project_ith(input, index)
         } else if index < n12 {
-            self.p2.project_ith(input, index - n1)
+            self.b2.project_ith(input, index - n1)
         } else {
             Err(Error::index_error(index, n12))
         }
     }
 
     fn project(&self, input: &[f64]) -> Result<Features> {
-        self.p1.project(input).and_then(|f1| {
-            self.p2.project(input).map(|f2| f1.stack(f2))
+        self.b1.project(input).and_then(|f1| {
+            self.b2.project(input).map(|f2| f1.stack(f2))
         })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::basis::{Projector, Constants, Indices};
+    use crate::basis::{Basis, Constants, Indices};
     use std::iter;
     use super::*;
 

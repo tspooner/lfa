@@ -7,11 +7,11 @@ use spaces::{real::Interval, BoundedSpace};
 
 pub mod kernels;
 
-/// Trait for basis projectors.
-pub trait Projector {
-    /// Return the number of features produced by this [`Projector`].
+/// Trait for functional bases.
+pub trait Basis {
+    /// Return the number of features produced by this [`Basis`].
     ///
-    /// [`Projector`]: trait.Projector.html
+    /// [`Basis`]: trait.Basis.html
     fn n_features(&self) -> usize;
 
     /// Compute the the i<sup>th</sup> element of the projection for the given `input`.
@@ -25,12 +25,12 @@ pub trait Projector {
     /// __Note:__ by default this method is implemented using the [`project_ith`] method.
     ///
     /// ```
-    /// use lfa::{Features, basis::{Projector, Constant}};
+    /// use lfa::{Features, basis::{Basis, Constant}};
     ///
-    /// let projector = Constant::unit();
+    /// let basis = Constant::unit();
     ///
     /// assert_eq!(
-    ///     projector.project(&[0.0]).unwrap(),
+    ///     basis.project(&[0.0]).unwrap(),
     ///     Features::from(vec![1.0])
     /// );
     /// ```
@@ -43,54 +43,54 @@ pub trait Projector {
             .collect()
     }
 
-    /// Return a stack of this [`Projector`] over another.
+    /// Return a stack of this [`Basis`] over another.
     ///
-    /// [`Projector`]: trait.Projector.html
-    fn stack<P: Projector>(self, other: P) -> Stacker<Self, P>
+    /// [`Basis`]: trait.Basis.html
+    fn stack<P: Basis>(self, other: P) -> Stacker<Self, P>
     where Self: Sized {
         Stacker::new(self, other)
     }
 
-    /// Return the a stack of this [`Projector`] with a single constant feature
+    /// Return the a stack of this [`Basis`] with a single constant feature
     /// term.
     ///
-    /// [`Projector`]: trait.Projector.html
+    /// [`Basis`]: trait.Basis.html
     fn with_constant(self) -> Stacker<Self, Constant>
     where Self: Sized {
         self.stack(Constant::unit())
     }
 
-    /// Return the original [`Projector`] with all activations normalised in
+    /// Return the original [`Basis`] with all activations normalised in
     /// _L₀_.
     ///
-    /// [`Projector`]: trait.Projector.html
+    /// [`Basis`]: trait.Basis.html
     fn normalise_l0(self) -> L0Normaliser<Self>
     where Self: Sized {
         L0Normaliser::new(self)
     }
 
-    /// Return the original [`Projector`] with all activations normalised in
+    /// Return the original [`Basis`] with all activations normalised in
     /// _L₁_.
     ///
-    /// [`Projector`]: trait.Projector.html
+    /// [`Basis`]: trait.Basis.html
     fn normalise_l1(self) -> L1Normaliser<Self>
     where Self: Sized {
         L1Normaliser::new(self)
     }
 
-    /// Return the original [`Projector`] with all activations normalised in
+    /// Return the original [`Basis`] with all activations normalised in
     /// _L₂_.
     ///
-    /// [`Projector`]: trait.Projector.html
+    /// [`Basis`]: trait.Basis.html
     fn normalise_l2(self) -> L2Normaliser<Self>
     where Self: Sized {
         L2Normaliser::new(self)
     }
 
-    /// Return the original [`Projector`] with all activations normalised in
+    /// Return the original [`Basis`] with all activations normalised in
     /// _L∞_.
     ///
-    /// [`Projector`]: trait.Projector.html
+    /// [`Basis`]: trait.Basis.html
     fn normalise_linf(self) -> LinfNormaliser<Self>
     where Self: Sized {
         LinfNormaliser::new(self)

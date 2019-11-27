@@ -48,7 +48,7 @@ mod tests {
 
     use crate::{
         Approximator,
-        basis::{Projector, Fourier, TileCoding},
+        basis::{Basis, Fourier, TileCoding},
         optim::SGD,
     };
     use std::hash::BuildHasherDefault;

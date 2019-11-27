@@ -1,18 +1,18 @@
-use crate::{IndexT, ActivationT, Result, check_index, Features, basis::Projector};
+use crate::{IndexT, ActivationT, Result, check_index, Features, basis::Basis};
 use std::f64;
 
-/// Apply _L₀_ normalisation to the output of a `Projector` instance.
+/// Apply _L₀_ normalisation to the output of a `Basis` instance.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct L0Normaliser<P>(P);
+pub struct L0Normaliser<B>(B);
 
-impl<P> L0Normaliser<P> {
-    pub fn new(projector: P) -> Self {
-        L0Normaliser(projector)
+impl<B> L0Normaliser<B> {
+    pub fn new(basis: B) -> Self {
+        L0Normaliser(basis)
     }
 }
 
-impl<P: Projector> Projector for L0Normaliser<P> {
+impl<B: Basis> Basis for L0Normaliser<B> {
     fn n_features(&self) -> usize {
         self.0.n_features()
     }
@@ -38,18 +38,18 @@ impl<P: Projector> Projector for L0Normaliser<P> {
     }
 }
 
-/// Apply _L₁_ normalisation to the output of a `Projector` instance.
+/// Apply _L₁_ normalisation to the output of a `Basis` instance.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct L1Normaliser<P>(P);
+pub struct L1Normaliser<B>(B);
 
-impl<P> L1Normaliser<P> {
-    pub fn new(projector: P) -> Self {
-        L1Normaliser(projector)
+impl<B> L1Normaliser<B> {
+    pub fn new(basis: B) -> Self {
+        L1Normaliser(basis)
     }
 }
 
-impl<P: Projector> Projector for L1Normaliser<P> {
+impl<B: Basis> Basis for L1Normaliser<B> {
     fn n_features(&self) -> usize {
         self.0.n_features()
     }
@@ -85,18 +85,18 @@ impl<P: Projector> Projector for L1Normaliser<P> {
     }
 }
 
-/// Apply _L₂_ normalisation to the output of a `Projector` instance.
+/// Apply _L₂_ normalisation to the output of a `Basis` instance.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct L2Normaliser<P>(P);
+pub struct L2Normaliser<B>(B);
 
-impl<P> L2Normaliser<P> {
-    pub fn new(projector: P) -> Self {
-        L2Normaliser(projector)
+impl<B> L2Normaliser<B> {
+    pub fn new(basis: B) -> Self {
+        L2Normaliser(basis)
     }
 }
 
-impl<P: Projector> Projector for L2Normaliser<P> {
+impl<B: Basis> Basis for L2Normaliser<B> {
     fn n_features(&self) -> usize { self.0.n_features() }
 
     fn project_ith(&self, input: &[f64], index: IndexT) -> Result<Option<ActivationT>> {
@@ -130,18 +130,18 @@ impl<P: Projector> Projector for L2Normaliser<P> {
     }
 }
 
-/// Apply _L∞_ normalisation to the output of a `Projector` instance.
+/// Apply _L∞_ normalisation to the output of a `Basis` instance.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct LinfNormaliser<P>(P);
+pub struct LinfNormaliser<B>(B);
 
-impl<P> LinfNormaliser<P> {
-    pub fn new(projector: P) -> Self {
-        LinfNormaliser(projector)
+impl<B> LinfNormaliser<B> {
+    pub fn new(basis: B) -> Self {
+        LinfNormaliser(basis)
     }
 }
 
-impl<P: Projector> Projector for LinfNormaliser<P> {
+impl<B: Basis> Basis for LinfNormaliser<B> {
     fn n_features(&self) -> usize {
         self.0.n_features()
     }

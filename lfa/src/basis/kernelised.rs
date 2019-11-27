@@ -1,11 +1,11 @@
 use crate::{
     IndexT, ActivationT, Features, Result, Error,
-    basis::{Projector, kernels::{self, Kernel}},
+    basis::{Basis, kernels::{self, Kernel}},
 };
 use itertools::Itertools;
 use spaces::{Equipartition, ProductSpace};
 
-/// Feature prototype used by the `KernelProjector` basis.
+/// Feature prototype used by the `KernelBasis`.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Prototype<K: Kernel<[f64]>> {
@@ -17,22 +17,22 @@ impl<K: Kernel<[f64]>> Prototype<K> {
     pub fn kernel(&self, x: &[f64]) -> f64 { self.kernel.kernel(x, &self.centroid) }
 }
 
-/// Kernel machine basis projector.
+/// Kernel-machine basis.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-pub struct KernelProjector<K: Kernel<[f64]>> {
+pub struct KernelBasis<K: Kernel<[f64]>> {
     pub prototypes: Vec<Prototype<K>>,
 }
 
-impl<K: Kernel<[f64]>> KernelProjector<K> {
-    pub fn new(prototypes: Vec<Prototype<K>>) -> Self { KernelProjector { prototypes } }
+impl<K: Kernel<[f64]>> KernelBasis<K> {
+    pub fn new(prototypes: Vec<Prototype<K>>) -> Self { KernelBasis { prototypes } }
 
     pub fn homogeneous<T, I>(centroids: T, kernel: K) -> Self
     where
         T: IntoIterator<Item = I>,
         I: Into<Vec<f64>>,
     {
-        KernelProjector::new(
+        KernelBasis::new(
             centroids
                 .into_iter()
                 .map(|c| Prototype {
@@ -44,40 +44,40 @@ impl<K: Kernel<[f64]>> KernelProjector<K> {
     }
 }
 
-impl KernelProjector<kernels::ExpQuad> {
+impl KernelBasis<kernels::ExpQuad> {
     pub fn exp_quad(partitioning: ProductSpace<Equipartition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
         let kernel = kernels::ExpQuad::new(1.0, lengthscales);
         let centroids: Vec<Vec<_>> =
             partitioning.centres().into_iter().multi_cartesian_product().collect();
 
-        KernelProjector::homogeneous(centroids, kernel)
+        KernelBasis::homogeneous(centroids, kernel)
     }
 }
 
-impl KernelProjector<kernels::Matern32> {
+impl KernelBasis<kernels::Matern32> {
     pub fn matern_32(partitioning: ProductSpace<Equipartition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
         let kernel = kernels::Matern32::new(1.0, lengthscales);
         let centroids: Vec<Vec<_>> =
             partitioning.centres().into_iter().multi_cartesian_product().collect();
 
-        KernelProjector::homogeneous(centroids, kernel)
+        KernelBasis::homogeneous(centroids, kernel)
     }
 }
 
-impl KernelProjector<kernels::Matern52> {
+impl KernelBasis<kernels::Matern52> {
     pub fn matern_52(partitioning: ProductSpace<Equipartition>) -> Self {
         let lengthscales = partitioning.iter().map(|d| d.partition_width()).collect();
         let kernel = kernels::Matern52::new(1.0, lengthscales);
         let centroids: Vec<Vec<_>> =
             partitioning.centres().into_iter().multi_cartesian_product().collect();
 
-        KernelProjector::homogeneous(centroids, kernel)
+        KernelBasis::homogeneous(centroids, kernel)
     }
 }
 
-impl<K: Kernel<[f64]>> Projector for KernelProjector<K> {
+impl<K: Kernel<[f64]>> Basis for KernelBasis<K> {
     fn n_features(&self) -> usize {
         self.prototypes.len()
     }
@@ -98,13 +98,13 @@ mod tests {
     use crate::basis::kernels::ExpQuad;
     use super::*;
 
-    fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> KernelProjector<ExpQuad> {
+    fn make_net(centroids: Vec<Vec<f64>>, ls: Vec<f64>) -> KernelBasis<ExpQuad> {
         let kernel = ExpQuad::new(1.0, ls);
 
-        KernelProjector::homogeneous(centroids, kernel)
+        KernelBasis::homogeneous(centroids, kernel)
     }
 
-    fn make_net_1d(centroids: Vec<f64>, ls: f64) -> KernelProjector<ExpQuad> {
+    fn make_net_1d(centroids: Vec<f64>, ls: f64) -> KernelBasis<ExpQuad> {
         make_net(centroids.into_iter().map(|c| vec![c]).collect(), vec![ls])
     }
 
