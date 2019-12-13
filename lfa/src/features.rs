@@ -236,13 +236,13 @@ impl Features {
     ///
     /// assert!(
     ///     Features::matmul(&vec![0.1, 0.2, 0.7].into(), &weights.view()).all_close(
-    ///         &Array1::from_vec(vec![1.1, 3.2]),
+    ///         &Array1::from(vec![1.1, 3.2]),
     ///         1e-7 // eps
     ///     )
     /// );
     /// assert_eq!(
     ///     Features::matmul(&vec![0, 1].into(), &weights.view()),
-    ///     Array1::from_vec(vec![3.0, 8.0])
+    ///     Array1::from(vec![3.0, 8.0])
     /// );
     /// ```
     pub fn matmul(&self, weights: &WeightsView) -> Array1<f64> {
@@ -472,7 +472,7 @@ impl From<DenseT> for Features {
 
 impl From<Vec<ActivationT>> for Features {
     fn from(activations: Vec<ActivationT>) -> Features {
-        DenseFeatures(Array1::from_vec(activations))
+        DenseFeatures(Array1::from(activations))
     }
 }
 
