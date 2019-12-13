@@ -107,9 +107,6 @@ import_all!(kernelised);
 import_all!(uniform_grid);
 import_all!(constant);
 
-#[cfg(feature = "random")]
-import_all!(random);
-
 pub(self) fn compute_coefficients(order: u8, dim: usize) -> impl Iterator<Item = Vec<u8>> {
     (0..dim)
         .map(|_| 0..=order)
