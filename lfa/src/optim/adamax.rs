@@ -38,11 +38,11 @@ impl AdaMax {
 }
 
 impl Optimiser<Features> for AdaMax {
-    fn step(
+    fn step_scaled(
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
-        loss: f64
+        scale_factor: f64,
     ) -> Result<()>
     {
         self.beta1_prod *= self.beta1;
@@ -53,7 +53,7 @@ impl Optimiser<Features> for AdaMax {
                 let u = self.exp_inf.as_slice_memory_order_mut().unwrap();
 
                 for (i, a) in activations.indexed_iter() {
-                    let g = a * loss;
+                    let g = a * scale_factor;
 
                     let m_new = self.beta1 * m[i] + (1.0 - self.beta1) * g;
                     let u_new = (self.beta2 * u[i]).max(g.abs());
@@ -72,7 +72,7 @@ impl Optimiser<Features> for AdaMax {
                 let u = self.exp_inf.as_slice_memory_order_mut().unwrap();
 
                 for (&i, a) in activations.iter() {
-                    let g = a * loss;
+                    let g = a * scale_factor;
 
                     let m_new = m[i] + (1.0 - self.beta1) * g;
                     let u_new = u[i].max(g.abs());

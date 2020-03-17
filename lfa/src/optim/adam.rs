@@ -40,11 +40,11 @@ impl Adam {
 }
 
 impl Optimiser<Features> for Adam {
-    fn step(
+    fn step_scaled(
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
-        loss: f64
+        scale_factor: f64
     ) -> Result<()>
     {
         self.beta1_prod *= self.beta1;
@@ -56,7 +56,7 @@ impl Optimiser<Features> for Adam {
                 let m2 = self.exp_avg_sq.as_slice_memory_order_mut().unwrap();
 
                 for (i, a) in activations.indexed_iter() {
-                    let g = a * loss;
+                    let g = a * scale_factor;
 
                     let m1_new = self.beta1 * m1[i] + (1.0 - self.beta1) * g;
                     let m2_new = self.beta2 * m2[i] + (1.0 - self.beta2) * g * g;
@@ -77,7 +77,7 @@ impl Optimiser<Features> for Adam {
                 let m2 = self.exp_avg_sq.as_slice_memory_order_mut().unwrap();
 
                 for (&i, a) in activations.iter() {
-                    let g = a * loss;
+                    let g = a * scale_factor;
 
                     let m1_new = m1[i] + (1.0 - self.beta1) * g;
                     let m2_new = m2[i] + (1.0 - self.beta2) * g * g;

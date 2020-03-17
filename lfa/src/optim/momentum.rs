@@ -21,25 +21,26 @@ impl SGDMomentum {
 }
 
 impl Optimiser<Features> for SGDMomentum {
-    fn step(
+    fn step_scaled(
         &mut self,
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
-        loss: f64
-    ) -> Result<()> {
+        scale_factor: f64
+    ) -> Result<()>
+    {
         let m = self.momentum;
         let lr = self.learning_rate;
 
         match features {
             Features::Dense(activations) => self.velocity.zip_mut_with(activations, |x, y| {
-                *x = m * *x + y * loss
+                *x = m * *x + y * scale_factor
             }),
             Features::Sparse(_, activations) => {
                 self.velocity.mul_assign(m);
 
-                for (i, a) in activations.iter() {
-                    self.velocity[*i] += a * loss;
-                }
+                activations.iter().for_each(|(i, a)| {
+                    self.velocity[*i] += a * scale_factor;
+                });
             },
         }
 
