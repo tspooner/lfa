@@ -12,7 +12,7 @@
 ## Installation
 ```toml
 [dependencies]
-lfa = "0.13"
+lfa = "0.14"
 ```
 
 
