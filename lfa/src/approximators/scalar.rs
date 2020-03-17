@@ -1,4 +1,7 @@
-use crate::{Approximator, Parameterised, Features, Result, WeightsView, WeightsViewMut};
+use crate::{
+    Approximator, Parameterised, Features,
+    Result, WeightsView, WeightsViewMut,
+};
 use ndarray::Array1;
 
 /// [`Weights`]-[`Features`] evaluator with `f64` output.
@@ -27,17 +30,15 @@ impl ScalarFunction {
 impl Approximator for ScalarFunction {
     type Output = f64;
 
-    fn n_outputs(&self) -> usize { 1 }
-
     fn evaluate(&self, features: &Features) -> Result<Self::Output> {
         Ok(features.dot(&self.weights.view()))
     }
 
-    fn update<O>(&mut self, opt: &mut O, f: &Features, e: f64) -> Result<()>
+    fn update<O>(&mut self, opt: &mut O, features: &Features, error: &f64) -> Result<()>
     where
         O: crate::optim::Optimiser,
     {
-        opt.step(&mut self.weights.view_mut(), f, e)
+        opt.step_scaled(&mut self.weights.view_mut(), features, *error)
     }
 }
 
@@ -57,25 +58,25 @@ mod tests {
 
     #[test]
     fn test_sparse_update_eval() {
-        let projector = TileCoding::new(SHBuilder::default(), 4, 100).normalise_l2();
+        let projector = TileCoding::new(SHBuilder::default(), 4, 100);
 
         let mut fa = ScalarFunction::zeros(projector.n_features());
-        let mut opt = SGD(1.0);
+        let mut opt = SGD(0.25);
 
         assert_eq!(fa.n_outputs(), 1);
         assert_eq!(fa.weights.len(), 100);
 
         let features = projector.project(&vec![5.0]).unwrap();
 
-        let _ = fa.update(&mut opt, &features, 50.0);
+        let _ = fa.update(&mut opt, &features, &10.0);
         let out = fa.evaluate(&features).unwrap();
 
-        assert!((out - 50.0).abs() < 1e-6);
+        assert!((out - 10.0).abs() < 1e-6);
     }
 
     #[test]
     fn test_dense_update_eval() {
-        let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
+        let projector = Fourier::new(3, vec![(0.0, 10.0)]);
 
         let mut fa = ScalarFunction::zeros(projector.n_features());
         let mut opt = SGD(1.0);
@@ -85,7 +86,7 @@ mod tests {
 
         let features = projector.project(&vec![5.0]).unwrap();
 
-        let _ = fa.update(&mut opt, &features, 50.0);
+        let _ = fa.update(&mut opt, &features, &50.0);
         let out = fa.evaluate(&features).unwrap();
 
         assert!((out - 50.0).abs() < 1e-6);

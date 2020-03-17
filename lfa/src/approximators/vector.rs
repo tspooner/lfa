@@ -1,4 +1,7 @@
-use crate::{Approximator, Parameterised, Features, Result, Weights, WeightsView, WeightsViewMut};
+use crate::{
+    Approximator, Parameterised, Features,
+    Result, Weights, WeightsView, WeightsViewMut,
+};
 
 /// [`Weights`]-[`Features`] evaluator with `Vec<f64>` output.
 ///
@@ -26,19 +29,17 @@ impl VectorFunction {
 impl Approximator for VectorFunction {
     type Output = Vec<f64>;
 
-    fn n_outputs(&self) -> usize { self.weights.ncols() }
-
     fn evaluate(&self, f: &Features) -> Result<Self::Output> {
         Ok(f.matmul(&self.weights.view()).into_raw_vec())
     }
 
-    fn update<O>(&mut self, opt: &mut O, f: &Features, es: Vec<f64>) -> Result<()>
+    fn update<O>(&mut self, opt: &mut O, features: &Features, error: &Vec<f64>) -> Result<()>
     where
         O: crate::optim::Optimiser,
     {
-        es.into_iter()
+        error.into_iter()
             .zip(self.weights.gencolumns_mut().into_iter())
-            .fold(Ok(()), |acc, (e, mut c)| acc.and(opt.step(&mut c, f, e)))
+            .fold(Ok(()), |acc, (e, mut c)| acc.and(opt.step_scaled(&mut c, features, *e)))
     }
 }
 
@@ -58,26 +59,26 @@ mod tests {
 
     #[test]
     fn test_sparse_update_eval() {
-        let projector = TileCoding::new(SHBuilder::default(), 4, 100).normalise_l2();
+        let projector = TileCoding::new(SHBuilder::default(), 4, 100);
 
         let mut evaluator = VectorFunction::zeros(projector.n_features(), 2);
-        let mut opt = SGD(1.0);
+        let mut opt = SGD(0.25);
 
         assert_eq!(evaluator.n_outputs(), 2);
         assert_eq!(evaluator.weights.len(), 200);
 
         let features = projector.project(&vec![5.0]).unwrap();
 
-        let _ = evaluator.update(&mut opt, &features, vec![20.0, 50.0]);
+        let _ = evaluator.update(&mut opt, &features, &vec![-20.0, 50.0]);
         let out = evaluator.evaluate(&features).unwrap();
 
-        assert!((out[0] - 20.0).abs() < 1e-6);
+        assert!((out[0] + 20.0).abs() < 1e-6);
         assert!((out[1] - 50.0).abs() < 1e-6);
     }
 
     #[test]
     fn test_dense_update_eval() {
-        let projector = Fourier::new(3, vec![(0.0, 10.0)]).normalise_l2();
+        let projector = Fourier::new(3, vec![(0.0, 10.0)]);
 
         let mut fa = VectorFunction::zeros(projector.n_features(), 2);
         let mut opt = SGD(1.0);
@@ -87,10 +88,10 @@ mod tests {
 
         let features = projector.project(&vec![5.0]).unwrap();
 
-        let _ = fa.update(&mut opt, &features, vec![20.0, 50.0]);
+        let _ = fa.update(&mut opt, &features, &vec![20.0, -50.0]);
         let out = fa.evaluate(&features).unwrap();
 
         assert!((out[0] - 20.0).abs() < 1e-6);
-        assert!((out[1] - 50.0).abs() < 1e-6);
+        assert!((out[1] + 50.0).abs() < 1e-6);
     }
 }

@@ -257,10 +257,11 @@ impl Features {
     ///
     /// ```
     /// use lfa::Features;
+    /// use ndarray::Array1;
     ///
     /// assert_eq!(
     ///     Features::expanded(vec![0, 2, 1, 4].into()),
-    ///     vec![1.0, 1.0, 1.0, 0.0, 1.0].into()
+    ///     Array1::from(vec![1.0, 1.0, 1.0, 0.0, 1.0]),
     /// );
     /// ```
     pub fn expanded(self) -> DenseT {
@@ -433,6 +434,10 @@ impl Features {
             for (&idx, act) in indices { weights[idx] += alpha * act; }
         });
     }
+}
+
+impl AsRef<Features> for Features {
+    fn as_ref(&self) -> &Features { self }
 }
 
 impl Index<usize> for Features {

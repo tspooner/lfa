@@ -1,5 +1,5 @@
 //! `lfa` is a framework for online learning of linear function approximation
-//! models. Included is a suite of scalar and multi-output approximator helpers,
+//! models. Included is a suite of scalar and multi-output approximation helpers,
 //! a range of basis functions for feature construction, and a set of
 //! optimisation routines. The framework is also designed to support
 //! fallible operations for which a custom error type is provided.
@@ -39,17 +39,19 @@
 //!     let mut opt = SGD(0.01);
 //!
 //!     let mut rng = thread_rng();
-//!     let mut data = Uniform::new_inclusive(-1.0, 1.0);
-//!     let mut noise = Normal::new(0.0, 0.01).unwrap();
+//!     let mut data_dist = Uniform::new_inclusive(-1.0, 1.0);
+//!     let mut noise_dist = Normal::new(0.0, 0.01).unwrap();
 //!
-//!     for x in rng.sample_iter(&data).take(10000) {
+//!     let mut sample_iter = rng.sample_iter(&data_dist).map(|x| {
 //!         let y_exp = M*x + C;
-//!         let y_noisy = y_exp + rng.sample(noise);
 //!
-//!         let x = basis.project(&vec![x]).unwrap();
-//!         let y_apx = fa.evaluate(&x).unwrap();
+//!         (basis.project(&vec![x]).unwrap(), y_exp + rng.sample(noise_dist))
+//!     });
 //!
-//!         fa.update(&mut opt, &x, y_noisy - y_apx).ok();
+//!     for (x, y) in sample_iter.take(1000) {
+//!         let y_pred = fa.evaluate(&x).unwrap();
+//!
+//!         fa.update(&mut opt, &x, &(y - y_pred)).ok();
 //!     }
 //!
 //!     let weights = fa.weights().column(0).to_owned();
@@ -101,7 +103,7 @@ pub type WeightsViewMut<'a> = ndarray::ArrayViewMut2<'a, f64>;
 
 /// Types that are parameterised by a matrix of weights.
 pub trait Parameterised {
-    /// Return a clone of the weights.
+    /// Return an owned copy of the weights.
     fn weights(&self) -> Weights { self.weights_view().to_owned() }
 
     /// Return a read-only view of the weights.
@@ -131,13 +133,12 @@ pub trait Approximator: Parameterised {
     /// Evaluate the approximator and return its value.
     fn evaluate(&self, features: &Features) -> Result<Self::Output>;
 
-    /// Update the approximator using some arbitrary optimiser for a given
-    /// error(s).
+    /// Update the approximator using an arbitrary optimiser for a given error.
     fn update<O: optim::Optimiser>(
         &mut self,
         optimiser: &mut O,
         features: &Features,
-        errors: Self::Output,
+        error: &Self::Output,
     ) -> Result<()>;
 }
 
@@ -147,100 +148,6 @@ pub trait Approximator: Parameterised {
 pub trait ScalarApproximator: Approximator<Output = f64> {}
 
 impl<T: Approximator<Output = f64>> ScalarApproximator for T {}
-
-/// [`Approximator`]s with an `[f64; 2]` output.
-///
-/// [`Approximator`]: trait.Approximator.html
-pub trait PairApproximator: Approximator<Output = [f64; 2]> {
-    /// Evaluate the first output value.
-    fn evaluate_first(&self, features: &Features) -> Result<f64> {
-        Ok(features.dot(&self.weights_view().column(0)))
-    }
-
-    /// Evaluate the second output value.
-    fn evaluate_second(&self, features: &Features) -> Result<f64> {
-        Ok(features.dot(&self.weights_view().column(1)))
-    }
-
-    /// Update the first output value.
-    fn update_first<O: optim::Optimiser>(
-        &mut self,
-        optimiser: &mut O,
-        features: &Features,
-        error: f64,
-    ) -> Result<()>
-    {
-        optimiser.step(&mut self.weights_view_mut().column_mut(0), features, error)
-    }
-
-    /// Update the second output value.
-    fn update_second<O: optim::Optimiser>(
-        &mut self,
-        optimiser: &mut O,
-        features: &Features,
-        error: f64,
-    ) -> Result<()>
-    {
-        optimiser.step(&mut self.weights_view_mut().column_mut(1), features, error)
-    }
-}
-
-impl<T: Approximator<Output = [f64; 2]>> PairApproximator for T {}
-
-/// [`Approximator`]s with an `[f64; 3]` output.
-///
-/// [`Approximator`]: trait.Approximator.html
-pub trait TripleApproximator: Approximator<Output = [f64; 3]> {
-    /// Evaluate the first output value.
-    fn evaluate_first(&self, features: &Features) -> Result<f64> {
-        Ok(features.dot(&self.weights_view().column(0)))
-    }
-
-    /// Evaluate the second output value.
-    fn evaluate_second(&self, features: &Features) -> Result<f64> {
-        Ok(features.dot(&self.weights_view().column(1)))
-    }
-
-    /// Evaluate the third output value.
-    fn evaluate_third(&self, features: &Features) -> Result<f64> {
-        Ok(features.dot(&self.weights_view().column(2)))
-    }
-
-    /// Update the first output value.
-    fn update_first<O: optim::Optimiser>(
-        &mut self,
-        optimiser: &mut O,
-        features: &Features,
-        error: f64,
-    ) -> Result<()>
-    {
-        optimiser.step(&mut self.weights_view_mut().column_mut(0), features, error)
-    }
-
-    /// Update the second output value.
-    fn update_second<O: optim::Optimiser>(
-        &mut self,
-        optimiser: &mut O,
-        features: &Features,
-        error: f64,
-    ) -> Result<()>
-    {
-        optimiser.step(&mut self.weights_view_mut().column_mut(1), features, error)
-    }
-
-    /// Update the third output value.
-    fn update_third<O: optim::Optimiser>(
-        &mut self,
-        optimiser: &mut O,
-        features: &Features,
-        error: f64,
-    ) -> Result<()>
-    {
-        optimiser.step(&mut self.weights_view_mut().column_mut(2), features, error)
-    }
-}
-
-impl<T: Approximator<Output = [f64; 3]>> TripleApproximator for T {}
 
 /// [`Approximator`]s with an `Vec<f64>` output.
 ///
@@ -254,13 +161,13 @@ pub trait VectorApproximator: Approximator<Output = Vec<f64>> {
     /// Update the `index`-th output value.
     fn update_index<O: optim::Optimiser>(
         &mut self,
-        opt: &mut O,
+        optimiser: &mut O,
         features: &Features,
         index: usize,
         error: f64,
     ) -> Result<()>
     {
-        opt.step(
+        optimiser.step_scaled(
             &mut self.weights_view_mut().column_mut(index),
             features,
             error,
