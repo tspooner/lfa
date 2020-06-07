@@ -1,5 +1,47 @@
-[workspace]
-members = [
-    "lfa",
-    "lfa_derive",
-]
+[package]
+name = "lfa"
+description = "Native rust implementations of linear function approximators."
+authors = ["Tom Spooner <spooner10000@gmail.com>"]
+
+version = "0.14.0"
+edition = "2018"
+
+license = "MIT"
+readme = "README.md"
+
+keywords = ["function", "approximation", "linear", "ai", "rl"]
+
+repository = "https://github.com/tspooner/lfa"
+documentation = "https://docs.rs/lfa"
+
+[badges]
+travis-ci = { repository = "tspooner/lfa", branch = "master" }
+coveralls = { repository = "tspooner/lfa", branch = "master", service = "github" }
+
+[features]
+default = []
+
+blas = ["ndarray/blas"]
+serde = ["serde_crate", "spaces/serialize", "ndarray/serde-1"]
+
+[dependencies]
+spaces = "5.0"
+ndarray = "0.13"
+itertools = "0.9"
+
+[dependencies.serde_crate]
+package = "serde"
+optional = true
+version = "1.0"
+default-features = false
+features = ["std", "derive"]
+
+[dev-dependencies]
+quickcheck = "0.9"
+seahash = "4.0"
+
+blas-src = { version = "0.2.0", default-features = false, features = ["openblas"] }
+openblas-src = { version = "0.6.0", default-features = false, features = ["cblas", "system"] }
+
+rand = "0.7"
+rand_distr = "0.2"
