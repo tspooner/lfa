@@ -16,7 +16,7 @@ approximation techniques used in reinforcement learning.
 lfa = "0.15"
 ```
 
-Note that `rsrl` enables the `blas` feature of its [`ndarray`] dependency, so
+Note that `lfa` enables the `blas` feature of its [`ndarray`] dependency, so
 if you're building a binary, you additionally need to specify a BLAS backend
 compatible with `ndarray`. For example, you can add these dependencies:
 
