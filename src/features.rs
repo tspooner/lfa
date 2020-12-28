@@ -369,7 +369,7 @@ impl Features {
         let tmp = unsafe { mem::MaybeUninit::zeroed().assume_init() };
         let old = mem::replace(self, tmp);
 
-        mem::replace(self, old.map_into(f));
+        mem::drop(mem::replace(self, old.map_into(f)));
     }
 
     /// Map the function `f` over the internal `DenseActivations` representation
@@ -535,7 +535,7 @@ impl Features {
         let tmp = unsafe { mem::MaybeUninit::zeroed().assume_init() };
         let old = mem::replace(self, tmp);
 
-        mem::replace(self, old.merge_into(other, f));
+        mem::drop(mem::replace(self, old.merge_into(other, f)));
     }
 
     /// Perform a fold operation over the feature activations.
