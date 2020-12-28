@@ -52,9 +52,9 @@ pub struct TileCoding<H> {
 impl<H: BuildHasher> TileCoding<H> {
     pub fn new(hasher_builder: H, n_tilings: usize, memory_size: usize) -> Self {
         TileCoding {
-            hasher_builder: hasher_builder,
-            n_tilings: n_tilings,
-            memory_size: memory_size,
+            hasher_builder,
+            n_tilings,
+            memory_size,
         }
     }
 }
