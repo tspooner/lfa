@@ -116,7 +116,9 @@ impl<B, O> ScalarLFA<B, O> {
     /// optimisation routine. The weights are initialised with a vector of
     /// zeros.
     pub fn scalar(basis: B, optimiser: O) -> Self
-    where B: spaces::Space {
+    where
+        B: spaces::Space,
+    {
         let n: usize = basis.dim().into();
         let weights = ndarray::Array1::zeros(n);
 
@@ -129,7 +131,9 @@ impl<B, O> ScalarLFA<B, O> {
 
     /// Evaluate the function approximator for a given `input`.
     pub fn evaluate<I>(&self, input: I) -> Result<f64>
-    where B: basis::Basis<I, Value = Features> {
+    where
+        B: basis::Basis<I, Value = Features>,
+    {
         self.basis
             .project(input)
             .map(|b| b.dot(&self.weights.view()))
@@ -174,13 +178,19 @@ pub struct OutputIter<'a> {
 impl<'a> Iterator for OutputIter<'a> {
     type Item = f64;
 
-    fn next(&mut self) -> Option<Self::Item> { self.lanes.next().map(|ref c| self.basis.dot(c)) }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.lanes.next().map(|ref c| self.basis.dot(c))
+    }
 
-    fn size_hint(&self) -> (usize, Option<usize>) { self.lanes.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.lanes.size_hint()
+    }
 }
 
 impl<'a> ExactSizeIterator for OutputIter<'a> {
-    fn len(&self) -> usize { self.lanes.len() }
+    fn len(&self) -> usize {
+        self.lanes.len()
+    }
 }
 
 impl<B, O> VectorLFA<B, O> {
@@ -188,7 +198,9 @@ impl<B, O> VectorLFA<B, O> {
     /// basis representation and optimisation routine. The weights are
     /// initialised with a matrix of zeros.
     pub fn vector(basis: B, optimiser: O, n_outputs: usize) -> Self
-    where B: spaces::Space {
+    where
+        B: spaces::Space,
+    {
         let n: usize = basis.dim().into();
         let weights = ndarray::Array2::zeros((n, n_outputs));
 
@@ -200,18 +212,24 @@ impl<B, O> VectorLFA<B, O> {
     }
 
     /// Return the dimensionality of the output..
-    pub fn n_outputs(&self) -> usize { self.weights.ncols() }
+    pub fn n_outputs(&self) -> usize {
+        self.weights.ncols()
+    }
 
     /// Evaluate the function approximator for a given `input`.
     pub fn evaluate<I>(&self, input: I) -> Result<ndarray::Array1<f64>>
-    where B: basis::Basis<I, Value = Features> {
+    where
+        B: basis::Basis<I, Value = Features>,
+    {
         self.try_iter(input).map(|it| it.collect())
     }
 
     /// Evaluate the `i`th output of the function approximator for a given
     /// `input`.
     pub fn evaluate_index<I>(&self, input: I, index: usize) -> Result<f64>
-    where B: basis::Basis<I, Value = Features> {
+    where
+        B: basis::Basis<I, Value = Features>,
+    {
         self.basis
             .project(input)
             .map(|b| b.dot(&self.weights.column(index)))
@@ -222,20 +240,24 @@ impl<B, O> VectorLFA<B, O> {
     ///
     /// __Panics__ if the basis computation fails.
     pub fn iter<'a, I>(&'a self, input: I) -> OutputIter<'a>
-    where B: basis::Basis<I, Value = Features> {
+    where
+        B: basis::Basis<I, Value = Features>,
+    {
         OutputIter {
             basis: self.basis.project(input).unwrap(),
-            lanes: self.weights.gencolumns().into_iter(),
+            lanes: self.weights.columns().into_iter(),
         }
     }
 
     /// Iterate sequentially over the outputs of the function approximator for a
     /// given `input`.
     pub fn try_iter<'a, I>(&'a self, input: I) -> Result<OutputIter<'a>>
-    where B: basis::Basis<I, Value = Features> {
+    where
+        B: basis::Basis<I, Value = Features>,
+    {
         self.basis.project(input).map(move |basis| OutputIter {
             basis,
-            lanes: self.weights.gencolumns().into_iter(),
+            lanes: self.weights.columns().into_iter(),
         })
     }
 
@@ -251,7 +273,7 @@ impl<B, O> VectorLFA<B, O> {
 
             errors
                 .into_iter()
-                .zip(self.weights.gencolumns_mut().into_iter())
+                .zip(self.weights.columns_mut().into_iter())
                 .fold(Ok(()), |acc, (e, mut c)| {
                     acc.and(opt.step_scaled(&mut c, b, e))
                 })
@@ -289,7 +311,7 @@ impl<B, O> VectorLFA<B, O> {
 
             errors
                 .into_iter()
-                .zip(self.weights.gencolumns_mut().into_iter())
+                .zip(self.weights.columns_mut().into_iter())
                 .fold(Ok(()), |acc, (e, mut c)| {
                     acc.and(opt.step_scaled(&mut c, b, e))
                 })

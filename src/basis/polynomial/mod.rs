@@ -72,13 +72,18 @@ impl Polynomial {
 impl Space for Polynomial {
     type Value = Features;
 
-    fn dim(&self) -> Dim { Dim::Finite(self.exponents.len()) }
+    fn dim(&self) -> Dim {
+        Dim::Finite(self.exponents.len())
+    }
 
-    fn card(&self) -> Card { Card::Infinite }
+    fn card(&self) -> Card {
+        Card::Infinite
+    }
 }
 
 impl<I: std::borrow::Borrow<f64>, T: IntoIterator<Item = I>> Basis<T> for Polynomial
-where T::IntoIter: Clone
+where
+    T::IntoIter: Clone,
 {
     fn project(&self, input: T) -> crate::Result<Features> {
         let iter = input.into_iter().map(|x| *x.borrow());
@@ -92,7 +97,8 @@ where T::IntoIter: Clone
 }
 
 impl<I: std::borrow::Borrow<f64>, T: IntoIterator<Item = I>> EnumerableBasis<T> for Polynomial
-where T::IntoIter: Clone
+where
+    T::IntoIter: Clone,
 {
     fn ith(&self, input: T, index: IndexT) -> crate::Result<ActivationT> {
         self.exponents
@@ -131,9 +137,9 @@ impl Chebyshev {
         let polynomials = Chebyshev::make_polynomials(order, limits.len());
 
         Chebyshev {
-            order: order,
-            limits: limits,
-            polynomials: polynomials,
+            order,
+            limits,
+            polynomials,
         }
     }
 
@@ -179,7 +185,9 @@ impl Chebyshev {
     }
 
     fn compute_feature<'a, I>(iter: I) -> f64
-    where I: IntoIterator<Item = (f64, &'a fn(f64) -> f64)> {
+    where
+        I: IntoIterator<Item = (f64, &'a fn(f64) -> f64)>,
+    {
         iter.into_iter().map(|(v, f)| f(v)).product()
     }
 }
@@ -187,13 +195,18 @@ impl Chebyshev {
 impl Space for Chebyshev {
     type Value = Features;
 
-    fn dim(&self) -> Dim { Dim::Finite(self.polynomials.len()) }
+    fn dim(&self) -> Dim {
+        Dim::Finite(self.polynomials.len())
+    }
 
-    fn card(&self) -> Card { Card::Infinite }
+    fn card(&self) -> Card {
+        Card::Infinite
+    }
 }
 
 impl<I: std::borrow::Borrow<f64>, T: IntoIterator<Item = I>> Basis<T> for Chebyshev
-where T::IntoIter: Clone
+where
+    T::IntoIter: Clone,
 {
     fn project(&self, input: T) -> crate::Result<Features> {
         let scaled_state: Vec<f64> = rescale!(input into self.limits)
@@ -209,7 +222,8 @@ where T::IntoIter: Clone
 }
 
 impl<I: std::borrow::Borrow<f64>, T: IntoIterator<Item = I>> EnumerableBasis<T> for Chebyshev
-where T::IntoIter: Clone
+where
+    T::IntoIter: Clone,
 {
     fn ith(&self, input: T, index: IndexT) -> crate::Result<ActivationT> {
         self.polynomials
@@ -228,15 +242,16 @@ impl Combinators for Chebyshev {}
 #[cfg(feature = "serde")]
 use serde::{
     de::{self, MapAccess, SeqAccess, Visitor},
-    Deserialize,
-    Deserializer,
+    Deserialize, Deserializer,
 };
 #[cfg(feature = "serde")]
 use std::fmt;
 #[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Chebyshev {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where D: Deserializer<'de> {
+    where
+        D: Deserializer<'de>,
+    {
         #[cfg_attr(
             feature = "serde",
             derive(Deserialize),
@@ -258,7 +273,9 @@ impl<'de> Deserialize<'de> for Chebyshev {
             }
 
             fn visit_seq<V>(self, mut seq: V) -> std::result::Result<Chebyshev, V::Error>
-            where V: SeqAccess<'de> {
+            where
+                V: SeqAccess<'de>,
+            {
                 let order = seq
                     .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(0, &self))?;
@@ -270,7 +287,9 @@ impl<'de> Deserialize<'de> for Chebyshev {
             }
 
             fn visit_map<V>(self, mut map: V) -> std::result::Result<Chebyshev, V::Error>
-            where V: MapAccess<'de> {
+            where
+                V: MapAccess<'de>,
+            {
                 let mut order = None;
                 let mut limits = None;
                 while let Some(key) = map.next_key()? {
@@ -280,13 +299,13 @@ impl<'de> Deserialize<'de> for Chebyshev {
                                 return Err(de::Error::duplicate_field("order"));
                             }
                             order = Some(map.next_value()?);
-                        },
+                        }
                         Field::Limits => {
                             if limits.is_some() {
                                 return Err(de::Error::duplicate_field("limits"));
                             }
                             limits = Some(map.next_value()?);
-                        },
+                        }
                     }
                 }
 
