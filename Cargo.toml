@@ -26,8 +26,8 @@ serde = ["serde_crate", "spaces/serialize", "ndarray/serde-1"]
 
 [dependencies]
 spaces = "5.0"
-ndarray = "0.13"
-itertools = "0.9"
+ndarray = "0.15"
+itertools = "0.10"
 
 [dependencies.serde_crate]
 package = "serde"
@@ -37,11 +37,11 @@ default-features = false
 features = ["std", "derive"]
 
 [dev-dependencies]
-quickcheck = "0.9"
+quickcheck = "1.0"
 seahash = "4.0"
 
-blas-src = { version = "0.2.0", default-features = false, features = ["openblas"] }
-openblas-src = { version = "0.6.0", default-features = false, features = ["cblas", "system"] }
+blas-src = { version = "0.8.0", default-features = false, features = ["openblas"] }
+openblas-src = { version = "0.10.4", default-features = false, features = ["cblas", "system"] }
 
-rand = "0.7"
-rand_distr = "0.2"
+rand = "0.8"
+rand_distr = "0.4"

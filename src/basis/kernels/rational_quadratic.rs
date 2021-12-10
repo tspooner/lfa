@@ -30,7 +30,9 @@ impl RationalQuadratic {
 }
 
 impl Default for RationalQuadratic {
-    fn default() -> RationalQuadratic { RationalQuadratic::non_ard(1.0, 1.0, 2.0) }
+    fn default() -> RationalQuadratic {
+        RationalQuadratic::non_ard(1.0, 1.0, 2.0)
+    }
 }
 
 impl super::Kernel<f64> for RationalQuadratic {
@@ -42,8 +44,8 @@ impl super::Kernel<f64> for RationalQuadratic {
 impl super::Kernel<&[f64]> for RationalQuadratic {
     fn kernel(&self, x: &[f64], y: &[f64]) -> f64 {
         let x = x
-            .into_iter()
-            .zip(y.into_iter())
+            .iter()
+            .zip(y.iter())
             .map(|(x, y)| x - y)
             .zip(self.lengthscales.iter())
             .map(|(d, l)| d / l)

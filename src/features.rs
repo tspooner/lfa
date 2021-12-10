@@ -2,7 +2,7 @@
 use ndarray::{linalg::Dot, Array1, ArrayBase, Data, DataMut, Dimension, NdIndex};
 use std::{
     iter::FromIterator,
-    mem,
+    mem::{self, MaybeUninit},
     ops::{AddAssign, Index},
 };
 
@@ -134,14 +134,18 @@ impl Features {
     /// Construct a `Dense` feature vector from an iterable collection of
     /// activations.
     pub fn dense<I>(da: I) -> Features
-    where I: IntoIterator<Item = ActivationT> {
+    where
+        I: IntoIterator<Item = ActivationT>,
+    {
         Features::Dense(da.into_iter().collect())
     }
 
     /// Construct a `Sparse` feature vector with given dimensionality from an
     /// iterable collection of feature-activation pairs.
     pub fn sparse<I>(dim: usize, activations: I) -> Features
-    where I: IntoIterator<Item = (IndexT, ActivationT)> {
+    where
+        I: IntoIterator<Item = (IndexT, ActivationT)>,
+    {
         Features::Sparse(SparseActivations {
             dim,
             activations: activations.into_iter().collect(),
@@ -151,15 +155,21 @@ impl Features {
     /// Construct a `Sparse` feature vector with given dimensionality from an
     /// iterable collection of feature indices.
     pub fn unitary<I>(dim: usize, indices: I) -> Features
-    where I: IntoIterator<Item = IndexT> {
+    where
+        I: IntoIterator<Item = IndexT>,
+    {
         Features::sparse(dim, indices.into_iter().map(|i| (i, 1.0)))
     }
 
     /// Return true if the features is the `Dense` variant.
-    pub fn is_dense(&self) -> bool { apply_to_features!(self => true; false) }
+    pub fn is_dense(&self) -> bool {
+        apply_to_features!(self => true; false)
+    }
 
     /// Return true if the features is the `Sparse` variant.
-    pub fn is_sparse(&self) -> bool { apply_to_features!(self => false; true) }
+    pub fn is_sparse(&self) -> bool {
+        apply_to_features!(self => false; true)
+    }
 
     /// Return the number of features.
     pub fn n_features(&self) -> usize {
@@ -239,7 +249,7 @@ impl Features {
                 }
 
                 phi
-            },
+            }
         }
     }
 
@@ -264,7 +274,7 @@ impl Features {
                 }
 
                 phi
-            },
+            }
         }
     }
 
@@ -291,13 +301,13 @@ impl Features {
                     dim: sa1.dim + sa2.dim,
                     activations: sa1.activations,
                 })
-            },
+            }
             (f1, f2) => {
                 let mut all_activations = f1.into_dense().into_raw_vec();
                 all_activations.extend_from_slice(f2.into_dense().as_slice().unwrap());
 
                 Dense(all_activations.into())
-            },
+            }
         }
     }
 
@@ -329,7 +339,7 @@ impl Features {
 
                     Dense(phi)
                 }
-            },
+            }
         }
     }
 
@@ -360,7 +370,7 @@ impl Features {
 
                     Dense(phi)
                 }
-            },
+            }
         }
     }
 
@@ -399,8 +409,7 @@ impl Features {
         self,
         f_dense: impl FnOnce(DenseActivations) -> T,
         f_sparse: impl FnOnce(SparseActivations) -> T,
-    ) -> T
-    {
+    ) -> T {
         apply_to_features!(self => activations, {
             f_dense(activations)
         }; indices, {
@@ -414,8 +423,7 @@ impl Features {
         &self,
         other: &Features,
         f: impl Fn(ActivationT, ActivationT) -> ActivationT,
-    ) -> Features
-    {
+    ) -> Features {
         use Features::*;
 
         match self {
@@ -424,30 +432,33 @@ impl Features {
 
                 match other {
                     Dense(da2) => {
-                        a_out.zip_mut_with(&da2, |x, y| *x = f(*x, *y));
+                        a_out.zip_mut_with(da2, |x, y| *x = f(*x, *y));
 
                         Dense(a_out)
-                    },
+                    }
                     Sparse(sa2) => {
                         for (&i, a) in sa2.iter() {
                             a_out[i] = f(a_out[i], *a);
                         }
 
                         Dense(a_out)
-                    },
+                    }
                 }
-            },
+            }
             Sparse(sa1) => match other {
                 Dense(da2) => {
                     let n = sa1.dim.max(da2.len());
-                    let mut phi = unsafe { Array1::uninitialized(n) };
+                    let mut phi = Array1::uninit(n);
 
                     for i in 0..n {
-                        phi[i] = f(sa1.activations.get(&i).cloned().unwrap_or(0.0), da2[i]);
+                        phi[i] = MaybeUninit::new(f(
+                            sa1.activations.get(&i).cloned().unwrap_or(0.0),
+                            da2[i],
+                        ));
                     }
 
-                    Dense(phi)
-                },
+                    unsafe { Dense(phi.assume_init()) }
+                }
                 Sparse(sa2) => {
                     let mut idx_out = sa1.activations.clone();
 
@@ -463,7 +474,7 @@ impl Features {
                         dim: sa1.dim.max(sa2.dim),
                         activations: idx_out,
                     })
-                },
+                }
             },
         }
     }
@@ -473,39 +484,38 @@ impl Features {
         self,
         other: &Features,
         f: impl Fn(ActivationT, ActivationT) -> ActivationT,
-    ) -> Features
-    {
+    ) -> Features {
         use Features::*;
 
         match self {
             Dense(mut da1) => match other {
                 Dense(sa2) => {
-                    da1.zip_mut_with(&sa2, |x, y| *x = f(*x, *y));
+                    da1.zip_mut_with(sa2, |x, y| *x = f(*x, *y));
 
                     Dense(da1)
-                },
+                }
                 Sparse(sa2) => {
                     for (&i, a) in sa2.iter() {
                         da1[i] = f(da1[i], *a);
                     }
 
                     Dense(da1)
-                },
+                }
             },
             Sparse(mut sa1) => match other {
                 Dense(da2) => {
                     let n = sa1.dim.max(da2.len());
-                    let mut phi = unsafe { Array1::uninitialized(n) };
+                    let mut phi = Array1::uninit(n);
 
                     for i in 0..n {
-                        phi[i] = f(
+                        phi[i] = MaybeUninit::new(f(
                             sa1.activations.get(&i).copied().unwrap_or(0.0),
                             da2.get(i).copied().unwrap_or(0.0),
-                        );
+                        ));
                     }
 
-                    Dense(phi)
-                },
+                    unsafe { Dense(phi.assume_init()) }
+                }
                 Sparse(sa2) => {
                     for (i, a) in sa1.activations.iter_mut() {
                         *a = f(*a, sa2.activations.get(i).cloned().unwrap_or(0.0));
@@ -519,7 +529,7 @@ impl Features {
                         dim: sa1.dim.max(sa2.dim),
                         activations: sa1.activations,
                     })
-                },
+                }
             },
         }
     }
@@ -530,8 +540,7 @@ impl Features {
         &mut self,
         other: &Features,
         f: impl Fn(ActivationT, ActivationT) -> ActivationT,
-    )
-    {
+    ) {
         let tmp = unsafe { mem::MaybeUninit::zeroed().assume_init() };
         let old = mem::replace(self, tmp);
 
@@ -574,12 +583,16 @@ impl Features {
     }
 
     fn dot_dense<W>(da: &DenseActivations, weights: &W) -> f64
-    where DenseActivations: Dot<W, Output = f64> {
+    where
+        DenseActivations: Dot<W, Output = f64>,
+    {
         da.dot(weights)
     }
 
     fn dot_sparse<W>(sa: &SparseActivations, weights: &W) -> f64
-    where W: std::ops::Index<usize, Output = f64> {
+    where
+        W: std::ops::Index<usize, Output = f64>,
+    {
         sa.activations
             .iter()
             .fold(0.0, |acc, (idx, act)| acc + weights[*idx] * act)
@@ -608,9 +621,11 @@ impl Features {
     /// );
     /// ```
     pub fn matmul<S>(&self, weights: &ArrayBase<S, ndarray::Ix2>) -> Array1<f64>
-    where S: Data<Elem = f64> {
+    where
+        S: Data<Elem = f64>,
+    {
         weights
-            .gencolumns()
+            .columns()
             .into_iter()
             .map(|col| self.dot(&col))
             .collect()
@@ -619,7 +634,7 @@ impl Features {
     /// Returns the sum of all activations in the feature vector.
     pub fn sum(&self) -> ActivationT {
         match self {
-            Features::Dense(da) => da.scalar_sum(),
+            Features::Dense(da) => da.sum(),
             Features::Sparse(sa) => sa.activations.values().sum(),
         }
     }
@@ -661,7 +676,9 @@ where
 {
     type Output = f64;
 
-    fn dot(&self, rhs: &W) -> f64 { self.dot(rhs) }
+    fn dot(&self, rhs: &W) -> f64 {
+        self.dot(rhs)
+    }
 }
 
 impl ndarray::linalg::Dot<Features> for Features {
@@ -690,7 +707,9 @@ impl ndarray::linalg::Dot<Features> for Features {
 }
 
 impl AsRef<Features> for Features {
-    fn as_ref(&self) -> &Features { self }
+    fn as_ref(&self) -> &Features {
+        self
+    }
 }
 
 impl Index<usize> for Features {
@@ -714,7 +733,7 @@ impl PartialEq<Features> for Features {
         match (self, rhs) {
             (SparseFeatures(sa1), SparseFeatures(sa2)) => {
                 sa1.dim == sa2.dim && sa1.activations.eq(&sa2.activations)
-            },
+            }
             (&DenseFeatures(ref da1), &DenseFeatures(ref da2)) => da1.eq(&da2),
             _ => unimplemented!(
                 "Cannot check equality of dense/sparse with no knowledge of the \
@@ -725,11 +744,15 @@ impl PartialEq<Features> for Features {
 }
 
 impl From<DenseActivations> for Features {
-    fn from(activations: DenseActivations) -> Features { DenseFeatures(activations) }
+    fn from(activations: DenseActivations) -> Features {
+        DenseFeatures(activations)
+    }
 }
 
 impl From<Vec<ActivationT>> for Features {
-    fn from(activations: Vec<ActivationT>) -> Features { DenseFeatures(Array1::from(activations)) }
+    fn from(activations: Vec<ActivationT>) -> Features {
+        DenseFeatures(Array1::from(activations))
+    }
 }
 
 impl FromIterator<ActivationT> for Features {
@@ -761,11 +784,15 @@ impl From<Vec<IndexT>> for Features {
 }
 
 impl From<Features> for DenseActivations {
-    fn from(phi: Features) -> DenseActivations { phi.into_dense() }
+    fn from(phi: Features) -> DenseActivations {
+        phi.into_dense()
+    }
 }
 
 impl From<Features> for Vec<ActivationT> {
-    fn from(phi: Features) -> Vec<ActivationT> { phi.into_dense().into_raw_vec() }
+    fn from(phi: Features) -> Vec<ActivationT> {
+        phi.into_dense().into_raw_vec()
+    }
 }
 
 #[cfg(test)]

@@ -32,8 +32,7 @@ impl Optimiser<Features> for NAG {
         weights: &mut ArrayViewMut1<f64>,
         features: &Features,
         scale_factor: f64,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         let m = self.momentum;
         let lr = self.learning_rate;
 
@@ -49,14 +48,16 @@ impl Optimiser<Features> for NAG {
 
                     self.velocity[*i] += g;
                 });
-            },
+            }
         }
-
-        Ok({
+        {
             weights.scaled_add(lr, &self.velocity);
             features.scaled_addto(m, weights);
-        })
+        }
+        Ok(())
     }
 
-    fn reset(&mut self) { self.velocity.fill(0.0); }
+    fn reset(&mut self) {
+        self.velocity.fill(0.0);
+    }
 }
